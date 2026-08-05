@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statusline ne yazacağını senden öğrenir</title>
+<!-- ===== Katalog meta bilgileri ===== -->
+<meta name="yazi:baslik" content="Statusline ne yazacağını senden öğrenir">
+<meta name="yazi:aciklama" content="Ekranın dibindeki satırı çalıştıran şey senin yazdığın script. /statusline ile kurulumdan stdin'e gelen JSON alanlarına, renkli context barına, Windows tuzağına ve satır boş kaldığında ne olduğuna kadar.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="statusline, settings.json, jq, ANSI, context window, rate limits, subagentStatusLine, PowerShell, OSC 8">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/statusline">
+<meta name="yazi:tarih" content="2026-08-05">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
+     scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · statusLine</p>
+    <h1>Statusline ne yazacağını<br><em>senden öğrenir</em></h1>
+    <p class="lede">Ekranın dibindeki o satırın hazır bir tema listesi yok. Claude Code her güncellemede
+    senin verdiğin komutu çalıştırır, stdin'den bir JSON gönderir ve script'in stdout'a ne bastıysa onu
+    gösterir. Yani satırın içeriği tamamen senin elinde — kurulumdan bu sayfa sorumlu.</p>
+    <p class="source">5 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/statusline">code.claude.com/docs/en/statusline</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Ekranın dibinde tam olarak ne var?</a></li>
+      <li><a href="#m2"><span class="n">02</span> /statusline yaz, gerisini o kursun</a></li>
+      <li><a href="#m3"><span class="n">03</span> Elle kurmak: script + settings.json</a></li>
+      <li><a href="#m4"><span class="n">04</span> stdin'den ne geliyor?</a></li>
+      <li><a href="#m5"><span class="n">05</span> context_window'u yanlış okumak kolay</a></li>
+      <li><a href="#m6"><span class="n">06</span> Script tam olarak ne zaman koşuyor?</a></li>
+      <li><a href="#m7"><span class="n">07</span> Senaryo defteri</a></li>
+      <li><a href="#m8"><span class="n">08</span> Renk, çok satır, tıklanabilir link</a></li>
+      <li><a href="#m9"><span class="n">09</span> Windows'ta bir tuzak var</a></li>
+      <li><a href="#m10"><span class="n">10</span> Yavaş script'i statusline affetmez</a></li>
+      <li><a href="#m11"><span class="n">11</span> Subagent'ların kendi satırı</a></li>
+      <li><a href="#m12"><span class="n">12</span> Satır boş kaldığında</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============ 01 ============ -->
+  <section id="m1">
+    <h2><span class="num">01</span> Ekranın dibinde tam olarak ne var?</h2>
+    <p>Statusline, Claude Code arayüzünün en altında duran ve <strong>senin yapılandırdığın herhangi bir
+    shell script'ini çalıştıran</strong> bir çubuk. Akış üç adımdan ibaret: Claude Code oturum verisini
+    JSON olarak script'in stdin'ine yazar, script okuduğunu işleyip stdout'a bir şeyler basar, Claude Code
+    o çıktıyı olduğu gibi ekrana yansıtır. Arada şablon, tema motoru veya sabit alan listesi yok.</p>
+
+    <p>Bu satır kendi satırında render olur ve <strong>alttaki hazır footer rozetlerinin yerini almaz</strong>,
+    onların üstüne eklenir. Konuşmada geçen bir ID'yi tıklanabilir rozete çevirmek istiyorsan script yazmana
+    gerek yok; onun için ayrı bir ayar var: <code>footerLinksRegexes</code>.</p>
+
+    <div class="note">
+      <span class="tag">Maliyeti yok</span>
+      Statusline tamamen yerelde çalışır ve <strong>API token harcamaz</strong>. İstediğin kadar sık
+      güncellenmesi faturana yansımaz — tek maliyeti script'inin CPU süresi.
+    </div>
+
+    <p>Satır her zaman görünmez: autocomplete önerileri, yardım menüsü ve permission prompt'ları gibi bazı
+    arayüz etkileşimleri sırasında geçici olarak gizlenir. Ayrıca sağ tarafını sistem bildirimleriyle
+    paylaşır — MCP sunucu hataları, auto-update mesajları, "context azaldı" uyarısı gibi geçici bildirimler
+    aynı satırda dolaşır. Verbose mod açıksa buraya bir de token sayacı eklenir. Dar terminallerde bunlar
+    senin çıktını kırpabilir.</p>
+
+    <div class="note warn">
+      <span class="tag">İki sessiz kapatıcı</span>
+      Statusline bir shell komutu çalıştırdığı için hook'larla aynı güven kapısına tabidir. Bulunduğun klasör
+      için <strong>workspace trust dialog'unu kabul etmediysen</strong> satır boş kalır. Ayrıca ayarlarında
+      <code>disableAllHooks: true</code> varsa statusline da devre dışı kalır.
+    </div>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section id="m2">
+    <h2><span class="num">02</span> /statusline yaz, gerisini o kursun</h2>
+    <p>Uçtan uca en kısa yol bu. <code>/statusline</code> komutu doğal dil talimatı kabul eder: ne görmek
+    istediğini yazarsın, Claude Code <code>~/.claude/</code> altında script dosyasını üretir ve
+    ayarlarını kendisi günceller. Kurulum sırasında dosya düzenleme izni isterse onaylaman yeterli.</p>
+
+    <pre><code><span class="k">/statusline</span> show model name and context percentage with a progress bar</code></pre>
+
+    <p>Talimatı Türkçe de yazabilirsin. Aşağıdaki tablo "neler istenebilir"in bir haritası — sol sütundaki
+    her istek, sağ sütundaki JSON alanlarına ya da script'in çalıştıracağı komutlara karşılık gelir:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Ne istersin</th><th>Arka planda ne kullanılır</th></tr></thead>
+        <tbody>
+          <tr><td>"Model adı ve context yüzdesi, yanında bar olsun"</td><td><code>model.display_name</code>, <code>context_window.used_percentage</code></td></tr>
+          <tr><td>"Bulunduğum klasör ve git branch'i görünsün"</td><td><code>workspace.current_dir</code> + <code>git branch --show-current</code></td></tr>
+          <tr><td>"Bu oturum kaç dolar oldu, kaç dakikadır açık"</td><td><code>cost.total_cost_usd</code>, <code>cost.total_duration_ms</code></td></tr>
+          <tr><td>"5 saatlik ve haftalık kotamın ne kadarını yaktım"</td><td><code>rate_limits.five_hour</code>, <code>rate_limits.seven_day</code></td></tr>
+          <tr><td>"Açık PR varsa numarası ve review durumu yazsın"</td><td><code>pr.number</code>, <code>pr.review_state</code></td></tr>
+          <tr><td>"Hangi effort seviyesinde ve thinking açık mı, göreyim"</td><td><code>effort.level</code>, <code>thinking.enabled</code>, <code>fast_mode</code></td></tr>
+          <tr><td>"Aynı anda üç oturum açıyorum, hangisi hangisi belli olsun"</td><td><code>session_name</code>, <code>workspace.repo.name</code>, <code>worktree.name</code></td></tr>
+          <tr><td>"Kaç satır ekledim/sildim takip edeyim"</td><td><code>cost.total_lines_added</code>, <code>cost.total_lines_removed</code></td></tr>
+          <tr><td>"Üstte git bilgisi, altta renkli context barı olsun"</td><td>iki <code>echo</code> satırı + ANSI renk kodları</td></tr>
+          <tr><td>"Repo adı tıklanınca GitHub'da açılsın"</td><td><code>workspace.repo.*</code> + OSC 8 escape dizisi</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Kaldırmak da aynı komutla: <code>/statusline delete</code>, <code>/statusline clear</code> ya da
+    "remove it" gibi bir talimat statusline'ı siler. Dilersen <code>settings.json</code> içindeki
+    <code>statusLine</code> alanını elle de silebilirsin.</p>
+
+    <div class="note">
+      <span class="tag">Ne zaman elle kurmalı</span>
+      <code>/statusline</code> hızlı, ama ürettiği script sende kalır. Script'i versiyon kontrolüne almak,
+      takımla paylaşmak veya cache/hata yönetimi gibi ince ayarlar yapmak istiyorsan bir sonraki bölümdeki
+      elle kurulum daha net.
+    </div>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section id="m3">
+    <h2><span class="num">03</span> Elle kurmak: script + settings.json</h2>
+    <p>Üç adım: script'i yaz, çalıştırılabilir yap, ayarlara ekle.</p>
+
+    <h3>1 — Script (<code>~/.claude/statusline.sh</code>)</h3>
+    <pre><code><span class="c">#!/bin/bash</span>
+<span class="c"># Claude Code'un stdin'e yazdığı JSON'u tek seferde oku</span>
+input=$(cat)
+
+<span class="c"># Alanları jq ile çıkar ("// 0" null gelirse yedek değer verir)</span>
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+DIR=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.workspace.current_dir'</span>)
+PCT=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.context_window.used_percentage // 0'</span> | cut -d. -f1)
+
+<span class="c"># ${DIR##*/} yolun sadece son klasör adını verir</span>
+echo <span class="s">"[$MODEL] 📁 ${DIR##*/} | ${PCT}% context"</span></code></pre>
+
+    <h3>2 — Çalıştırılabilir yap</h3>
+    <pre><code>chmod +x ~/.claude/statusline.sh</code></pre>
+
+    <h3>3 — Ayarlara ekle</h3>
+    <p>Kullanıcı ayarların (<code>~/.claude/settings.json</code>) veya proje ayarların içine:</p>
+    <pre><code>{
+  <span class="s">"statusLine"</span>: {
+    <span class="s">"type"</span>: <span class="s">"command"</span>,
+    <span class="s">"command"</span>: <span class="s">"~/.claude/statusline.sh"</span>,
+    <span class="s">"padding"</span>: 2
+  }
+}</code></pre>
+
+    <p><code>command</code> bir shell içinde çalışır, dolayısıyla dosya yolu yerine doğrudan tek satırlık
+    bir komut da verebilirsin. Ayrı script dosyası istemiyorsan:</p>
+
+    <pre><code>{
+  <span class="s">"statusLine"</span>: {
+    <span class="s">"type"</span>: <span class="s">"command"</span>,
+    <span class="s">"command"</span>: <span class="s">"jq -r '\"[\\(.model.display_name)] \\(.context_window.used_percentage // 0)% context\"'"</span>
+  }
+}</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td>Zorunlu, değeri <code>"command"</code>.</td></tr>
+          <tr><td><code>command</code></td><td>Çalıştırılacak script yolu ya da inline shell komutu.</td></tr>
+          <tr><td><code>padding</code></td><td>İçeriğe karakter cinsinden ek yatay boşluk. Varsayılan <code>0</code>. Arayüzün kendi boşluğuna eklenir, yani terminal kenarından mutlak uzaklık değil <em>göreli</em> girinti ayarlar.</td></tr>
+          <tr><td><code>refreshInterval</code></td><td>Olay tabanlı güncellemelere ek olarak komutu her N saniyede bir tekrar çalıştırır. Minimum <code>1</code>. Saat gibi zamana bağlı bir şey gösteriyorsan ya da ana oturum boştayken arka plan subagent'ları git durumunu değiştiriyorsa gerekir. Yazmazsan sadece olaylarda çalışır.</td></tr>
+          <tr><td><code>hideVimModeIndicator</code></td><td><code>true</code> yaparsan prompt'un altındaki hazır <code>-- INSERT --</code> yazısı gizlenir. Vim modunu kendi script'inde <code>vim.mode</code> ile bastığında iki kere görünmesin diye.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Hemen görünmeyebilir</span>
+      Ayarlar otomatik yeniden yüklenir, ancak değişiklik <strong>bir sonraki etkileşimine kadar</strong>
+      ekrana yansımaz. Bir mesaj gönder, satır yenilensin.
+    </div>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section id="m4">
+    <h2><span class="num">04</span> stdin'den ne geliyor?</h2>
+    <p>Script'in gücü buradan geliyor: her çalıştırmada oturumun anlık durumu tek bir JSON nesnesi olarak
+    stdin'e yazılıyor. Aşağıdaki tablolar kullanabileceğin alanların tamamı.</p>
+
+    <h3>Kimlik ve konum</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Açıklama</th></tr></thead>
+        <tbody>
+          <tr><td><code>model.id</code>, <code>model.display_name</code></td><td>Aktif modelin kimliği ve ekranda görünen adı.</td></tr>
+          <tr><td><code>cwd</code>, <code>workspace.current_dir</code></td><td>Çalışma dizini. İkisi de aynı değeri taşır; <code>workspace.project_dir</code> ile tutarlılık için <code>workspace.current_dir</code> tercih edilir.</td></tr>
+          <tr><td><code>workspace.project_dir</code></td><td>Claude Code'un başlatıldığı dizin. Oturum sırasında dizin değişirse <code>cwd</code>'den farklı olabilir.</td></tr>
+          <tr><td><code>workspace.added_dirs</code></td><td><code>/add-dir</code> veya <code>--add-dir</code> ile eklenen ek dizinler. Yoksa boş dizi.</td></tr>
+          <tr><td><code>workspace.git_worktree</code></td><td><code>git worktree add</code> ile açılmış bir worktree içindeysen worktree adı. Ana çalışma ağacında yok. <code>worktree.*</code>'ın aksine sadece <code>--worktree</code> oturumlarında değil, her git worktree'sinde dolar.</td></tr>
+          <tr><td><code>workspace.repo.host</code> / <code>.owner</code> / <code>.name</code></td><td><code>origin</code> remote'undan ayrıştırılan repo kimliği (<code>"github.com"</code>, <code>"anthropics"</code>, <code>"claude-code"</code>). Git reposu dışında veya <code>origin</code> tanımlı değilse yok.</td></tr>
+          <tr><td><code>session_id</code></td><td>Oturumun benzersiz kimliği. Cache dosyası adlandırmak için ideal (bkz. bölüm 10).</td></tr>
+          <tr><td><code>session_name</code></td><td><code>--name</code> veya <code>/rename</code> ile verilen özel ad; yoksa AI'ın ürettiği oturum başlığı. <code>my-app-3f</code> gibi varsayılan görünen ad bu alanı <em>doldurmaz</em>; ikisi de yoksa alan hiç gelmez.</td></tr>
+          <tr><td><code>transcript_path</code></td><td>Konuşma transcript dosyasının yolu.</td></tr>
+          <tr><td><code>version</code></td><td>Claude Code sürümü.</td></tr>
+          <tr><td><code>prompt_id</code></td><td>İşlenmekte olan kullanıcı prompt'unun UUID'si; OpenTelemetry olaylarındaki <code>prompt.id</code> ile eşleşir. İlk girdiye kadar yok. v2.1.196+ gerektirir.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Bağlam ve maliyet</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Açıklama</th></tr></thead>
+        <tbody>
+          <tr><td><code>context_window.used_percentage</code></td><td>Context window'un kullanılan yüzdesi, hazır hesaplanmış.</td></tr>
+          <tr><td><code>context_window.remaining_percentage</code></td><td>Kalan yüzde, hazır hesaplanmış.</td></tr>
+          <tr><td><code>context_window.total_input_tokens</code> / <code>total_output_tokens</code></td><td>Şu anda context window'da olan token sayıları, son API yanıtından. Input, cache okuma ve yazmalarını da içerir.</td></tr>
+          <tr><td><code>context_window.context_window_size</code></td><td>Maksimum context window boyutu. Varsayılan 200000; genişletilmiş context'i olan modellerde 1000000.</td></tr>
+          <tr><td><code>context_window.current_usage</code></td><td>Son API çağrısının token dökümü: <code>input_tokens</code>, <code>output_tokens</code>, <code>cache_creation_input_tokens</code>, <code>cache_read_input_tokens</code>.</td></tr>
+          <tr><td><code>exceeds_200k_tokens</code></td><td>Son API yanıtındaki toplam token (input + cache + output) 200k'yı aştı mı. Gerçek pencere boyutundan bağımsız, sabit eşik.</td></tr>
+          <tr><td><code>cost.total_cost_usd</code></td><td>Oturumun tahmini maliyeti (USD), istemci tarafında hesaplanır. Gerçek faturandan sapabilir. <code>/clear</code> yeni oturum başlattığında $0'a döner.</td></tr>
+          <tr><td><code>cost.total_duration_ms</code></td><td>Oturum başından beri geçen toplam duvar saati süresi (ms).</td></tr>
+          <tr><td><code>cost.total_api_duration_ms</code></td><td>Sadece API yanıtı beklenerek geçen süre (ms).</td></tr>
+          <tr><td><code>cost.total_lines_added</code> / <code>total_lines_removed</code></td><td>Değişen satır sayıları.</td></tr>
+          <tr><td><code>rate_limits.five_hour.used_percentage</code><br><code>rate_limits.seven_day.used_percentage</code></td><td>5 saatlik ve 7 günlük limitin yüzde kaçının tükendiği (0–100).</td></tr>
+          <tr><td><code>rate_limits.five_hour.resets_at</code><br><code>rate_limits.seven_day.resets_at</code></td><td>İlgili pencerenin sıfırlanacağı an, Unix epoch saniyesi olarak.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Oturum durumu, git ve worktree</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Açıklama</th></tr></thead>
+        <tbody>
+          <tr><td><code>fast_mode</code></td><td>Oturumda fast mode açık mı.</td></tr>
+          <tr><td><code>effort.level</code></td><td>Güncel reasoning effort: <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code> veya <code>max</code>. Oturum içinde <code>/effort</code> ile yapılan değişiklikleri anında yansıtır. Ultracode ayrı bir seviye değildir, <code>xhigh</code> olarak raporlanır. Model effort parametresini desteklemiyorsa alan hiç gelmez.</td></tr>
+          <tr><td><code>thinking.enabled</code></td><td>Extended thinking açık mı.</td></tr>
+          <tr><td><code>output_style.name</code></td><td>Aktif output style'ın adı.</td></tr>
+          <tr><td><code>vim.mode</code></td><td>Vim modu açıkken güncel mod: <code>NORMAL</code>, <code>INSERT</code>, <code>VISUAL</code>, <code>VISUAL LINE</code>.</td></tr>
+          <tr><td><code>agent.name</code></td><td><code>--agent</code> bayrağıyla veya agent ayarlarıyla çalışıyorsan agent adı.</td></tr>
+          <tr><td><code>pr.number</code>, <code>pr.url</code></td><td>Mevcut branch için açık pull request. Alttaki PR rozetiyle aynı bilgiyi taşır. PR bulunana kadar, git reposu dışında ve PR merge/close olduğunda yok.</td></tr>
+          <tr><td><code>pr.review_state</code></td><td>Açık PR'ın review durumu: <code>approved</code>, <code>pending</code>, <code>changes_requested</code>, <code>draft</code>. <code>pr</code> varken bile ayrıca eksik olabilir.</td></tr>
+          <tr><td><code>worktree.name</code>, <code>.path</code>, <code>.branch</code></td><td>Aktif worktree'nin adı, mutlak yolu ve git branch'i. Sadece <code>--worktree</code> oturumlarında gelir; hook tabanlı worktree'lerde <code>branch</code> olmayabilir.</td></tr>
+          <tr><td><code>worktree.original_cwd</code>, <code>.original_branch</code></td><td>Worktree'ye girmeden önceki dizin ve branch.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Tam JSON gövdesi</h3>
+    <pre><code>{
+  <span class="s">"cwd"</span>: <span class="s">"/current/working/directory"</span>,
+  <span class="s">"session_id"</span>: <span class="s">"abc123..."</span>,
+  <span class="s">"session_name"</span>: <span class="s">"my-session"</span>,
+  <span class="s">"prompt_id"</span>: <span class="s">"550e8400-e29b-41d4-a716-446655440000"</span>,
+  <span class="s">"transcript_path"</span>: <span class="s">"/path/to/transcript.jsonl"</span>,
+  <span class="s">"model"</span>: { <span class="s">"id"</span>: <span class="s">"claude-opus-5"</span>, <span class="s">"display_name"</span>: <span class="s">"Opus"</span> },
+  <span class="s">"workspace"</span>: {
+    <span class="s">"current_dir"</span>: <span class="s">"/current/working/directory"</span>,
+    <span class="s">"project_dir"</span>: <span class="s">"/original/project/directory"</span>,
+    <span class="s">"added_dirs"</span>: [],
+    <span class="s">"git_worktree"</span>: <span class="s">"feature-xyz"</span>,
+    <span class="s">"repo"</span>: { <span class="s">"host"</span>: <span class="s">"github.com"</span>, <span class="s">"owner"</span>: <span class="s">"anthropics"</span>, <span class="s">"name"</span>: <span class="s">"claude-code"</span> }
+  },
+  <span class="s">"version"</span>: <span class="s">"2.1.90"</span>,
+  <span class="s">"output_style"</span>: { <span class="s">"name"</span>: <span class="s">"default"</span> },
+  <span class="s">"cost"</span>: {
+    <span class="s">"total_cost_usd"</span>: 0.01234,
+    <span class="s">"total_duration_ms"</span>: 45000,
+    <span class="s">"total_api_duration_ms"</span>: 2300,
+    <span class="s">"total_lines_added"</span>: 156,
+    <span class="s">"total_lines_removed"</span>: 23
+  },
+  <span class="s">"context_window"</span>: {
+    <span class="s">"total_input_tokens"</span>: 15500,
+    <span class="s">"total_output_tokens"</span>: 1200,
+    <span class="s">"context_window_size"</span>: 200000,
+    <span class="s">"used_percentage"</span>: 8,
+    <span class="s">"remaining_percentage"</span>: 92,
+    <span class="s">"current_usage"</span>: {
+      <span class="s">"input_tokens"</span>: 8500,
+      <span class="s">"output_tokens"</span>: 1200,
+      <span class="s">"cache_creation_input_tokens"</span>: 5000,
+      <span class="s">"cache_read_input_tokens"</span>: 2000
+    }
+  },
+  <span class="s">"exceeds_200k_tokens"</span>: false,
+  <span class="s">"fast_mode"</span>: false,
+  <span class="s">"effort"</span>: { <span class="s">"level"</span>: <span class="s">"high"</span> },
+  <span class="s">"thinking"</span>: { <span class="s">"enabled"</span>: true },
+  <span class="s">"rate_limits"</span>: {
+    <span class="s">"five_hour"</span>: { <span class="s">"used_percentage"</span>: 23.5, <span class="s">"resets_at"</span>: 1738425600 },
+    <span class="s">"seven_day"</span>: { <span class="s">"used_percentage"</span>: 41.2, <span class="s">"resets_at"</span>: 1738857600 }
+  },
+  <span class="s">"vim"</span>: { <span class="s">"mode"</span>: <span class="s">"NORMAL"</span> },
+  <span class="s">"agent"</span>: { <span class="s">"name"</span>: <span class="s">"security-reviewer"</span> },
+  <span class="s">"pr"</span>: {
+    <span class="s">"number"</span>: 1234,
+    <span class="s">"url"</span>: <span class="s">"https://github.com/anthropics/claude-code/pull/1234"</span>,
+    <span class="s">"review_state"</span>: <span class="s">"pending"</span>
+  },
+  <span class="s">"worktree"</span>: {
+    <span class="s">"name"</span>: <span class="s">"my-feature"</span>,
+    <span class="s">"path"</span>: <span class="s">"/path/to/.claude/worktrees/my-feature"</span>,
+    <span class="s">"branch"</span>: <span class="s">"worktree-my-feature"</span>,
+    <span class="s">"original_cwd"</span>: <span class="s">"/path/to/project"</span>,
+    <span class="s">"original_branch"</span>: <span class="s">"main"</span>
+  }
+}</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Her alan her zaman yok</span>
+      <code>session_name</code>, <code>prompt_id</code>, <code>workspace.git_worktree</code>,
+      <code>workspace.repo</code>, <code>effort</code>, <code>vim</code>, <code>agent</code>,
+      <code>pr</code>, <code>worktree</code> ve <code>rate_limits</code> koşullu alanlar — JSON'da hiç
+      bulunmayabilirler. <code>rate_limits</code> yalnızca Claude.ai abonelerinde (Pro/Max) ve oturumun ilk
+      API yanıtından sonra gelir. Eksik alanı koşullu erişimle, <code>null</code> değeri yedek değerle
+      karşıla: <code>jq -r '.rate_limits.five_hour.used_percentage // empty'</code>.
+    </div>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section id="m5">
+    <h2><span class="num">05</span> context_window'u yanlış okumak kolay</h2>
+    <p>Statusline'ın en çok istenen içeriği context doluluğu, ve tam da burada birkaç ince nokta var.</p>
+
+    <ul>
+      <li><strong>Yüzde sadece input'tan hesaplanır.</strong> <code>used_percentage</code> şu toplamı
+      kullanır: <code>input_tokens + cache_creation_input_tokens + cache_read_input_tokens</code>.
+      <code>output_tokens</code> <em>dahil değildir</em>. Yüzdeyi <code>current_usage</code>'dan kendin
+      hesaplayacaksan aynı formülü kullan, yoksa iki rakam tutmaz.</li>
+      <li><strong><code>total_input_tokens</code> artık kümülatif değil.</strong> v2.1.132'den itibaren
+      bu alanlar oturum toplamını değil, <em>şu anda context'te olan</em> token'ları gösterir. İlk API
+      yanıtından önce ikisi de <code>0</code>.</li>
+      <li><strong><code>current_usage</code> null olabilir.</strong> Oturumun ilk API çağrısından önce ve
+      <code>/compact</code>'ten sonra bir sonraki API çağrısına kadar <code>null</code> gelir. Yüzde alanları
+      da oturumun başında <code>null</code> olabilir.</li>
+      <li><strong><code>exceeds_200k_tokens</code> sabit eşiktir.</strong> Modelin gerçek penceresi 1M olsa
+      bile bu bayrak 200k'yı ölçer.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">/context ile aynı olmayabilir</span>
+      Statusline'daki yüzde ile <code>/context</code> çıktısı farklı anlarda hesaplandığı için sapabilir.
+      En basit ve tutarlı gösterim için <code>used_percentage</code>'i olduğu gibi kullan.
+    </div>
+
+    <p>Cache alanlarını ayrı ayrı göstermek istersen <code>current_usage</code> tam da bunun için var —
+    taze input ile cache okumasını ayırmak, prompt cache'in işe yarayıp yaramadığını canlı görmenin en
+    ucuz yolu.</p>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section id="m6">
+    <h2><span class="num">06</span> Script tam olarak ne zaman koşuyor?</h2>
+    <p>Script'in bir kere oturum başlarken çalışır — bir oturumu resume ettiğinde de dahil. Sonrasında şu
+    olaylarda tekrar çalışır:</p>
+
+    <ul>
+      <li>Yeni bir asistan mesajı geldiğinde</li>
+      <li><code>/compact</code> bittiğinde</li>
+      <li>Permission mode değiştiğinde</li>
+      <li>Vim modu değiştiğinde</li>
+      <li>Ayarladıysan, <code>refreshInterval</code> zamanlayıcısı dolduğunda</li>
+    </ul>
+
+    <p>Güncellemeler 300 ms debounce edilir: hızlı değişiklikler tek bir çalıştırmada toplanır. Script'in
+    hâlâ çalışırken yeni bir tetikleyici gelirse <strong>çalışan script iptal edilir</strong>. Script
+    dosyasını düzenlersen değişiklik bir sonraki tetikleyicide devreye girer.</p>
+
+    <div class="note">
+      <span class="tag">Sessiz oturumlar</span>
+      Olay tabanlı tetikleyiciler ana oturum boştayken susar — örneğin bir koordinatör arka plandaki
+      subagent'ları beklerken. Saat, zamanlayıcı veya dışarıdan beslenen bir bölüm gösteriyorsan
+      <code>refreshInterval</code> ile sabit periyotta da çalıştır.
+    </div>
+
+    <p>Bir de genişlik meselesi var: Claude Code script'inin çıktısını yakalar, doğrudan terminale
+    bağlamaz. Bu yüzden <code>tput cols</code> ve dil seviyesindeki genişlik tespitleri script'in içinden
+    terminal boyutunu okuyamaz. Bunun yerine <strong><code>COLUMNS</code> ve <code>LINES</code> ortam
+    değişkenlerini</strong> oku — Claude Code script'i çalıştırmadan önce bunları güncel terminal
+    ölçüleriyle doldurur (v2.1.153+).</p>
+
+    <p>Küçük bir tarihçe notu: v2.1.216 öncesinde bir oturumu resume etmek komutu kısa aralıkla iki kez
+    çalıştırıyordu, bu yüzden ilk sonuç ekranda titreyip yerini ikinciye bırakabiliyordu.</p>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section id="m7">
+    <h2><span class="num">07</span> Senaryo defteri</h2>
+    <p>Aşağıdakiler kopyalayıp <code>~/.claude/statusline.sh</code> (ya da <code>.py</code>) olarak
+    kaydedip <code>chmod +x</code> yapabileceğin bitmiş örnekler. Bash sürümleri JSON'u
+    <a href="https://jqlang.org/">jq</a> ile ayrıştırır; Python ve Node'un kendi JSON desteği vardır.</p>
+
+    <h3>A — "Sadece nerede olduğumu ve ne kadar yer kaldığını göreyim"</h3>
+    <p>En sade kurulum. Model adı, klasör adı, context yüzdesi. Bölüm 3'teki script'in aynısı; ilk
+    statusline'ın için doğru başlangıç.</p>
+
+    <h3>B — "Context dolmadan önce fark edeyim" — bar</h3>
+    <p>10 karakterlik bir dolum çubuğu, yüzdeyi göz kararı okunur hale getirir.</p>
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+PCT=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.context_window.used_percentage // 0'</span> | cut -d. -f1)
+
+<span class="c"># printf -v ile boşluk dizisi üret, sonra her boşluğu blok karakterine çevir</span>
+BAR_WIDTH=10
+FILLED=$((PCT * BAR_WIDTH / 100))
+EMPTY=$((BAR_WIDTH - FILLED))
+BAR=<span class="s">""</span>
+[ <span class="s">"$FILLED"</span> -gt 0 ] &amp;&amp; printf -v FILL <span class="s">"%${FILLED}s"</span> &amp;&amp; BAR=<span class="s">"${FILL// /▓}"</span>
+[ <span class="s">"$EMPTY"</span> -gt 0 ] &amp;&amp; printf -v PAD <span class="s">"%${EMPTY}s"</span> &amp;&amp; BAR=<span class="s">"${BAR}${PAD// /░}"</span>
+
+echo <span class="s">"[$MODEL] $BAR $PCT%"</span></code></pre>
+
+    <p>Python karşılığı çok daha kısa:</p>
+    <pre><code><span class="c">#!/usr/bin/env python3</span>
+<span class="k">import</span> json, sys
+
+data = json.load(sys.stdin)
+model = data[<span class="s">'model'</span>][<span class="s">'display_name'</span>]
+<span class="c"># "or 0" null değeri yakalar</span>
+pct = int(data.get(<span class="s">'context_window'</span>, {}).get(<span class="s">'used_percentage'</span>, 0) <span class="k">or</span> 0)
+
+filled = pct * 10 // 100
+bar = <span class="s">'▓'</span> * filled + <span class="s">'░'</span> * (10 - filled)
+
+print(f<span class="s">"[{model}] {bar} {pct}%"</span>)</code></pre>
+
+    <h3>C — "Bu oturum bana kaça mal oldu?"</h3>
+    <p>Deneysel bir işi ne kadar uzattığını görmenin en doğrudan yolu. <code>total_cost_usd</code> istemci
+    tarafı bir tahmindir, faturayla birebir tutmayabilir.</p>
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+COST=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.cost.total_cost_usd // 0'</span>)
+DURATION_MS=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.cost.total_duration_ms // 0'</span>)
+
+COST_FMT=$(printf <span class="s">'$%.2f'</span> <span class="s">"$COST"</span>)
+DURATION_SEC=$((DURATION_MS / 1000))
+MINS=$((DURATION_SEC / 60))
+SECS=$((DURATION_SEC % 60))
+
+echo <span class="s">"[$MODEL] 💰 $COST_FMT | ⏱️ ${MINS}m ${SECS}s"</span></code></pre>
+
+    <h3>D — "Haftalık kotamı bilmeden yakmayayım"</h3>
+    <p>Pro/Max aboneliğindeysen 5 saatlik ve 7 günlük pencerelerin doluluğu buradan gelir. Alan hiç
+    gelmeyebileceği için <code>// empty</code> ile zarifçe düşmek şart.</p>
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+<span class="c"># "// empty" alan yoksa hiçbir şey basmaz</span>
+FIVE_H=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.rate_limits.five_hour.used_percentage // empty'</span>)
+WEEK=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.rate_limits.seven_day.used_percentage // empty'</span>)
+
+LIMITS=<span class="s">""</span>
+[ -n "$FIVE_H" ] &amp;&amp; LIMITS="5h: $(printf '%.0f' "$FIVE_H")%"
+[ -n "$WEEK" ] &amp;&amp; LIMITS="${LIMITS:+$LIMITS }7d: $(printf '%.0f' "$WEEK")%"
+
+[ -n <span class="s">"$LIMITS"</span> ] &amp;&amp; echo <span class="s">"[$MODEL] | $LIMITS"</span> || echo <span class="s">"[$MODEL]"</span></code></pre>
+
+    <p><code>resets_at</code> alanları Unix epoch saniyesi verir; "2 saat sonra sıfırlanıyor" gibi bir
+    ifade istiyorsan bu değerden kendi hesabını yapman gerekir (tarih biçimlendirme komutları platforma
+    göre değişir).</p>
+
+    <h3>E — "Hangi branch'teyim, kaç dosya kirli, PR açık mı?"</h3>
+    <p>Git bilgisi JSON'da hazır gelmez — branch ve değişiklik sayılarını script'in kendisi
+    <code>git</code> çağırarak toplar. PR bilgisi ise JSON'dan gelir.</p>
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+DIR=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.workspace.current_dir'</span>)
+PR_NUM=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.pr.number // empty'</span>)
+PR_STATE=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.pr.review_state // empty'</span>)
+
+GREEN=<span class="s">'\033[32m'</span>; YELLOW=<span class="s">'\033[33m'</span>; RESET=<span class="s">'\033[0m'</span>
+
+GIT_INFO=<span class="s">""</span>
+<span class="k">if</span> git rev-parse --git-dir &gt; /dev/null 2&gt;&amp;1; <span class="k">then</span>
+    BRANCH=$(git branch --show-current 2&gt;/dev/null)
+    STAGED=$(git diff --cached --numstat 2&gt;/dev/null | wc -l | tr -d <span class="s">' '</span>)
+    MODIFIED=$(git diff --numstat 2&gt;/dev/null | wc -l | tr -d <span class="s">' '</span>)
+    GIT_INFO=<span class="s">" | 🌿 $BRANCH"</span>
+    [ <span class="s">"$STAGED"</span> -gt 0 ] &amp;&amp; GIT_INFO=<span class="s">"${GIT_INFO} ${GREEN}+${STAGED}${RESET}"</span>
+    [ <span class="s">"$MODIFIED"</span> -gt 0 ] &amp;&amp; GIT_INFO=<span class="s">"${GIT_INFO} ${YELLOW}~${MODIFIED}${RESET}"</span>
+<span class="k">fi</span>
+
+PR_INFO=<span class="s">""</span>
+[ -n <span class="s">"$PR_NUM"</span> ] &amp;&amp; PR_INFO=<span class="s">" | PR #${PR_NUM}${PR_STATE:+ (${PR_STATE})}"</span>
+
+echo -e <span class="s">"[$MODEL] 📁 ${DIR##*/}${GIT_INFO}${PR_INFO}"</span></code></pre>
+
+    <h3>F — "Şu an hangi ayarlarla çalışıyorum?"</h3>
+    <p>Effort seviyesi, thinking, fast mode, output style ve agent adı tek satırda rozet gibi. Uzun
+    oturumlarda <code>/effort</code> ile yaptığın değişikliği unutmamak için birebir.</p>
+    <pre><code><span class="c">#!/usr/bin/env python3</span>
+<span class="k">import</span> json, sys
+
+data = json.load(sys.stdin)
+parts = [data[<span class="s">'model'</span>][<span class="s">'display_name'</span>]]
+
+<span class="c"># effort modelin desteğine bağlı, hiç gelmeyebilir</span>
+effort = data.get(<span class="s">'effort'</span>, {}).get(<span class="s">'level'</span>)
+<span class="k">if</span> effort:
+    parts.append(f<span class="s">"effort:{effort}"</span>)
+<span class="k">if</span> data.get(<span class="s">'thinking'</span>, {}).get(<span class="s">'enabled'</span>):
+    parts.append(<span class="s">"think"</span>)
+<span class="k">if</span> data.get(<span class="s">'fast_mode'</span>):
+    parts.append(<span class="s">"fast"</span>)
+
+style = data.get(<span class="s">'output_style'</span>, {}).get(<span class="s">'name'</span>)
+<span class="k">if</span> style <span class="k">and</span> style != <span class="s">'default'</span>:
+    parts.append(f<span class="s">"style:{style}"</span>)
+
+agent = data.get(<span class="s">'agent'</span>, {}).get(<span class="s">'name'</span>)
+<span class="k">if</span> agent:
+    parts.append(f<span class="s">"@{agent}"</span>)
+
+print(<span class="s">" · "</span>.join(parts))</code></pre>
+
+    <h3>G — "Üç terminal açık, hangisi hangi iş?"</h3>
+    <p>Paralel oturumlarda en sık yaşanan kayboluş. Oturum adı, repo adı ve worktree adı birleşince satır
+    kimlik kartına dönüşür.</p>
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+
+NAME=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.session_name // empty'</span>)
+REPO=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.workspace.repo.name // empty'</span>)
+WT=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.worktree.name // .workspace.git_worktree // empty'</span>)
+PCT=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.context_window.used_percentage // 0'</span> | cut -d. -f1)
+
+LABEL=<span class="s">"${NAME:-oturum}"</span>
+[ -n <span class="s">"$REPO"</span> ] &amp;&amp; LABEL=<span class="s">"$LABEL @ $REPO"</span>
+[ -n <span class="s">"$WT"</span> ] &amp;&amp; LABEL=<span class="s">"$LABEL ⑂ $WT"</span>
+
+echo <span class="s">"$LABEL · ${PCT}%"</span></code></pre>
+
+    <div class="note">
+      <span class="tag">Test etmeyi unutma</span>
+      Script'i Claude Code'a bağlamadan önce sahte girdiyle dene:
+      <code>echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"/home/user/project"},"context_window":{"used_percentage":25},"session_id":"test-session-abc"}' | ./statusline.sh</code>
+    </div>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section id="m8">
+    <h2><span class="num">08</span> Renk, çok satır, tıklanabilir link</h2>
+    <p>Script'in çıktısı düz metinle sınırlı değil. Üç şey mümkün:</p>
+
+    <ul>
+      <li><strong>Çok satır:</strong> her <code>echo</code> / <code>print</code> ayrı bir satır olarak
+      görünür.</li>
+      <li><strong>Renk:</strong> ANSI escape kodları (<code>\033[32m</code> yeşil gibi) — terminalin
+      desteklemesi gerekir.</li>
+      <li><strong>Link:</strong> OSC 8 escape dizileri metni tıklanabilir yapar (macOS'ta Cmd, Windows ve
+      Linux'ta Ctrl + tık).</li>
+    </ul>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kod</th><th>Renk</th></tr></thead>
+        <tbody>
+          <tr><td><code>\033[31m</code></td><td>kırmızı</td></tr>
+          <tr><td><code>\033[32m</code></td><td>yeşil</td></tr>
+          <tr><td><code>\033[33m</code></td><td>sarı</td></tr>
+          <tr><td><code>\033[36m</code></td><td>camgöbeği</td></tr>
+          <tr><td><code>\033[0m</code></td><td>sıfırla (her renkli parçadan sonra şart)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Aşağıdaki örnek üçünü birleştiriyor: eşiğe göre renk (70 altı yeşil, 70–89 sarı, 90+ kırmızı), bar
+    ve iki satırlık yerleşim. Üst satır nerede olduğunu, alt satır ne kadar harcadığını söylüyor.</p>
+
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+DIR=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.workspace.current_dir'</span>)
+COST=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.cost.total_cost_usd // 0'</span>)
+PCT=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.context_window.used_percentage // 0'</span> | cut -d. -f1)
+DURATION_MS=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.cost.total_duration_ms // 0'</span>)
+
+CYAN=<span class="s">'\033[36m'</span>; GREEN=<span class="s">'\033[32m'</span>; YELLOW=<span class="s">'\033[33m'</span>; RED=<span class="s">'\033[31m'</span>; RESET=<span class="s">'\033[0m'</span>
+
+<span class="c"># Bar rengini context doluluğuna göre seç</span>
+<span class="k">if</span> [ <span class="s">"$PCT"</span> -ge 90 ]; <span class="k">then</span> BAR_COLOR=<span class="s">"$RED"</span>
+<span class="k">elif</span> [ <span class="s">"$PCT"</span> -ge 70 ]; <span class="k">then</span> BAR_COLOR=<span class="s">"$YELLOW"</span>
+<span class="k">else</span> BAR_COLOR=<span class="s">"$GREEN"</span>; <span class="k">fi</span>
+
+FILLED=$((PCT / 10)); EMPTY=$((10 - FILLED))
+printf -v FILL <span class="s">"%${FILLED}s"</span>; printf -v PAD <span class="s">"%${EMPTY}s"</span>
+BAR=<span class="s">"${FILL// /█}${PAD// /░}"</span>
+
+MINS=$((DURATION_MS / 60000)); SECS=$(((DURATION_MS % 60000) / 1000))
+
+BRANCH=<span class="s">""</span>
+git rev-parse --git-dir &gt; /dev/null 2&gt;&amp;1 &amp;&amp; BRANCH=<span class="s">" | 🌿 $(git branch --show-current 2&gt;/dev/null)"</span>
+
+echo -e <span class="s">"${CYAN}[$MODEL]${RESET} 📁 ${DIR##*/}$BRANCH"</span>
+COST_FMT=$(printf <span class="s">'$%.2f'</span> <span class="s">"$COST"</span>)
+echo -e <span class="s">"${BAR_COLOR}${BAR}${RESET} ${PCT}% | ${YELLOW}${COST_FMT}${RESET} | ⏱️ ${MINS}m ${SECS}s"</span></code></pre>
+
+    <h3>Tıklanabilir repo linki</h3>
+    <p>OSC 8 biçimi şöyle: <code>\e]8;;URL\a</code> + görünecek metin + <code>\e]8;;\a</code>. Bash'te
+    <code>echo -e</code> yerine <code>printf '%b'</code> kullanmak escape'leri kabuklar arasında daha
+    güvenilir yorumlar.</p>
+
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+
+<span class="c"># git SSH URL'sini HTTPS'e çevir</span>
+REMOTE=$(git remote get-url origin 2&gt;/dev/null | sed <span class="s">'s/git@github.com:/https:\/\/github.com\//'</span> | sed <span class="s">'s/\.git$//'</span>)
+
+<span class="k">if</span> [ -n <span class="s">"$REMOTE"</span> ]; <span class="k">then</span>
+    REPO_NAME=$(basename <span class="s">"$REMOTE"</span>)
+    printf <span class="s">'%b'</span> <span class="s">"[$MODEL] 🔗 \e]8;;${REMOTE}\a${REPO_NAME}\e]8;;\a\n"</span>
+<span class="k">else</span>
+    echo <span class="s">"[$MODEL]"</span>
+<span class="k">fi</span></code></pre>
+
+    <p>Tıklanabilirlik terminale bağlı: iTerm2, Kitty ve WezTerm destekler, macOS'un Terminal.app
+    desteklemez. Link metni görünüyor ama tıklanmıyorsa Claude Code terminalinin hyperlink desteğini
+    tespit edememiş olabilir — Windows Terminal'de sık görülür. Başlatmadan önce zorla:</p>
+
+    <pre><code><span class="c"># bash</span>
+FORCE_HYPERLINK=1 claude
+
+<span class="c"># PowerShell</span>
+$env:FORCE_HYPERLINK = <span class="s">"1"</span>; claude</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Escape dizileri kırılgandır</span>
+      Karmaşık ANSI/OSC dizileri diğer arayüz güncellemeleriyle çakışırsa çıktı bozulabilir. Bozuk metin
+      görüyorsan script'i düz metne indirerek dene: <strong>escape kodlu çok satırlı statusline'lar, tek
+      satırlık düz metinden belirgin şekilde daha sorunludur.</strong> SSH ve tmux oturumları da
+      yapılandırmaya göre OSC dizilerini kırpabilir.
+    </div>
+  </section>
+
+  <!-- ============ 09 ============ -->
+  <section id="m9">
+    <h2><span class="num">09</span> Windows'ta bir tuzak var</h2>
+    <p>Windows'ta Claude Code statusline komutunu <strong>Git Bash kuruluysa Git Bash üzerinden</strong>,
+    kurulu değilse PowerShell üzerinden çalıştırır.</p>
+
+    <div class="note warn">
+      <span class="tag">Ters bölü sessizce yiyor</span>
+      Git Bash tırnaksız ters bölü işaretlerini escape karakteri sayar. <code>C:\Users\username\script.mjs</code>
+      gibi bir yol script çalıştırıcısına <strong>ayraçları silinmiş halde</strong> ulaşır ve komut
+      <strong>görünür bir hata vermeden</strong> başarısız olur. <code>command</code> içindeki yolları
+      <strong>düz bölü</strong> ile yaz. <code>~</code> kısayolu da çalışır ve Windows ev dizinine açılır.
+    </div>
+
+    <p>PowerShell script'i kullanmak istiyorsan <code>powershell</code> üzerinden çağır — bu yöntem, komut
+    ister Git Bash'ten ister PowerShell'den geçsin çalışır:</p>
+
+    <pre><code>{
+  <span class="s">"statusLine"</span>: {
+    <span class="s">"type"</span>: <span class="s">"command"</span>,
+    <span class="s">"command"</span>: <span class="s">"powershell -NoProfile -File C:/Users/username/.claude/statusline.ps1"</span>
+  }
+}</code></pre>
+
+    <pre><code><span class="c"># statusline.ps1</span>
+$input_json = $input | Out-String | ConvertFrom-Json
+$cwd = $input_json.cwd
+$model = $input_json.model.display_name
+$used = $input_json.context_window.used_percentage
+$dirname = Split-Path $cwd -Leaf
+
+<span class="k">if</span> ($used) {
+    Write-Host <span class="s">"$dirname [$model] ctx: $used%"</span>
+} <span class="k">else</span> {
+    Write-Host <span class="s">"$dirname [$model]"</span>
+}</code></pre>
+
+    <p>Git Bash kuruluysa doğrudan bir Bash script'i de çalıştırabilirsin. <code>jq</code> yüklü değilse
+    basit alanlar için <code>grep</code> yeterli olur:</p>
+
+    <pre><code><span class="c">#!/usr/bin/env bash</span>
+input=$(cat)
+cwd=$(echo <span class="s">"$input"</span> | grep -o <span class="s">'"cwd":"[^"]*"'</span> | cut -d<span class="s">'"'</span> -f4)
+model=$(echo <span class="s">"$input"</span> | grep -o <span class="s">'"display_name":"[^"]*"'</span> | cut -d<span class="s">'"'</span> -f4)
+dirname=<span class="s">"${cwd##*[/\\]}"</span>
+echo <span class="s">"$dirname [$model]"</span></code></pre>
+  </section>
+
+  <!-- ============ 10 ============ -->
+  <section id="m10">
+    <h2><span class="num">10</span> Yavaş script'i statusline affetmez</h2>
+    <p>Script'in aktif oturumlarda sık çalışır. Büyük repolarda <code>git status</code> veya
+    <code>git diff</code> gibi komutlar yavaştır ve yavaş script satırın güncellenmesini bloklar — ekranda
+    bayat bilgi kalır. Çözüm: pahalı işi cache'le.</p>
+
+    <div class="note">
+      <span class="tag">Cache dosyasının adı önemli</span>
+      Ad, aynı oturumun çağrıları arasında <strong>sabit</strong>, farklı oturumlar arasında
+      <strong>benzersiz</strong> olmalı — yoksa farklı repolardaki eş zamanlı oturumlar birbirinin git
+      durumunu okur. <code>$$</code>, <code>os.getpid()</code>, <code>process.pid</code> gibi süreç
+      kimlikleri her çağrıda değişir ve cache'i işlevsiz bırakır. JSON'dan gelen <code>session_id</code>'yi
+      kullan.
+    </div>
+
+    <pre><code><span class="c">#!/bin/bash</span>
+input=$(cat)
+
+MODEL=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.model.display_name'</span>)
+DIR=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.workspace.current_dir'</span>)
+SESSION_ID=$(echo <span class="s">"$input"</span> | jq -r <span class="s">'.session_id'</span>)
+
+CACHE_FILE=<span class="s">"/tmp/statusline-git-cache-$SESSION_ID"</span>
+CACHE_MAX_AGE=5  <span class="c"># saniye</span>
+
+cache_is_stale() {
+    [ ! -f <span class="s">"$CACHE_FILE"</span> ] || \
+    <span class="c"># stat -c %Y (Linux) veya stat -f %m (macOS) son değişiklik zamanını basar.</span>
+    <span class="c"># Linux formu önce gelmeli: Linux'ta macOS formu başarısız olmadan önce</span>
+    <span class="c"># stdout'a rapor basar ve bu çıktı aritmetiği bozar.</span>
+    [ $(($(date +%s) - $(stat -c %Y <span class="s">"$CACHE_FILE"</span> 2&gt;/dev/null || stat -f %m <span class="s">"$CACHE_FILE"</span> 2&gt;/dev/null || echo 0))) -gt $CACHE_MAX_AGE ]
+}
+
+<span class="k">if</span> cache_is_stale; <span class="k">then</span>
+    <span class="k">if</span> git rev-parse --git-dir &gt; /dev/null 2&gt;&amp;1; <span class="k">then</span>
+        BRANCH=$(git branch --show-current 2&gt;/dev/null)
+        STAGED=$(git diff --cached --numstat 2&gt;/dev/null | wc -l | tr -d <span class="s">' '</span>)
+        MODIFIED=$(git diff --numstat 2&gt;/dev/null | wc -l | tr -d <span class="s">' '</span>)
+        echo <span class="s">"$BRANCH|$STAGED|$MODIFIED"</span> &gt; <span class="s">"$CACHE_FILE"</span>
+    <span class="k">else</span>
+        echo <span class="s">"||"</span> &gt; <span class="s">"$CACHE_FILE"</span>
+    <span class="k">fi</span>
+<span class="k">fi</span>
+
+IFS=<span class="s">'|'</span> read -r BRANCH STAGED MODIFIED &lt; <span class="s">"$CACHE_FILE"</span>
+
+<span class="k">if</span> [ -n <span class="s">"$BRANCH"</span> ]; <span class="k">then</span>
+    echo <span class="s">"[$MODEL] 📁 ${DIR##*/} | 🌿 $BRANCH +$STAGED ~$MODIFIED"</span>
+<span class="k">else</span>
+    echo <span class="s">"[$MODEL] 📁 ${DIR##*/}"</span>
+<span class="k">fi</span></code></pre>
+
+    <p>İki pratik kural daha: <strong>çıktıyı kısa tut</strong> — çubuğun genişliği sınırlı, uzun çıktı
+    kırpılır veya çirkin sarar. Ve script'i bağlamadan önce <strong>sahte girdiyle bağımsız test et</strong>.</p>
+
+    <div class="note">
+      <span class="tag">Hazır çözümler</span>
+      Sıfırdan yazmak istemiyorsan topluluk projeleri var: temalar ve ek özelliklerle gelen
+      <a href="https://github.com/sirmalloc/ccstatusline">ccstatusline</a> ve
+      <a href="https://github.com/martinemde/starship-claude">starship-claude</a>.
+    </div>
+  </section>
+
+  <!-- ============ 11 ============ -->
+  <section id="m11">
+    <h2><span class="num">11</span> Subagent'ların kendi satırı</h2>
+    <p>Ana statusline'ın kardeşi: <code>subagentStatusLine</code> ayarı, prompt'un altındaki agent
+    panelinde görünen her subagent satırının gövdesini senin biçimlendirmene izin verir. Varsayılan
+    <code>ad · açıklama · token sayısı</code> düzenini değiştirmek istediğinde kullanılır.</p>
+
+    <pre><code>{
+  <span class="s">"subagentStatusLine"</span>: {
+    <span class="s">"type"</span>: <span class="s">"command"</span>,
+    <span class="s">"command"</span>: <span class="s">"~/.claude/subagent-statusline.sh"</span>
+  }
+}</code></pre>
+
+    <p>Çalışma şekli ana statusline'dan farklı: komut her yenileme turunda <strong>bir kez</strong> çalışır
+    ve görünen tüm subagent satırlarını tek bir JSON nesnesi olarak alır. Girdi, ortak hook alanlarına ek
+    olarak kullanılabilir satır genişliğini veren <code>columns</code> alanını ve bir <code>tasks</code>
+    dizisini içerir. Her görevde şunlar bulunur: <code>id</code>, <code>name</code>, <code>type</code>,
+    <code>status</code>, <code>description</code>, <code>label</code>, <code>startTime</code>,
+    <code>model</code>, <code>effort</code>, <code>contextWindowSize</code>, <code>tokenCount</code>,
+    <code>tokenSamples</code>, <code>cwd</code>.</p>
+
+    <p>Çıktı biçimi de farklı: <strong>ezmek istediğin her satır için stdout'a bir JSON satırı</strong>
+    yazarsın — <code>{"id": "&lt;task id&gt;", "content": "&lt;satır gövdesi&gt;"}</code>. <code>content</code>
+    olduğu gibi render edilir; ANSI renkleri ve OSC 8 linkleri geçerlidir. Bir görevin <code>id</code>'sini
+    hiç yazmazsan o satır varsayılan haliyle kalır; <code>content</code>'i boş string verirsen satır gizlenir.</p>
+
+    <pre><code><span class="c">#!/usr/bin/env python3</span>
+<span class="k">import</span> json, sys
+
+data = json.load(sys.stdin)
+
+<span class="k">for</span> task <span class="k">in</span> data.get(<span class="s">"tasks"</span>, []):
+    name = task.get(<span class="s">"name"</span>, <span class="s">"?"</span>)
+    tokens = task.get(<span class="s">"tokenCount"</span>) <span class="k">or</span> 0
+    size = task.get(<span class="s">"contextWindowSize"</span>)
+    <span class="c"># contextWindowSize modeli çözülmemiş görevlerde gelmez</span>
+    pct = f<span class="s">" {tokens * 100 // size}%"</span> <span class="k">if</span> size <span class="k">else</span> <span class="s">""</span>
+    status = task.get(<span class="s">"status"</span>, <span class="s">""</span>)
+
+    print(json.dumps({
+        <span class="s">"id"</span>: task[<span class="s">"id"</span>],
+        <span class="s">"content"</span>: f<span class="s">"{name} · {status} · {tokens}tok{pct}"</span>
+    }))</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Not</th></tr></thead>
+        <tbody>
+          <tr><td><code>model</code>, <code>contextWindowSize</code></td><td>Görevin çalıştığı çözülmüş model kimliği ve o modelin token cinsinden context penceresi — ana statusline'daki <code>context_window.context_window_size</code> ile aynı şekilde hesaplanır, yani <code>tokenCount</code> ile satır başına yüzde üretebilirsin. v2.1.205+ gerektirir; modeli henüz çözülmemiş görevlerde gelmez.</td></tr>
+          <tr><td><code>effort</code></td><td>Subagent için ayarlanmış reasoning effort: tanım frontmatter'ından ya da tek seferlik çağrıdan. Değer <code>low</code>/<code>medium</code>/<code>high</code>/<code>xhigh</code>/<code>max</code> stringlerinden biri veya sayısal token bütçesidir. Yazıldığı gibi raporlanır — model o seviyeyi desteklemiyorsa uygulanan effort farklı olabilir. v2.1.214+ gerektirir; subagent oturumun seviyesini devralıyorsa gelmez.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Aynı güven ve <code>disableAllHooks</code> kapıları burada da geçerlidir. Plugin'ler kendi
+    <code>settings.json</code> dosyalarında varsayılan bir <code>subagentStatusLine</code> gönderebilir.</p>
+  </section>
+
+  <!-- ============ 12 ============ -->
+  <section id="m12">
+    <h2><span class="num">12</span> Satır boş kaldığında</h2>
+    <p>Statusline hata mesajı göstermez — sorun çıkınca sadece kaybolur. Sıralı kontrol listesi:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Belirti</th><th>Bak</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Satır hiç görünmüyor</td>
+            <td>Script çalıştırılabilir mi (<code>chmod +x</code>)? Çıktıyı stdout'a mı basıyor, stderr'e mi? Script'i elle çalıştırınca bir şey üretiyor mu? Windows'ta yol ters bölü içeriyorsa düz bölüye çevir. Ayarlarda <code>disableAllHooks: true</code> varsa kaldır. <code>claude --debug</code> oturumdaki ilk çalıştırmanın exit kodunu ve stderr'ini loglar.</td>
+          </tr>
+          <tr>
+            <td>Debug'da <code>workspace trust not accepted</code></td>
+            <td>Bu klasör için workspace trust dialog'u kabul edilmemiş. Claude Code'u yeniden başlat ve güven dialog'unu onayla.</td>
+          </tr>
+          <tr>
+            <td>Satır <code>--</code> veya boş değerler gösteriyor</td>
+            <td>İlk API yanıtı tamamlanmadan alanlar <code>null</code> olabilir. jq'da <code>// 0</code> gibi yedek değerler koy. Birkaç mesaj sonra hâlâ boşsa Claude Code'u yeniden başlat.</td>
+          </tr>
+          <tr>
+            <td>Context yüzdesi beklenmedik</td>
+            <td>En sadesi ve doğrusu <code>used_percentage</code>. <code>/context</code> çıktısıyla farkı, iki değerin farklı anlarda hesaplanmasından gelir.</td>
+          </tr>
+          <tr>
+            <td>Bir anda kayboluyor / bayat kalıyor</td>
+            <td>Sıfırdan farklı exit kodu döndüren ya da hiç çıktı üretmeyen script satırı boşaltır. Yavaş script güncellemeyi bloklar; çalışırken yeni tetikleyici gelirse iptal edilir.</td>
+          </tr>
+          <tr>
+            <td>Ekranda <code>\e]8;;</code> gibi ham metin</td>
+            <td><code>echo -e</code> yerine <code>printf '%b'</code> kullan.</td>
+          </tr>
+          <tr>
+            <td>Dar terminalde çıktı kırpılıyor</td>
+            <td>Sağ tarafı sistem bildirimleriyle paylaşıyorsun; ayrıca verbose mod token sayacı ekler. Çıktıyı kısalt veya <code>COLUMNS</code>'a göre uyarla.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">En hızlı teşhis</span>
+      Claude'a ayar dosyanı okumasını ve <code>statusLine</code> komutunu doğrudan çalıştırmasını söyle —
+      arayüzün yuttuğu hata mesajı böylece görünür hale gelir.
+    </div>
+  </section>
+
+  <footer>
+    Kaynaklar ·
+    <a href="https://code.claude.com/docs/en/statusline">code.claude.com/docs/en/statusline</a> ·
+    <a href="https://code.claude.com/docs/en/sub-agents">sub-agents</a> ·
+    <a href="https://code.claude.com/docs/en/settings">settings</a>
+  </footer>
+
+</div>
+</body>
+</html>

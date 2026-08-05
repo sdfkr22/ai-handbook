@@ -18,6 +18,25 @@
     "tarih": "2026-08-05"
   },
   {
+    "dosya": "posts/statusline-guide.html",
+    "baslik": "Statusline ne yazacağını senden öğrenir",
+    "aciklama": "Ekranın dibindeki satırı çalıştıran şey senin yazdığın script. /statusline ile kurulumdan stdin'e gelen JSON alanlarına, renkli context barına, Windows tuzağına ve satır boş kaldığında ne olduğuna kadar.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "statusline",
+      "settings.json",
+      "jq",
+      "ANSI",
+      "context window",
+      "rate limits",
+      "subagentStatusLine",
+      "PowerShell",
+      "OSC 8"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/statusline",
+    "tarih": "2026-08-05"
+  },
+  {
     "dosya": "posts/creating-subagents-guide.html",
     "baslik": "Kendi subagent'ını yazmak",
     "aciklama": "Subagent ne zaman kurulur, dosyası nereye konur, hangi frontmatter alanı ne yapar ve araç erişimi nasıl kısıtlanır — altı bitmiş örnek senaryoyla.",
