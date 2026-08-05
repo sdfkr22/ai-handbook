@@ -1,0 +1,47 @@
+# --- İşletim sistemi ---
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# --- Editör / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+
+# --- Node (bağımlılık yok ama npx/serve iz bırakabiliyor) ---
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.npm/
+package-lock.json
+
+# --- Python (python -m http.server önizlemesi) ---
+__pycache__/
+*.pyc
+
+# --- Claude Code yerel dosyaları ---
+.claude/settings.local.json
+.claude/local/
+.claude/*.local.json
+
+# --- Geçici / taslak dosyalar ---
+*.tmp
+*.bak
+*.orig
+*.log
+tmp/
+scratch/
+drafts/
+
+# --- Ortam değişkenleri ---
+.env
+.env.*
