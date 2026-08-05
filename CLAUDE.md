@@ -42,7 +42,15 @@ data/posts.json                   Aynı veri, JSON olarak. OTOMATİK ÜRETİLİR
 scripts/build.mjs                 posts/ klasörünü tarar, data/ dosyalarını üretir.
 .claude/skills/summarize-source/  Kaynaktan Türkçe sayfa üretir.
 .claude/skills/topic-page/        Konu başlığından özgün sayfa üretir.
+.claude/agents/page-auditor.md    Mevcut sayfaları denetler ve düzeltir. Elle çağrılır.
 ```
+
+## Denetim
+
+`page-auditor` subagent'i mevcut sayfaları doğrular: bilgi doğruluğu, katalog metaları, şablon/stil
+uyumu, TOC-bölüm tutarlılığı, kırık linkler, karakter sorunları. Bulduğunu düzeltir ve
+`build.mjs`'i çalıştırır. **Kendiliğinden çalışmaz** — "sayfaları kontrol et" gibi açık bir
+istekle tetiklenir. Yeni sayfa üretmez.
 
 ## Katalog nasıl besleniyor
 

@@ -294,8 +294,9 @@
 
     <h3>exec form vs shell form</h3>
     <p><code>args</code> yazarsan komut PATH üzerinde bir çalıştırılabilir olarak çözümlenir ve argümanlar
-      shell'e uğramadan geçer. Yazmazsan komut bir shell'e verilir (Unix'te <code>sh -c</code>, Windows'ta
-      PowerShell) ve pipe, <code>&amp;&amp;</code>, glob, değişken genişletme kullanabilirsin. Tırnak
+      shell'e uğramadan geçer. Yazmazsan komut bir shell'e verilir (macOS/Linux'ta <code>sh -c</code>,
+      Windows'ta Git Bash, Git Bash kurulu değilse PowerShell) ve pipe, <code>&amp;&amp;</code>, glob,
+      değişken genişletme kullanabilirsin. Tırnak
       sorunlarından tamamen kaçınmak istiyorsan <code>"args": []</code> ekleyip exec form'a geç.</p>
 
     <h3>Yol yer tutucuları</h3>
@@ -429,8 +430,9 @@
 
     <div class="note">
       <span class="tag">Paralel çalışırlar</span>
-      Bir event ateşlendiğinde eşleşen tüm hook'lar <strong>paralel</strong> çalışır ve birebir aynı olan
-      komutlar tekilleştirilir. Bir hook'un <code>deny</code> dönmesi kardeş hook'ların çalışmasını
+      Bir event ateşlendiğinde eşleşen tüm hook'lar <strong>paralel</strong> çalışır. Aynı handler'ı birden
+      çok ayar dosyasında tanımlarsan bir kez çalışır; plugin'in ya da skill'in kendi kopyası ayrı sayılır.
+      Bir hook'un <code>deny</code> dönmesi kardeş hook'ların çalışmasını
       durdurmaz — birinin engellemesine güvenip diğerinin yan etkisini önlediğini varsayma.
     </div>
   </section>
@@ -463,7 +465,11 @@
       <li><code>"*"</code>, <code>""</code> veya alan hiç yok — hepsiyle eşleşir</li>
       <li><code>"Bash"</code> — birebir eşleşme</li>
       <li><code>"Edit|Write"</code> — çoklu eşleşme (v2.1.191'den itibaren virgül de aynı işi görür)</li>
-      <li><code>"mcp__github__.*"</code> — regex; alfanümerik olmayan karakter içeren desenler regex olarak değerlendirilir</li>
+      <li><code>"mcp__github__.*"</code> — regex; yalnızca harf, rakam, <code>_</code>, <code>-</code>,
+        boşluk, <code>,</code> ve <code>|</code> içeren desenler birebir eşleşme listesi sayılır, bunların
+        dışında bir karakter geçen her desen <strong>bağlanmamış (unanchored) JavaScript regex</strong>
+        olarak değerlendirilir — <code>Edit.*</code> hem <code>Edit</code>'i hem <code>NotebookEdit</code>'i
+        yakalar, tam eşleşme için <code>^Edit$</code> yaz</li>
     </ul>
     <p>MCP tool'ları <code>mcp__&lt;sunucu&gt;__&lt;tool&gt;</code> biçiminde adlandırılır; bir sunucunun
       tüm tool'larını yakalamak için <code>mcp__github__.*</code> yazarsın.</p>
@@ -582,7 +588,8 @@ exit 0  <span class="c"># 0 = karar yok; normal izin akışı devam eder</span><
           <tr><td><code>Stop</code>, <code>SubagentStop</code>, <code>TeammateIdle</code></td><td>Durmayı/boşa geçmeyi engeller</td></tr>
           <tr><td><code>TaskCreated</code>, <code>TaskCompleted</code></td><td>İşlemi geri alır veya engeller</td></tr>
           <tr><td><code>ConfigChange</code>, <code>PreCompact</code></td><td>Değişikliği / compaction'ı engeller</td></tr>
-          <tr><td><code>PostToolUse</code>, <code>PostToolUseFailure</code></td><td>Tool zaten çalıştı — geri alamaz, yalnızca agentic döngüyü durdurur veya hata gösterir</td></tr>
+          <tr><td><code>PostToolBatch</code></td><td>Bir sonraki model çağrısından önce agentic döngüyü durdurur</td></tr>
+          <tr><td><code>PostToolUse</code>, <code>PostToolUseFailure</code></td><td>Engelleyemez — tool zaten çalıştı; stderr yalnızca Claude'a geri bildirim olarak gösterilir</td></tr>
           <tr><td><code>SessionStart</code>, <code>Setup</code>, <code>Notification</code> ve diğerleri</td><td>Engellemez; stderr gösterilir, akış sürer</td></tr>
         </tbody>
       </table>
@@ -642,8 +649,11 @@ exit 0  <span class="c"># 0 = karar yok; normal izin akışı devam eder</span><
     <h3>Diğer event'lerin karar biçimi</h3>
     <ul>
       <li><strong>Üst seviye <code>decision</code>:</strong> <code>UserPromptSubmit</code>,
-        <code>PostToolUse</code>, <code>Stop</code>, <code>SubagentStop</code>, <code>ConfigChange</code>,
+        <code>UserPromptExpansion</code>, <code>PostToolUse</code>, <code>PostToolUseFailure</code>,
+        <code>PostToolBatch</code>, <code>Stop</code>, <code>SubagentStop</code>, <code>ConfigChange</code>,
         <code>PreCompact</code> — <code>{"decision": "block", "reason": "…"}</code></li>
+      <li><strong>Exit kodu ya da <code>continue: false</code>:</strong> <code>TeammateIdle</code>,
+        <code>TaskCreated</code>, <code>TaskCompleted</code> — üst seviye <code>decision</code> almazlar</li>
       <li><strong>Yalnızca context:</strong> <code>SessionStart</code>, <code>Setup</code>,
         <code>SubagentStart</code> — <code>additionalContext</code> döner, engelleyemez</li>
       <li><strong><code>PermissionRequest</code>:</strong> <code>hookSpecificOutput.decision</code>
