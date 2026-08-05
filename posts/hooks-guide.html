@@ -641,9 +641,10 @@ exit 0  <span class="c"># 0 = karar yok; normal izin akışı devam eder</span><
 
     <div class="note warn">
       <span class="tag">Tek yazar kuralı</span>
-      Birden çok <code>PreToolUse</code> hook'u aynı çağrıya <code>updatedInput</code> döndürürse
-      <strong>en son bitenin</strong> yazdığı geçerli olur. Hook'lar paralel çalıştığı için bu sıra
-      belirsizdir. Aynı tool'un girdisini birden fazla hook'un değiştirmesine izin verme.
+      Birden çok <code>PreToolUse</code> hook'u aynı çağrıya <code>updatedInput</code> döndürdüğünde hangi
+      girdinin geçerli olacağı <strong>tanımlı değildir</strong>; hook'lar paralel çalışır ve doküman bu
+      çakışma için bir çözümleme kuralı vermez. Aynı tool'un girdisini birden fazla hook'un değiştirmesine
+      izin verme. (<code>permissionDecision</code> çakışmasının aksine: orada sıra tanımlıdır.)
     </div>
 
     <h3>Diğer event'lerin karar biçimi</h3>
@@ -912,10 +913,13 @@ exit 0</code></pre>
   <section id="m11">
     <h2><span class="num">11</span> İzin modları ve güvenlik</h2>
 
-    <p><code>PreToolUse</code> hook'ları <strong>izin modu kontrolünden önce</strong>, her modda ateşlenir —
-      <code>dontAsk</code> dahil. <code>permissionDecision: "deny"</code> dönen bir hook,
-      <code>bypassPermissions</code> modunda ve <code>--dangerously-skip-permissions</code> ile bile
-      çağrıyı engeller.</p>
+    <p><code>PreToolUse</code> hook'ları <strong>izin sorusundan önce</strong> çalışır —
+      <code>EndConversation</code> dışındaki her tool için. <code>dontAsk</code> modunda bir çağrının
+      onaylanmasının yollarından biri de budur: bu modda Claude yalnızca <code>permissions.allow</code>
+      kurallarına uyan işleri, salt okunur Bash komutlarını ve bir <code>PreToolUse</code> hook'unun
+      onayladığı çağrıları çalıştırır. Exit 2 ile engelleyen bir hook ise çağrıyı <strong>izin kuralları
+      değerlendirilmeden önce</strong> durdurur; bu yüzden engelleme, eşleşen bir allow kuralı olsa bile
+      geçerlidir.</p>
 
     <div class="note">
       <span class="tag">Asimetrik kural</span>
@@ -925,9 +929,10 @@ exit 0</code></pre>
       bastıramaz.
     </div>
 
-    <p>Bu asimetri, hook'ları organizasyon politikası için doğru katman yapar: kullanıcı izin modunu
-      değiştirerek kuralı atlatamaz. Kurum genelinde geçerli olması gerekiyorsa doğru yer
-      <strong>managed policy settings</strong>'tir.</p>
+    <p>Bu asimetri, hook'ları organizasyon politikası için doğru katman yapar: bir hook'un
+      <code>allow</code> dönmesi, managed settings'te tanımlı deny kurallarını da geçersiz kılmaz. Kurum
+      genelinde geçerli olması gerekiyorsa doğru yer <strong>managed policy settings</strong>'tir —
+      oradaki hook'lar kullanıcı ayarlarındaki <code>disableAllHooks</code> ile kapatılamaz.</p>
 
     <div class="note warn">
       <span class="tag">Hook, senin yetkinle çalışan koddur</span>
