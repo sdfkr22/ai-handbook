@@ -10,7 +10,7 @@
    Aynı kurallar iki kez yazılır: bir kez düğmeyle seçilen tema için, bir kez de
    sistem açık temadayken. Değiştirirken iki bloğu birlikte güncelle. */
 :root[data-theme="light"]{
-  --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc;
+  --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
   --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
   --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
 }
@@ -25,7 +25,7 @@
 
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
-    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
     --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
   }
