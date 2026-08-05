@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(node scripts/build.mjs)",
-      "WebFetch(domain:docs.claude.com)"
-    ]
-  }
-}
