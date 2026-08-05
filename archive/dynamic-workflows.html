@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Workflows in Claude Code</title>
+<meta name="yazi:baslik" content="A harness for every task: dynamic workflows">
+<meta name="yazi:aciklama" content="Claude Code artık göreve özel, çok-ajanlı bir harness yazıp anında çalıştırabiliyor. Dinamik iş akışlarının nasıl çalıştığı, static workflow'lardan farkı ve ne zaman kullanılmaması gerektiği.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="dynamic workflows, harness, subagents, orkestrasyon, patterns">
+<meta name="yazi:kaynak" content="https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code">
+<meta name="yazi:tarih" content="2026-06-02">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Anthropic Blog</p>
+    <h1>A harness for every task:<br><em>dynamic workflows</em> in Claude Code</h1>
+    <p class="lede">Claude Code artık göreve özel, çok-ajanlı bir "harness" (koşum takımı) yazıp anında çalıştırabiliyor. Dinamik iş akışlarının nasıl çalıştığı ve onlardan en iyi verimi almanın yolları.</p>
+    <p class="source">Kaynak: <a href="https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code">claude.com/blog · 2 Haziran 2026 · Thariq Shihipar & Sid Bidasaria</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Temel fikir & örnek promptlar</a></li>
+      <li><a href="#m2"><span class="n">02</span> How dynamic workflows work</a></li>
+      <li><a href="#m3"><span class="n">03</span> Why dynamic workflows</a></li>
+      <li><a href="#m4"><span class="n">04</span> Dynamic vs static workflows</a></li>
+      <li><a href="#m5"><span class="n">05</span> Helpful patterns</a></li>
+      <li><a href="#m6"><span class="n">06</span> Use cases</a></li>
+      <li><a href="#m7"><span class="n">07</span> When not to use</a></li>
+      <li><a href="#m8"><span class="n">08</span> Tips for building</a></li>
+    </ol>
+  </nav>
+
+  <section id="m1">
+    <h2><span class="num">01</span> Temel fikir & örnek promptlar</h2>
+    <p>Anthropic geçtiğimiz hafta Claude Code'a <strong>dinamik iş akışlarını (dynamic workflows)</strong> ekledi. Claude artık eldeki göreve özel bir <em>harness</em>'i (ajanları koordine eden koşum yapısı) anında kendisi yazabiliyor.</p>
+    <p>Varsayılan Claude Code harness'i kodlama için tasarlanmış olsa da birçok görev kodlamaya benzediği için başka işlerde de işe yarar. Ancak Research, güvenlik analizi, agent teams veya Code Review gibi bazı görevlerde en yüksek performans için özel harness'ler gerekmişti. Dinamik iş akışları, tam da bu tür problemleri daha yerel (native) biçimde çözmeyi sağlıyor — ayrıca bu iş akışlarını başkalarıyla paylaşıp yeniden kullanabiliyorsunuz.</p>
+
+    <div class="note warn">
+      <span class="tag">Baştan bilinmesi gereken</span>
+      İş akışları güçlü ama <strong>daha fazla token harcar</strong>. En çok karmaşık, yüksek değerli görevler için uygundur; her göreve gerek yoktur. En iyi pratikler henüz gelişmekte.
+    </div>
+
+    <h3>Fikir verecek örnek promptlar</h3>
+    <ul>
+      <li>"Bu test her 50 çalıştırmadan birinde başarısız oluyor. Onu tekrar üretmek için bir iş akışı kur. Yarışma (race) hakkında rakip teoriler üret ve kanıt bir teoriyi ayakta bırakana kadar durma."</li>
+      <li>"Son 50 oturumumu tarayıp sürekli yaptığım düzeltmeleri çıkar ve tekrar edenleri <code>CLAUDE.md</code> kurallarına dönüştür."</li>
+      <li>"Slack'teki #incidents kanalını son altı ay için tara ve kimsenin ticket açmadığı tekrar eden kök nedenleri bul."</li>
+      <li>"İş planımı al ve farklı ajanların onu yatırımcı, müşteri ve rakip gözünden parçaladığı bir iş akışı çalıştır."</li>
+      <li>"80 CV'lik bir klasör var; backend rolü için sırala, ilk on'u iki kez kontrol et. AskUserQuestion aracıyla bir değerlendirme kriteri (rubric) için beni sorgula."</li>
+      <li>"Blog taslağımdaki her teknik iddiayı kod tabanına karşı doğrula — yanlış bir şey yayınlamak istemiyorum."</li>
+    </ul>
+  </section>
+
+  <section id="m2">
+    <h2><span class="num">02</span> How dynamic workflows work</h2>
+    <p>Dinamik iş akışları, <strong>alt-ajanları (subagents) oluşturup koordine etmeye yarayan birkaç özel fonksiyon</strong> içeren bir JavaScript dosyasını çalıştırır. Ayrıca veriyi işlemek için JSON, Math, Array gibi standart JavaScript fonksiyonlarını da barındırır.</p>
+
+    <div class="note">
+      <span class="tag">Kritik ayrıntı</span>
+      İş akışı; her ajanın <strong>hangi modeli kullanacağına</strong> ve alt-ajanların <strong>kendi worktree'sinde izole çalışıp çalışmayacağına</strong> karar verebilir. Böylece Claude, iş için gereken zeka seviyesini ve izolasyonu kendisi seçer.
+    </div>
+
+    <div class="note">
+      <span class="tag">Kesintiye dayanıklılık</span>
+      Bir iş akışı (kullanıcı müdahalesi ya da terminalin kapatılması gibi) kesilirse, oturumu sürdürmek iş akışının <strong>kaldığı yerden devam etmesini</strong> sağlar.
+    </div>
+  </section>
+
+  <section id="m3">
+    <h2><span class="num">03</span> Why dynamic workflows</h2>
+    <p>Varsayılan harness'e bir görev verdiğinizde, planlama ve yürütmeyi <strong>aynı bağlam penceresinde (context window)</strong> yapmak zorundadır. Bu, çoğu kodlama görevinde çok etkilidir; ancak uzun süren, kitlesel paralel, aşırı yapısal veya çekişmeli (adversarial) görevlerde bozulabilir. Claude tek bağlam penceresinde uzun süre çalıştıkça şu hatalara açık hâle gelir:</p>
+    <ul>
+      <li><strong>Agentic laziness (ajan tembelliği):</strong> Claude çok parçalı karmaşık bir görevi bitirmeden durur ve kısmi ilerlemenin ardından işi tamam sayar — örneğin bir güvenlik incelemesindeki 50 maddeden yalnızca 35'ini ele alıp bırakmak.</li>
+      <li><strong>Self-preferential bias (kendini kayırma önyargısı):</strong> Claude, özellikle bir kritere karşı doğrulama/yargılama yaparken kendi sonuçlarını tercih etme eğilimindedir.</li>
+      <li><strong>Goal drift (hedeften sapma):</strong> Çok sayıda turda, özellikle sıkıştırmadan (compaction) sonra orijinal hedefe sadakatin kademeli kaybı. Her özetleme adımı kayıplıdır; kenar-durum gereksinimleri veya "şunu yapma" kısıtları yitebilir.</li>
+    </ul>
+    <p>Bir iş akışı kurmak; <strong>ayrı bağlam pencereleri ve odaklı, izole hedefleri olan ayrı alt-ajanları</strong> düzenleyerek bu sorunlarla mücadele eder.</p>
+  </section>
+
+  <section id="m4">
+    <h2><span class="num">04</span> Dynamic vs static workflows</h2>
+    <p>Daha önce Claude Agent SDK veya <code>claude -p</code> ile birden çok Claude Code örneğini koordine eden <strong>statik</strong> bir iş akışı yapmış olabilirsiniz. Ama statik iş akışları tüm kenar durumlar için çalışmak zorunda olduğundan genellikle daha geneldir (generic).</p>
+    <div class="note">
+      <span class="tag">Fark</span>
+      <strong>Claude Opus 4.8</strong> ve dinamik iş akışlarıyla Claude artık, sizin özel kullanım senaryonuza <strong>birebir uyacak bir harness'i kendisi yazacak</strong> kadar zeki.
+    </div>
+  </section>
+
+  <section id="m5">
+    <h2><span class="num">05</span> Helpful patterns</h2>
+    <p>Dinamik iş akışlarını yalnızca Claude'dan bir tane yapmasını isteyerek ya da <code>ultracode</code> tetikleyici kelimesini kullanarak başlatabilirsiniz. İş akışlarının nasıl çalıştığına dair bir zihinsel model, ne zaman kullanacağınızı ve promptla nasıl yönlendireceğinizi anlamanıza yardımcı olur. Claude'un kurarken kullanıp birleştirebileceği ortak desenler:</p>
+    <ul>
+      <li><strong>Classify-and-act:</strong> Bir sınıflandırıcı ajan görev türüne karar verir, ardından iş uygun ajanlara/davranışlara yönlendirilir. Sınıflandırıcı çıktı türünü belirlemek için sonda da kullanılabilir.</li>
+      <li><strong>Fan-out-and-synthesize:</strong> Görevi çok sayıda küçük adıma böl, her adıma bir ajan koş, sonra sonuçları birleştir. Sentez adımı bir <em>bariyerdir</em>: tüm dağıtılmış ajanları bekler, sonra yapılandırılmış çıktıları tek sonuçta birleştirir. Her adımın kendi temiz bağlamı olduğu için birbirlerine karışmazlar.</li>
+      <li><strong>Adversarial verification:</strong> Oluşturulan her ajan için, çıktısını bir kritere karşı <em>çekişmeli</em> doğrulayan ayrı bir ajan çalıştır.</li>
+      <li><strong>Generate-and-filter:</strong> Bir konuda çok sayıda fikir üret, bunları kritere/doğrulamaya göre filtrele, tekrarları ayıkla ve yalnızca en kaliteli, test edilmiş fikirleri döndür.</li>
+      <li><strong>Tournament:</strong> İşi bölmek yerine ajanları yarıştır. N ajan aynı görevi farklı yaklaşımlarla dener; bir yargıç (judge) ajan sonuçları <em>ikili karşılaştırmayla</em> değerlendirerek bir kazanan çıkarır.</li>
+      <li><strong>Loop until done:</strong> İş miktarı bilinmediğinde, sabit sayıda geçiş yerine bir durma koşulu (yeni bulgu kalmaması, log'da hata bitmesi) sağlanana kadar ajan üretmeye devam et.</li>
+    </ul>
+  </section>
+
+  <section id="m6">
+    <h2><span class="num">06</span> Use cases</h2>
+    <p>İş akışlarının teknik olmayan işlerde bazen daha da faydalı olduğu görülüyor. Öne çıkan senaryolar:</p>
+    <ul>
+      <li><strong>Migrations & refactors:</strong> <code>Bun</code>, iş akışlarıyla Zig'den Rust'a yeniden yazıldı. Anahtar: görevi çağrı noktaları, başarısız testler, modüller gibi adımlara bölmek; her düzeltme için worktree'de bir alt-ajan açmak, sonra başka bir ajanla çekişmeli inceleyip birleştirmek. Kaynağı tüketen komutları yasaklayarak makineyi tüketmeden azami paralellik sağlayın.</li>
+      <li><strong>Deep research:</strong> Claude Code içindeki <code>/deep-research</code> becerisi dinamik iş akışı kullanır: web aramalarını dağıtır, kaynakları çeker, iddialarını çekişmeli doğrular ve kaynaklı bir rapor sentezler. Sadece web için değil — Slack'ten durum raporu derlemek veya bir kod tabanını inceleyerek bir özelliğin işleyişini araştırmak için de kullanılabilir.</li>
+      <li><strong>Deep verification:</strong> Her olgusal iddiayı kaynağıyla doğrulamak isterseniz; bir ajan tüm iddiaları tespit eder, her biri için ayrı bir alt-ajan detaylı kontrol yapar, hatta bir doğrulama ajanı kaynağın kaliteli olduğunu denetler.</li>
+      <li><strong>Sorting:</strong> 1000+ satırı tek promptta sıralamak kaliteyi düşürür ve bağlama sığmaz. Bunun yerine bir tournament / ikili-karşılaştırma hattı kurun (karşılaştırmalı yargı, mutlak puanlamadan daha güvenilirdir) veya paralel kova-sıralama yapıp birleştirin. Her karşılaştırma kendi ajanı olur; deterministik döngü sıralamayı tutar.</li>
+      <li><strong>Memory & rule adherence:</strong> Claude'un (CLAUDE.md'ye konsa bile) kaçırdığı kurallar için, her kuralı bir doğrulayıcı ajanla kontrol eden bir iş akışı kurun. Yanlış pozitifleri azaltmak için bir <em>şüpheci (skeptic) persona</em> ekleyin. Tersi de mümkün: oturumlardan tekrarlayan düzeltmeleri madenleyip kümeleyin, "bu kural gerçek bir hatayı önler miydi?" diye doğrulayıp hayatta kalanları CLAUDE.md'ye damıtın.</li>
+      <li><strong>Root-cause investigation:</strong> Hata ayıklama, birbirinden bağımsız birden çok hipotezi test etmekle en iyi çalışır. İş akışı; log'lar, dosyalar ve veri için ayrı ajanlar açarak her hipotezi bir doğrulayıcı/çürütücü panelinin önüne koyar. Yalnızca kod için değil — satış (mart'ta satış neden düştü?), veri mühendisliği veya her türlü post-mortem için.</li>
+      <li><strong>Triaging at scale:</strong> Bir triyaj iş akışı her öğeyi sınıflandırır, mevcut kayıtlarla tekrarı ayıklar ve aksiyon alır (düzeltmeyi dener veya insana yükseltir). Faydalı bir desen <em>karantina</em>dır: güvenilmez halka açık içeriği okuyan ajanların yüksek-yetkili eylem almasını engellemek; bu eylemleri ayrı, yetkili ajanlara bırakmak. <code>/loop</code> ile sürekli çalıştırılabilir.</li>
+      <li><strong>Exploration & taste:</strong> Tasarım veya isimlendirme gibi zevke dayalı işlerde birçok çözüm ürettirin, bir inceleme ajanına "iyi çözüm nedir" kriterini verin; kriter karşılanınca iş biter. Çözümler bir tournament'la sıralanabilir.</li>
+      <li><strong>Evals:</strong> Ayrı ajanları worktree'de açıp çıktıları bir kritere karşı karşılaştıran ajanlarla notlandırarak hafif değerlendirmeler çalıştırın — örneğin oluşturduğunuz bir beceriyi (skill) değerlendirip iyileştirmek.</li>
+      <li><strong>Model & intelligence routing:</strong> Hangi modelin kullanılacağına karar veren bir sınıflandırıcı ajan kurun. Örneğin "auth modülü nasıl çalışıyor?" için en iyi model, modüldeki dosya sayısına ve kod tabanının şekline bağlıdır; sınıflandırıcı bunu araştırıp <strong>Sonnet</strong> veya <strong>Opus</strong>'a yönlendirir.</li>
+    </ul>
+  </section>
+
+  <section id="m7">
+    <h2><span class="num">07</span> When not to use dynamic workflows</h2>
+    <div class="note warn">
+      <span class="tag">Dikkat</span>
+      İş akışları her göreve gerekmez ve <strong>önemli ölçüde daha fazla token</strong> harcayabilir. Sıradan kodlama işleri için kendinize sorun: "Bu gerçekten daha fazla hesaplama gerektiriyor mu?" Çoğu geleneksel kodlama görevi <strong>5 kişilik bir inceleme paneline ihtiyaç duymaz.</strong>
+    </div>
+    <p>Aynı muhakeme bir üst katmanda da geçerli: çok-ajanlı mı yoksa tek ajanlı mı kararı benzer mantığı izler — paralellik ve uzmanlaşma, getirdikleri koordinasyon maliyetini hak etmelidir.</p>
+  </section>
+
+  <section id="m8">
+    <h2><span class="num">08</span> Tips for building dynamic workflows</h2>
+    <ul>
+      <li><strong>Prompting:</strong> Yukarıdaki spesifik teknikleri kullanan detaylı promptlar en iyi sonucu verir. İş akışları yalnızca büyük görevler için değil — bir varsayımın hızlı çekişmeli incelemesi gibi bir <em>"quick workflow"</em> de isteyebilirsiniz.</li>
+      <li><strong><code>/goal</code> ve <code>/loop</code> ile birleştirin:</strong> Triyaj, araştırma veya doğrulama gibi tekrarlanabilir iş akışlarını düzenli aralıklarla koşturmak için <code>/loop</code>, katı bir tamamlanma şartı koymak için <code>/goal</code> kullanın.</li>
+      <li><strong>Token bütçeleri:</strong> Açık token bütçeleri belirleyebilirsiniz. "use 10k tokens" gibi bir promptla üst sınır koyabilirsiniz.</li>
+      <li><strong>Kaydetme & paylaşma:</strong> İş akışı menüsünde <code>s</code>'e basarak kaydedin. Bunları <code>~/.claude/workflows</code> içine ekleyebilir ya da bir beceri (skill) aracılığıyla dağıtabilirsiniz. Beceriyle paylaşırken JS dosyalarını becerinin klasörüne koyup <code>SKILL.md</code> içinde referans verin. Esneklik için Claude'a bunları <em>birebir çalıştırılacak bir betik değil, bir şablon</em> gibi düşünmesini söyleyin.</li>
+    </ul>
+    <div class="note">
+      <span class="tag">Kapanış notu</span>
+      Yazarlar iş akışlarını, Claude'u yeni şekillerde kullanmaya başlamak için bir <strong>başlangıç noktası</strong> olarak görmenizi öneriyor — en iyi kullanım biçimleri konusunda keşfedilecek çok şey var.
+    </div>
+  </section>
+
+  <footer>
+    Kaynak: claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code
+  </footer>
+
+</div>
+</body>
+</html>

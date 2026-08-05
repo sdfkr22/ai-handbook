@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context window dolduğunda!!</title>
+<meta name="yazi:baslik" content="Context window dolduğunda!!">
+<meta name="yazi:aciklama" content="Context window'a neler yükleniyor, sınır kaç token, auto-compact hangi eşikte devreye giriyor ve /compact, /clear, subagent arasında nasıl seçim yapılır — senaryo senaryo.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="context window, compact, autocompact, token, 1M context, subagent, CLAUDE.md, maliyet">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/context-window">
+<meta name="yazi:tarih" content="2026-08-05">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
+     scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · Context Management</p>
+    <h1>Context window<br><em>dolduğunda!!</em></h1>
+    <p class="lede">Bağlam, Claude Code ile çalışırken karşılaşacağın en temel sınır. Bu sayfa neyin
+    context'e yüklendiğini, sınırın kaç token olduğunu, auto-compact'in hangi eşikte devreye
+    girdiğini ve tıkandığın anlarda hangi komutu çalıştırman gerektiğini anlatıyor.</p>
+    <p class="source">5 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/context-window">code.claude.com/docs/en/context-window</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Context window'da ne var?</a></li>
+      <li><a href="#m2"><span class="n">02</span> Sınır kaç token?</a></li>
+      <li><a href="#m3"><span class="n">03</span> Tahmin etme, /context'e bak</a></li>
+      <li><a href="#m4"><span class="n">04</span> Auto-compact sırtını sıvazlar</a></li>
+      <li><a href="#m5"><span class="n">05</span> /compact mı /clear mı?</a></li>
+      <li><a href="#m6"><span class="n">06</span> Compaction'dan ne sağ çıkar?</a></li>
+      <li><a href="#m7"><span class="n">07</span> Tıkandığın anlar</a></li>
+      <li><a href="#m8"><span class="n">08</span> Şişmeden önlemek</a></li>
+      <li><a href="#m9"><span class="n">09</span> Uzun oturumda kullanım neden artar?</a></li>
+      <li><a href="#m10"><span class="n">10</span> Hızlı referans</a></li>
+    </ol>
+  </nav>
+
+  <section id="m1">
+    <h2><span class="num">01</span> Context window'da ne var?</h2>
+    <p>Context window, Claude'un o oturumda bildiği <strong>her şeyi</strong> tutar: senin
+    mesajların, okunan dosyaların içeriği, komut çıktıları, Claude'un kendi yanıtları ve
+    terminalde hiç görmediğin bir sürü içerik. Sen daha hiçbir şey yazmadan bir kısmı doludur.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Ne yükleniyor</th><th>Ne zaman</th><th>Not</th></tr></thead>
+        <tbody>
+          <tr><td>System prompt</td><td>Başlangıçta</td><td>Davranış ve tool talimatları. Hiç görmezsin.</td></tr>
+          <tr><td><code>CLAUDE.md</code></td><td>Başlangıçta</td><td>Proje talimatların. Her mesajda oradadır.</td></tr>
+          <tr><td>Auto memory (<code>MEMORY.md</code>)</td><td>Başlangıçta</td><td>İlk 200 satır veya 25KB — hangisi önce gelirse.</td></tr>
+          <tr><td>Environment info</td><td>Başlangıçta</td><td>Çalışma dizini, platform, shell, git durumu.</td></tr>
+          <tr><td>MCP tool adları</td><td>Başlangıçta</td><td>Şemalar varsayılan olarak <em>deferred</em>; sadece adlar yüklenir.</td></tr>
+          <tr><td>Skill description'ları</td><td>Başlangıçta</td><td>Gövde değil, sadece tanım satırı.</td></tr>
+          <tr><td>Output style / <code>--append-system-prompt</code></td><td>Başlangıçta</td><td>System prompt'a eklenir.</td></tr>
+          <tr><td>Dosya okumaları, tool çıktıları</td><td>Çalışırken</td><td>Bağlamın asıl büyüdüğü yer burası.</td></tr>
+          <tr><td>Path-scoped rule'lar</td><td>Eşleşen dosya okununca</td><td>Message history'ye girer.</td></tr>
+          <tr><td>Alt dizindeki <code>CLAUDE.md</code></td><td>O dizinden dosya okununca</td><td>Aynı şekilde message history'ye girer.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Ayırt etmesi gereken fark</span>
+      Bu içeriklerin bir kısmı <strong>message history'nin dışında</strong> yaşar (system prompt,
+      output style) ve compaction'dan etkilenmez. Bir kısmı ise konuşmanın içindedir ve özetlenip
+      gider. Bölüm 06 bu ayrımı tablo halinde veriyor — compaction sonrası "Claude kuralımı unuttu"
+      şikâyetlerinin tamamı bu tablodan okunabiliyor.
+    </div>
+
+    <p>Her oturum <strong>sıfırdan</strong> başlar. Önceki oturumun konuşma geçmişi taşınmaz;
+    kalıcılık isteyen bilgi <code>CLAUDE.md</code>'ye veya auto memory'ye yazılmalıdır.</p>
+  </section>
+
+  <section id="m2">
+    <h2><span class="num">02</span> Sınır kaç token?</h2>
+    <p>Pratikte iki sayı var: <strong>200K</strong> ve <strong>1M</strong>. Hangisinde olduğun
+    modele, plana ve sağlayıcıya bağlı.</p>
+
+    <p>1 milyon token'lık context window'u destekleyen modeller: <strong>Fable 5, Sonnet 5,
+    Opus 4.6 ve sonrası, Sonnet 4.6</strong>. Anthropic API üzerinde Fable 5, Sonnet 5 ve
+    Opus 4.7+ <em>her zaman</em> 1M ile çalışır.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Plan</th><th>Opus + 1M context</th><th>Sonnet 4.6 + 1M context</th></tr></thead>
+        <tbody>
+          <tr><td>Max, Team, Enterprise</td><td>Aboneliğe dahil, otomatik yükseltme</td><td>Usage credits gerekir</td></tr>
+          <tr><td>Pro</td><td>Usage credits gerekir</td><td>Usage credits gerekir</td></tr>
+          <tr><td>API / pay-as-you-go</td><td>Tam erişim</td><td>Tam erişim</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Hesabın destekliyorsa seçenek <code>/model</code> picker'ında görünür. Alias'lara
+    <code>[1m]</code> soneki de eklenebilir:</p>
+
+    <pre><code><span class="c"># alias ile</span>
+/model opus[1m]
+/model sonnet[1m]
+
+<span class="c"># ya da tam model adına ekleyerek</span>
+/model claude-opus-4-8[1m]</code></pre>
+
+    <div class="note">
+      <span class="tag">Sonnet 5 istisnası</span>
+      Anthropic API'de Sonnet 5 <strong>daima</strong> 1M ile çalışır: 200K varyantı yok,
+      seçilecek bir <code>[1m]</code> soneki yok, hiçbir planda usage credits gerekmiyor.
+      İki durum bunu 200K'ya düşürür: <code>ANTHROPIC_BASE_URL</code> bir LLM gateway'i
+      gösteriyorsa (Claude Code 1M desteğini doğrulayamaz — picker'dan "Sonnet 5 (1M context)"
+      seçmen gerekir) ve <code>CLAUDE_CODE_DISABLE_1M_CONTEXT=1</code> ayarlıysa.
+    </div>
+
+    <p>1M context <strong>standart model fiyatlandırması</strong> kullanır; 200K'nın ötesindeki
+    token'lar için ek prim yoktur. 1M'i tamamen kapatmak için
+    <code>CLAUDE_CODE_DISABLE_1M_CONTEXT=1</code> — bu, 1M varyantlarını model picker'dan da
+    kaldırır.</p>
+
+    <div class="note warn">
+      <span class="tag">Amazon Bedrock / Google Cloud / Microsoft Foundry</span>
+      Bu sağlayıcılarda <code>[1m]</code> soneki <strong>değişken başına</strong> okunur. Bir
+      değişkende sonek olmayan model ID'si, başka bir değişken aynı modeli sonekle tanımlasa bile
+      200K context kullanır. Sonnet 5 bu sağlayıcılarda da daima 1M çalışır, soneke ihtiyaç duymaz.
+    </div>
+  </section>
+
+  <section id="m3">
+    <h2><span class="num">03</span> Tahmin etme, /context'e bak</h2>
+    <p>Tahmin yürütme — bak. <code>/context</code> anlık kullanımı renkli bir grid olarak,
+    kategori kırılımıyla gösterir; hangi <code>CLAUDE.md</code> ve auto memory dosyalarının
+    yüklendiğini de listeler. Context-heavy tool'lar, memory şişmesi ve kapasite uyarıları için
+    optimizasyon önerileri sunar.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Komut</th><th>Ne gösterir</th></tr></thead>
+        <tbody>
+          <tr><td><code>/context</code></td><td>Anlık bağlam kullanımı, kategori kırılımı, öneriler. Fullscreen'de kırılım katlanır; <code>/context all</code> açar.</td></tr>
+          <tr><td><code>/usage</code> <span style="opacity:.6">(alias: <code>/cost</code>)</span></td><td>Token ve maliyet istatistikleri. Abonelikte plan limiti barları, skill/subagent/plugin/MCP kırılımı. <code>d</code>/<code>w</code> ile 24 saat ↔ 7 gün.</td></tr>
+          <tr><td><code>/memory</code></td><td><code>CLAUDE.md</code> ve auto memory dosyalarını açar, düzenletir.</td></tr>
+          <tr><td><code>/mcp</code></td><td>MCP sunucularının durumu ve sunucu başına maliyet.</td></tr>
+          <tr><td><code>/doctor</code></td><td>Kurulum, ayar, eklenti <em>ve</em> bağlam kullanımı denetimi; önerdiği düzeltmeleri onayınla uygular.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Sürekli görünürlük istiyorsan bağlam kullanımını <strong>statusline</strong>'a koyabilirsin;
+    o zaman <code>/context</code>'i hatırlamak zorunda kalmazsın.</p>
+
+    <div class="note">
+      <span class="tag">Abonelikte faydalı ayrıntı</span>
+      Pro, Max, Team ve Enterprise planlarında <code>/usage</code>, son kullanımının %10 veya
+      fazlasını oluşturan davranışları ayrıca işaretler — "long context" ve "cache misses" gibi —
+      ve her biri için azaltma ipucu verir. Bağlam sorunun olup olmadığını en hızlı buradan
+      anlarsın.
+    </div>
+  </section>
+
+  <section id="m4">
+    <h2><span class="num">04</span> Auto-compact sırtını sıvazlar</h2>
+    <p>Context window'un dolması oturumunu bitirmez. Claude Code sınıra yaklaştıkça
+    <strong>otomatik olarak compact eder</strong>: önce eski tool çıktılarını temizler, gerekirse
+    konuşmayı özetler. Bu otomatik geçiş, elle çalıştırdığın <code>/compact</code> ile aynı
+    şekilde çalışır.</p>
+
+    <h3>Varsayılan eşik</h3>
+    <p>Hiçbir yerde pencere boyutu ayarlanmamışsa Claude Code, konuşma <strong>modelin context
+    limitine ulaştığında</strong> compact eder. İstisnalar — bunlar daha erken compact eder:</p>
+    <ul>
+      <li><strong>Cloud session'lar:</strong> konuşma modelin limitine <em>yaklaşırken</em> compact eder.</li>
+      <li><strong>Sonnet 4.6 ve Opus 4.6</strong> (extended context olmadan): 200K sınırında. Opus 4.8 ve Opus 5 de 200K pencereyle çalıştıklarında aynı — örneğin Amazon Bedrock, Google Cloud's Agent Platform ve Microsoft Foundry üzerinde.</li>
+      <li><strong>Sonnet 5:</strong> modelin varsayılan eşiğinde — 1M penceresi dolmadan, yaklaşık <strong>967K token</strong> civarında.</li>
+    </ul>
+
+    <h3>Eşiği değiştirmek</h3>
+    <p>Daha erken compact olmasını istiyorsan (örneğin özetin daha küçük ve daha isabetli olması
+    için) pencereyi kendin belirleyebilirsin. Üç yer var, öncelik sırasıyla:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yöntem</th><th>Kapsam</th><th>Not</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>CLAUDE_CODE_AUTO_COMPACT_WINDOW</code></td>
+            <td>Script'ler, cloud ortamlar</td>
+            <td><strong>Hepsini ezer.</strong> Ayarlıyken <code>/autocompact</code> pencereyi değiştirmez, override'ı bildirir. Sadece düz token sayısı kabul eder.</td>
+          </tr>
+          <tr>
+            <td><code>claude --autocompact &lt;değer&gt;</code></td>
+            <td>Tek başlatma</td>
+            <td>Kayıtlı ayarı o oturum için ezer, ayarı değiştirmez. <code>/autocompact</code>'ten farklı olarak managed settings gibi üst kapsamlar tarafından engellenmez.</td>
+          </tr>
+          <tr>
+            <td><code>/autocompact &lt;değer&gt;</code></td>
+            <td>Bu ve sonraki oturumlar</td>
+            <td>User settings'e <code>autoCompactWindow</code> olarak kaydeder. Üst kapsam (ör. managed settings) bu anahtarı ayarlıyorsa değerin kaydedilir ama oturum o kapsamın penceresinde kalır — komut bunu söyler.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><code><span class="c"># bu ve sonraki oturumlar için 500K'da compact et</span>
+/autocompact 500k
+
+<span class="c"># modele göre ayarlanmış varsayılana dön</span>
+/autocompact auto
+
+<span class="c"># tek başlatma için</span>
+claude --autocompact 300k</code></pre>
+
+    <p>Komut ve flag <strong>100K ile 1M arası</strong> bir pencere kabul eder, üç biçimde:
+    düz token sayısı (<code>200000</code>), <code>k</code>/<code>M</code> soneki
+    (<code>500k</code>, <code>1M</code>) veya 100–1000 arası çıplak sayı — binler anlamında,
+    yani <code>200</code> = 200.000. Ortam değişkeni yalnızca düz token sayısını kabul eder.
+    Claude Code pencereyi her hâlükârda modelin context window'uyla sınırlar.</p>
+
+    <div class="note warn">
+      <span class="tag">Sürüm gereksinimi</span>
+      <code>/autocompact</code> komutu Claude Code <strong>v2.1.221</strong> ve sonrasını
+      gerektirir. Sürümünü <code>claude --version</code> ile kontrol et.
+    </div>
+  </section>
+
+  <section id="m5">
+    <h2><span class="num">05</span> /compact mı /clear mı?</h2>
+    <p>İkisi de yer açar ama tamamen farklı şeyler yapar — ve <strong>maliyetleri de farklı</strong>.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Komut</th><th>Ne yapar</th><th>Ne zaman</th><th>Maliyet</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>/compact [talimat]</code></td>
+            <td>Konuşmayı özete indirger, devamlılık korunur</td>
+            <td>Aynı işe devam edeceksen</td>
+            <td>Özetlediği konuşmayı okur — <strong>büyük bir istektir</strong></td>
+          </tr>
+          <tr>
+            <td><code>/clear [ad]</code></td>
+            <td>Boş bağlamla yeni konuşma başlatır</td>
+            <td>Alakasız bir işe geçiyorsan</td>
+            <td>Sıfır</td>
+          </tr>
+          <tr>
+            <td><code>/rewind</code></td>
+            <td>Kodu ve konuşmayı bir checkpoint'e geri alır</td>
+            <td>Claude yanlış yöne gittiyse</td>
+            <td>Düşük</td>
+          </tr>
+          <tr>
+            <td><code>/resume</code></td>
+            <td>Önceki bir konuşmaya döner</td>
+            <td><code>/clear</code> sonrası geri dönmek için</td>
+            <td>Geçmişi yeniden yükler</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><code>/compact</code>'e <strong>odak talimatı</strong> verebilirsin. Bu, otomatik geçişin
+    "önemli" diye tahmin ettiği şey yerine senin seçtiğini korur:</p>
+
+    <pre><code>/compact focus on the auth bug fix
+/compact keep only the plan and the diff
+/compact Focus on code samples and API usage</code></pre>
+
+    <p>Aynı yönlendirmeyi her seferinde yazmak yerine projenin <code>CLAUDE.md</code>'sine kalıcı
+    olarak koyabilirsin:</p>
+
+    <pre><code><span class="c">// CLAUDE.md</span>
+<span class="k"># Compact instructions</span>
+
+When you are using compact, please focus on test output and code changes</code></pre>
+
+    <div class="note">
+      <span class="tag">Küçük ama can sıkıcı ayrıntı</span>
+      Yeni bir oturumda <code>/compact</code> çalıştırırsan <code>Not enough messages to
+      compact.</code> yazar — özetlenecek konuşma geçmişi yoktur. Bu, bağlam <em>dolu</em> olsa
+      bile olabilir: tek bir büyük yapıştırma pencereyi doldurduysa, özetlenecek yeterli tur yoktur.
+    </div>
+
+    <p><code>/clear</code> yapmadan önce <code>/rename</code> ile oturuma bir ad ver; sonra
+    <code>/resume</code> picker'ında kolayca bulursun. Ayrıca <code>/clear [ad]</code> biçimi
+    önceki konuşmayı picker'da etiketler. Not: <code>/clear</code> ile başlayan yeni oturumda
+    <code>/usage</code> toplamları da sıfırlanır.</p>
+  </section>
+
+  <section id="m6">
+    <h2><span class="num">06</span> Compaction'dan ne sağ çıkar?</h2>
+    <p>Bu tablo, "compact'ten sonra Claude kuralımı unuttu" probleminin doğrudan cevabı.
+    Talimatının compaction'dan sağ çıkıp çıkmaması, <strong>nasıl yüklendiğine</strong> bağlı:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Mekanizma</th><th>Compaction sonrası</th></tr></thead>
+        <tbody>
+          <tr><td>System prompt ve output style</td><td>Değişmez; message history'nin parçası değil</td></tr>
+          <tr><td>Proje kökündeki <code>CLAUDE.md</code> ve scope'suz rule'lar</td><td>Diskten yeniden enjekte edilir</td></tr>
+          <tr><td>Auto memory</td><td>Diskten yeniden enjekte edilir</td></tr>
+          <tr><td><code>paths:</code> frontmatter'lı rule'lar</td><td><strong>Kaybolur</strong> — eşleşen bir dosya tekrar okunana kadar</td></tr>
+          <tr><td>Alt dizinlerdeki <code>CLAUDE.md</code></td><td><strong>Kaybolur</strong> — o dizinden bir dosya tekrar okunana kadar</td></tr>
+          <tr><td>Çağrılmış skill gövdeleri</td><td>Yeniden enjekte edilir; skill başına 5.000, toplamda 25.000 token ile sınırlı — en eskiler önce düşer</td></tr>
+          <tr><td>Hook'lar</td><td>Konu dışı; hook'lar bağlam değil, kod olarak çalışır</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Kalıcı olması gereken kural</span>
+      Bir kuralın compaction'dan sağ çıkması gerekiyorsa <code>paths:</code> frontmatter'ını
+      kaldır veya kuralı <strong>proje kökündeki</strong> <code>CLAUDE.md</code>'ye taşı.
+      Konuşma geçmişine güvenme — erken turlardaki ayrıntılı talimatlar özetlenip gidebilir.
+    </div>
+
+    <p>Skill gövdeleri yeniden enjekte edilirken büyük skill'ler sınıra sığdırmak için kırpılır.
+    Kırpma <strong>dosyanın başını korur</strong> — bu yüzden en kritik talimatları
+    <code>SKILL.md</code>'nin en üstüne koy.</p>
+
+    <p>Compaction sırasında özetleme isteği (v2.1.198'den itibaren) oturumunun extended thinking
+    ayarını devralır: oturumunda açıksa düşünerek özetler, kapalıysa kapalı kalır. Bu yalnızca
+    özetin nasıl üretildiğini etkiler; oturum ayarların sonrasında değişmez.</p>
+  </section>
+
+  <section id="m7">
+    <h2><span class="num">07</span> Tıkandığın anlar</h2>
+    <p>Pratikte karşılaşacağın durumlar ve ne yapman gerektiği:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Belirti</th><th>Muhtemel sebep</th><th>Aksiyon</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Uzun bir oturumda Claude erken söylediklerini unutuyor</td>
+            <td>Auto-compact devreye girdi, o talimatlar özetlenip gitti</td>
+            <td>Kalıcı kuralları <code>CLAUDE.md</code>'ye taşı; bir sonraki uzun iş öncesi <code>/compact &lt;odak&gt;</code> çalıştır</td>
+          </tr>
+          <tr>
+            <td>Alakasız bir işe geçtin, Claude eski işten bahsediyor</td>
+            <td>Bayat bağlam her mesajda taşınıyor</td>
+            <td><code>/clear</code> — ücretsiz ve temiz</td>
+          </tr>
+          <tr>
+            <td><code>Autocompact is thrashing: the context refilled to the limit...</code></td>
+            <td>Compaction başarılı oluyor ama tek bir dosya/tool çıktısı bağlamı üst üste anında dolduruyor</td>
+            <td>Aşağıdaki kurtarma adımları</td>
+          </tr>
+          <tr>
+            <td>Bir soru sordun, kullanım beklenmedik şekilde arttı</td>
+            <td>Long context: tüm konuşma her istekte gönderiliyor</td>
+            <td><code>/context</code> ile bak, <code>/clear</code> veya <code>/compact</code></td>
+          </tr>
+          <tr>
+            <td>Aradan sonra ilk mesaj çok pahalıya geldi</td>
+            <td>Cache miss — prompt cache ömrü doldu, tüm bağlam yeniden işlendi</td>
+            <td>Uzun molalardan sonra <code>/clear</code>; Pro/Max'te büyük oturumu özetten devam etme teklifini kabul et</td>
+          </tr>
+          <tr>
+            <td>Büyük bir log/dosya inceletmen gerekiyor</td>
+            <td>İçerik doğrudan ana bağlama girecek</td>
+            <td>İşi bir <strong>subagent</strong>'a devret; sadece özet geri döner</td>
+          </tr>
+          <tr>
+            <td><code>/compact</code> "Not enough messages to compact." diyor</td>
+            <td>Özetlenecek yeterli konuşma turu yok</td>
+            <td><code>/clear</code> veya büyük yapıştırmayı dosyaya alıp parça parça okut</td>
+          </tr>
+          <tr>
+            <td>"Context veya auto-compact uyarısı" aldın</td>
+            <td>Bu bir <strong>kullanım limiti değil</strong> — sadece auto-compact eşiğine yaklaştın</td>
+            <td>Panik yok; bölüm 08'deki tekniklerle bağlamı küçült</td>
+          </tr>
+          <tr>
+            <td>Bağlamın büyük kısmını MCP tool'ları yiyor</td>
+            <td>Kullanılmayan MCP sunucuları açık</td>
+            <td><code>/mcp</code> ile kapat; mümkünse MCP yerine CLI aracı kullan</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Thrashing hatasından kurtulma</h3>
+    <p>Claude Code, ilerlemeyen bir döngüde API çağrısı harcamamak için birkaç denemeden sonra
+    otomatik compaction'ı durdurup hata gösterir. Sırayla dene:</p>
+    <ul>
+      <li>Claude'dan büyük dosyayı <strong>parça parça</strong> okumasını iste — belirli bir satır aralığı veya fonksiyon, tamamı değil.</li>
+      <li>Büyük çıktıyı düşüren bir odakla compact et: <code>/compact keep only the plan and the diff</code></li>
+      <li>Büyük dosya işini bir <strong>subagent</strong>'a taşı — ayrı bir context window'da çalışır.</li>
+      <li>Önceki konuşmaya artık ihtiyacın yoksa <code>/clear</code>.</li>
+    </ul>
+  </section>
+
+  <section id="m8">
+    <h2><span class="num">08</span> Şişmeden önlemek</h2>
+    <p>Compact etmek bir kurtarma manevrasıdır. Asıl kazanç, bağlamın hiç şişmemesini sağlamaktan
+    gelir.</p>
+
+    <h3>Subagent'lara devret</h3>
+    <p>Subagent'lar <strong>kendi ayrı context window'larında</strong> çalışır. Test çalıştırma,
+    dokümantasyon getirme, log dosyası işleme gibi hacimli işleri onlara verirsen ayrıntılı çıktı
+    subagent'ın bağlamında kalır, ana konuşmaya yalnızca özet döner. Uzun oturumlarda en yüksek
+    getirili tek hamle budur.</p>
+
+    <div class="note warn">
+      <span class="tag">Agent teams maliyeti</span>
+      <a href="https://code.claude.com/docs/en/agent-teams">Agent teams</a> her teammate için ayrı
+      bir Claude Code örneği ve ayrı context window açar. Plan mode'da çalışan takımlar standart
+      oturumlara göre <strong>yaklaşık 7 kat</strong> token kullanır. Takımları küçük tut,
+      teammate'ler için Sonnet seç, işi biten teammate'i kapat — aktif kaldığı sürece token
+      harcamaya devam eder.
+    </div>
+
+    <h3>Talimatları CLAUDE.md'den skill'lere taşı</h3>
+    <p><code>CLAUDE.md</code> oturum başında yüklenir ve <strong>her mesajda</strong> oradadır.
+    İçinde PR review veya veritabanı migration'ı gibi özel iş akışlarının ayrıntılı talimatları
+    varsa, alakasız bir iş yaparken bile o token'ları ödersin. Skill'ler ise yalnızca çağrıldığında
+    yüklenir. <code>CLAUDE.md</code>'yi <strong>200 satırın altında</strong> tutmayı hedefle ve
+    sadece esasları bırak.</p>
+
+    <p>Manuel çağırdığın skill'lerde <code>disable-model-invocation: true</code> kullanırsan
+    description'ları bile sen çağırana kadar bağlamın dışında kalır. Senin yazmadığın skill'ler
+    için aynı şeyi ayarlardan <code>skillOverrides</code> ile yapabilirsin.</p>
+
+    <h3>MCP yükünü azalt</h3>
+    <p>MCP tool tanımları varsayılan olarak <strong>deferred</strong>'dır: Claude belirli bir
+    tool'u kullanana kadar sadece adlar bağlama girer. Yine de <code>/mcp</code> ile kullanmadığın
+    sunucuları kapat. <code>gh</code>, <code>aws</code>, <code>gcloud</code>,
+    <code>sentry-cli</code> gibi CLI araçları MCP'den daha bağlam-verimlidir çünkü hiçbir tool
+    listesi eklemezler — Claude komutu doğrudan çalıştırır.</p>
+
+    <h3>Hook'larla ön işle</h3>
+    <p>Bir hook, Claude görmeden önce veriyi filtreleyebilir. 10.000 satırlık log dosyasını
+    okutmak yerine <code>ERROR</code> satırlarını çeken bir hook, bağlamı on binlerce token'dan
+    yüzlere indirir. Örnek: test çıktısını yalnızca başarısızlıklara indiren bir
+    <code>PreToolUse</code> hook'u.</p>
+
+    <pre><code><span class="c">// settings.json</span>
+{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"PreToolUse"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">"Bash"</span>,
+        <span class="s">"hooks"</span>: [
+          { <span class="s">"type"</span>: <span class="s">"command"</span>,
+            <span class="s">"command"</span>: <span class="s">"~/.claude/hooks/filter-test-output.sh"</span> }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+
+    <h3>Daha az arama gerektiren istekler yaz</h3>
+    <p>"Bu codebase'i iyileştir" gibi belirsiz istekler geniş taramayı tetikler.
+    "<code>auth.ts</code>'deki login fonksiyonuna input validation ekle" gibi belirli istekler,
+    Claude'un minimum dosya okumasıyla çalışmasını sağlar. Karmaşık işlerde önce
+    <strong>plan mode</strong> (Shift+Tab) kullan — yanlış yönde gidip pahalıya yeniden yapmayı
+    önler. Yanlış yöne gittiğini gördüğün an Escape'e bas.</p>
+
+    <p>Tipli diller için <a href="https://code.claude.com/docs/en/discover-plugins#code-intelligence">code
+    intelligence plugin'leri</a> de bağlam tasarrufu sağlar: tek bir "go to definition" çağrısı,
+    bir grep'in ardından birkaç aday dosyayı okumanın yerine geçer.</p>
+  </section>
+
+  <section id="m9">
+    <h2><span class="num">09</span> Uzun oturumda kullanım neden artar?</h2>
+    <p>Saatlerdir açık bir oturum, aktivitenin ima ettiğinden çok daha fazla plan limiti
+    tüketebilir. Sebepler:</p>
+
+    <ul>
+      <li><strong>Long context:</strong> Claude Code <em>tüm konuşmanı</em> her istekle gönderir; Claude her tool kullandığında da o tool sonuçlarını taşıyan yeni bir istek gider. Prompt caching sayesinde bu geçmiş cached token oranından okunur, ama gün boyu açık kalmış bir oturumdaki tek satırlık bir soru bile tüm konuşma için kullanım çeker.</li>
+      <li><strong>Cache miss:</strong> cache ömründen uzun bir aradan sonraki ilk mesaj cache'i ıskalar ve tüm bağlamı yeniden işler. Ömür abonelikte bir saattir, usage credits'e geçtiğinde beş dakikaya düşer; API anahtarı veya cloud sağlayıcıda varsayılan olarak beş dakikadır.</li>
+      <li><strong>Scheduled task'lar:</strong> oturum boştayken bile kendi aralığında tetiklenir ve her seferinde tüm bağlamını gönderir.</li>
+      <li><strong>Agent teammate'ler:</strong> her aktif teammate çıkana kadar token harcamaya devam eder.</li>
+      <li><strong>Compaction'ın kendisi:</strong> <code>/compact</code> özetlediği konuşmayı okur — büyük bir bağlamı compact etmek büyük bir istektir. Devamlılık değil de temiz başlangıç istiyorsan <code>/clear</code> hiçbir şeye mal olmaz.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Extended thinking</span>
+      Thinking token'ları output token olarak faturalanır ve varsayılan bütçe modele göre on
+      binlerce token olabilir. Derin akıl yürütme gerektirmeyen basit işlerde <code>/effort</code>
+      ile effort seviyesini düşürebilir, <code>/config</code>'den thinking'i kapatabilir veya sabit
+      thinking bütçesi olan modellerde <code>MAX_THINKING_TOKENS</code> ortam değişkenini
+      ayarlayabilirsin (ör. <code>MAX_THINKING_TOKENS=8000</code>). Adaptive-reasoning modelleri
+      sıfır olmayan bütçeleri yok sayar — orada effort seviyesi kullan. Fable 5'te thinking
+      kapatılamaz.
+    </div>
+  </section>
+
+  <section id="m10">
+    <h2><span class="num">10</span> Hızlı referans</h2>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Komut</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>/context [all]</code></td><td>Bağlam kullanımını renkli grid olarak göster</td></tr>
+          <tr><td><code>/compact [talimat]</code></td><td>Konuşmayı özetleyerek yer aç; opsiyonel odak talimatı</td></tr>
+          <tr><td><code>/clear [ad]</code></td><td>Boş bağlamla yeni konuşma (alias: <code>/reset</code>, <code>/new</code>)</td></tr>
+          <tr><td><code>/autocompact [auto|&lt;token&gt;]</code></td><td>Auto-compact penceresini ayarla (v2.1.221+)</td></tr>
+          <tr><td><code>/rewind</code></td><td>Kodu ve konuşmayı checkpoint'e geri al (Esc Esc)</td></tr>
+          <tr><td><code>/resume</code></td><td>Önceki konuşmaya dön</td></tr>
+          <tr><td><code>/usage</code></td><td>Token kullanımı ve maliyet (alias: <code>/cost</code>)</td></tr>
+          <tr><td><code>/memory</code></td><td><code>CLAUDE.md</code> ve auto memory dosyalarını düzenle</td></tr>
+          <tr><td><code>/export [dosya]</code></td><td>Konuşmayı düz metin olarak dışa aktar</td></tr>
+          <tr><td><code>/model opus[1m]</code></td><td>1M context window'lu varyanta geç</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Ayar / değişken</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>autoCompactWindow</code></td><td>settings.json: auto-compact penceresi</td></tr>
+          <tr><td><code>CLAUDE_CODE_AUTO_COMPACT_WINDOW</code></td><td>Auto-compact penceresi; komut, flag ve ayarı ezer (yalnız düz token sayısı)</td></tr>
+          <tr><td><code>claude --autocompact &lt;değer&gt;</code></td><td>Tek başlatma için pencere</td></tr>
+          <tr><td><code>CLAUDE_CODE_DISABLE_1M_CONTEXT=1</code></td><td>1M context'i tamamen kapat, picker'dan kaldır</td></tr>
+          <tr><td><code>ENABLE_TOOL_SEARCH</code></td><td><code>auto</code>: şemalar context'in %10'una sığıyorsa önden yükle · <code>false</code>: hepsini yükle</td></tr>
+          <tr><td><code>MAX_THINKING_TOKENS</code></td><td>Sabit thinking bütçeli modellerde bütçeyi düşür</td></tr>
+          <tr><td><code>skillOverrides</code></td><td>Skill görünürlüğünü ayarlardan bastır</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Alakasız işe geçerken</strong> <code>/clear</code> — bedava.</li>
+        <li><strong>Aynı işe devam ederken</strong> <code>/compact &lt;odak&gt;</code>.</li>
+        <li><strong>Kalıcı kural</strong> konuşmaya değil, proje kökündeki <code>CLAUDE.md</code>'ye.</li>
+        <li><strong>Hacimli okuma</strong> subagent'a.</li>
+        <li><strong>Emin değilsen</strong> önce <code>/context</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Kaynaklar:
+    <a href="https://code.claude.com/docs/en/context-window">context-window</a> ·
+    <a href="https://code.claude.com/docs/en/costs">costs</a> ·
+    <a href="https://code.claude.com/docs/en/model-config">model-config</a> ·
+    <a href="https://code.claude.com/docs/en/how-claude-code-works">how-claude-code-works</a> ·
+    <a href="https://code.claude.com/docs/en/troubleshooting">troubleshooting</a>
+  </footer>
+
+</div>
+</body>
+</html>

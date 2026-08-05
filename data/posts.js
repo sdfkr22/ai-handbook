@@ -1,0 +1,91 @@
+// OTOMATİK ÜRETİLDİ — elle düzenleme. Yenilemek için: node scripts/build.mjs
+window.YAZILAR = [
+  {
+    "dosya": "posts/context-management-guide.html",
+    "baslik": "Context window dolduğunda!!",
+    "aciklama": "Context window'a neler yükleniyor, sınır kaç token, auto-compact hangi eşikte devreye giriyor ve /compact, /clear, subagent arasında nasıl seçim yapılır — senaryo senaryo.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "context window",
+      "compact",
+      "autocompact",
+      "token",
+      "1M context",
+      "subagent",
+      "CLAUDE.md",
+      "maliyet"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/context-window",
+    "tarih": "2026-08-05"
+  },
+  {
+    "dosya": "posts/creating-subagents-guide.html",
+    "baslik": "Kendi subagent'ını yazmak",
+    "aciklama": "Subagent ne zaman kurulur, dosyası nereye konur, hangi frontmatter alanı ne yapar ve araç erişimi nasıl kısıtlanır — altı bitmiş örnek senaryoyla.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "subagents",
+      "agents",
+      "frontmatter",
+      "tools",
+      "permissionMode",
+      "memory",
+      "orkestrasyon",
+      "background"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/sub-agents",
+    "tarih": "2026-08-03"
+  },
+  {
+    "dosya": "posts/hooks-guide.html",
+    "baslik": "Talimat rica eder, hook zorlar",
+    "aciklama": "CLAUDE.md'ye yazdığın kurala model uyabilir de uymayabilir de. Hook ise harness'in çalıştırdığı koddur: event'ler, matcher'lar, exit kod davranışı ve altı çalışan örnek.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "hooks",
+      "PreToolUse",
+      "PostToolUse",
+      "settings.json",
+      "exit code",
+      "matcher",
+      "guardrail",
+      "otomasyon"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/hooks",
+    "tarih": "2026-08-03"
+  },
+  {
+    "dosya": "posts/writing-skills-guide.html",
+    "baslik": "Sıfırdan skill yazmak",
+    "aciklama": "İlk SKILL.md dosyandan test etmeye kadar: skill ne zaman yazılır, description nasıl kurulur, gövde ne kadar kısa olmalı, destekleyici dosyalar ve script'ler nasıl bağlanır.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "skills",
+      "SKILL.md",
+      "frontmatter",
+      "progressive disclosure",
+      "description",
+      "subagent",
+      "eval"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/skills",
+    "tarih": "2026-07-30"
+  },
+  {
+    "dosya": "posts/claude-code-steering-handbook.html",
+    "baslik": "Skills? Rules? Hooks? Hangisi ne zaman?",
+    "aciklama": "CLAUDE.md, rules, skills, subagents, hooks, output styles ve system prompt — Claude'a talimat vermenin yedi yolu.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "CLAUDE.md",
+      "rules",
+      "skills",
+      "subagents",
+      "hooks",
+      "output styles"
+    ],
+    "kaynak": "https://claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more",
+    "tarih": "2026-06-25"
+  }
+];
+window.YAZILAR_GUNCELLEME = "2026-08-05";

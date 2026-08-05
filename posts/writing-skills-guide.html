@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sıfırdan skill yazmak</title>
+<meta name="yazi:baslik" content="Sıfırdan skill yazmak">
+<meta name="yazi:aciklama" content="İlk SKILL.md dosyandan test etmeye kadar: skill ne zaman yazılır, description nasıl kurulur, gövde ne kadar kısa olmalı, destekleyici dosyalar ve script'ler nasıl bağlanır.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="skills, SKILL.md, frontmatter, progressive disclosure, description, subagent, eval">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/skills">
+<meta name="yazi:tarih" content="2026-07-30">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · Skills</p>
+    <h1>Sıfırdan<br><em>skill yazmak</em></h1>
+    <p class="lede">Bir skill, klasör içinde duran tek bir <code>SKILL.md</code> dosyasından ibarettir: üstte Claude'un
+      "bunu ne zaman kullanmalıyım" sorusunu cevaplayan birkaç satır, altında talimatlar. Bu sayfa o dosyayı ilk
+      kez yazacak biri için baştan sona ilerliyor — ilk çalışan örnek, <code>description</code>'ın neden en kritik
+      alan olduğu, gövdenin ne kadar kısa olması gerektiği, destekleyici dosyalar, script bağlama ve test etme.</p>
+    <p class="source">30 Temmuz 2026 · Referans: <a href="https://code.claude.com/docs/en/skills">code.claude.com/docs/en/skills</a> + <a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices">skill authoring best practices</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Skill nedir, ne zaman yazılır</a></li>
+      <li><a href="#m2"><span class="n">02</span> İlk skill: adım adım</a></li>
+      <li><a href="#m3"><span class="n">03</span> Anatomi ve skill nerede yaşar</a></li>
+      <li><a href="#m4"><span class="n">04</span> description: tetiklemeyi belirleyen alan</a></li>
+      <li><a href="#m5"><span class="n">05</span> Gövde: kısalık ve degrees of freedom</a></li>
+      <li><a href="#m6"><span class="n">06</span> Frontmatter: işe yarayan alanlar</a></li>
+      <li><a href="#m7"><span class="n">07</span> Progressive disclosure</a></li>
+      <li><a href="#m8"><span class="n">08</span> Script bağlamak</a></li>
+      <li><a href="#m9"><span class="n">09</span> Argümanlar ve dinamik context</a></li>
+      <li><a href="#m10"><span class="n">10</span> Gerçek örnek: bu sitenin skill'i</a></li>
+      <li><a href="#m11"><span class="n">11</span> Test et, ölç, iyileştir</a></li>
+      <li><a href="#m12"><span class="n">12</span> Sık yapılan hatalar</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============================================================ -->
+  <section id="m1">
+    <h2><span class="num">01</span> Skill nedir, ne zaman yazılır</h2>
+    <p>Skill, Claude'un araç çantasına eklenen bir <strong>prosedür</strong>dür. Bir klasör açar, içine
+      <code>SKILL.md</code> koyarsın; Claude ya konuyla ilgili bir şey istediğinde kendisi yükler, ya da
+      <code>/skill-adı</code> yazarak sen çağırırsın. Ekstra bir kayıt dosyası, kurulum veya derleme adımı yok —
+      dosyayı yazdığın an skill vardır.</p>
+
+    <div class="card">
+      <p style="margin-bottom:8px;"><strong>Skill yazmanın zamanı geldiğinin iki işareti:</strong></p>
+      <ul style="margin-bottom:0;">
+        <li>Aynı talimat listesini, checklist'i veya çok adımlı prosedürü sohbete <strong>tekrar tekrar yapıştırıyorsun</strong>.</li>
+        <li><code>CLAUDE.md</code> içindeki bir bölüm artık bir <em>bilgi</em> değil bir <strong>prosedür</strong> haline geldi — "şunu yaparken önce şu, sonra bu" diye uzuyor.</li>
+      </ul>
+    </div>
+
+    <p>İkinci madde teknik bir fark da içeriyor: <code>CLAUDE.md</code> her oturumun başında context'e girer ve orada
+      durur. Skill'in gövdesi ise <strong>yalnızca kullanıldığında</strong> yüklenir. Bu yüzden uzun referans
+      malzemesi bir skill'de neredeyse bedava taşınır; aynı metin <code>CLAUDE.md</code>'de her oturuma bindirilen
+      sabit bir maliyettir.</p>
+
+    <div class="note">
+      <span class="tag">Not</span>
+      Custom command'lar skill'lerle birleştirildi. <code>.claude/commands/deploy.md</code> ile
+      <code>.claude/skills/deploy/SKILL.md</code> ikisi de <code>/deploy</code> komutunu üretir ve aynı şekilde
+      çalışır. Mevcut <code>commands/</code> dosyaların çalışmaya devam eder; skill formatı bunlara destekleyici
+      dosya klasörü, çağırma denetimi ve Claude'un kendiliğinden yükleyebilmesi özelliklerini ekler.
+    </div>
+
+    <p>Bu sayfa skill <em>yazmayı</em> anlatıyor. Skill yerine rules, hooks veya subagent'ın daha doğru olduğu
+      durumlar için <a href="claude-code-steering-handbook.html" style="color:var(--ink-soft);">Skills? Rules? Hooks?</a>
+      sayfasına, frontmatter alanlarının tam listesi ve yerleşik komutlar için
+      <a href="../archive/slash-commands-guide.html" style="color:var(--ink-soft);">slash command'ların tamamı</a> sayfasına bak.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m2">
+    <h2><span class="num">02</span> İlk skill: adım adım</h2>
+    <p>En hızlı öğrenme yolu çalışan bir örnek. Aşağıdaki skill, commit'lenmemiş değişiklikleri özetleyip riskli
+      görünen yerleri işaretler. Kişisel klasöre koyduğumuz için bütün projelerinde kullanılabilir olacak.</p>
+
+    <h3>1. Klasörü aç</h3>
+    <pre><code><span class="k">mkdir</span> -p ~/.claude/skills/summarize-changes</code></pre>
+    <p>Windows'ta PowerShell kullanıyorsan: <code>New-Item -ItemType Directory -Force ~/.claude/skills/summarize-changes</code>.
+      Klasörün adı — <code>summarize-changes</code> — aynı zamanda yazacağın komutun adıdır.</p>
+
+    <h3>2. SKILL.md dosyasını yaz</h3>
+    <p>Dosyanın iki parçası var: <code>---</code> çizgileri arasındaki YAML frontmatter (Claude'a bunu <em>ne zaman</em>
+      kullanacağını söyler) ve altındaki markdown gövde (skill çalıştığında <em>ne yapacağını</em> söyler).</p>
+    <pre><code><span class="c"># ~/.claude/skills/summarize-changes/SKILL.md</span>
+---
+<span class="k">description</span>: <span class="s">Summarizes uncommitted changes and flags anything risky. Use when the
+  user asks what changed, wants a commit message, or asks to review their diff.</span>
+---
+
+## Current changes
+
+!`git diff HEAD`
+
+## Instructions
+
+Summarize the changes above in two or three bullet points, then list any risks
+you notice such as missing error handling, hardcoded values, or tests that need
+updating. If the diff is empty, say there are no uncommitted changes.</code></pre>
+
+    <p>Buradaki <code>!`git diff HEAD`</code> satırı bir <strong>dinamik context</strong> yerleştirmesi: Claude
+      dosyayı görmeden <em>önce</em> Claude Code komutu çalıştırır ve satırı çıktısıyla değiştirir. Yani Claude'a
+      "diff'e bak" demiyorsun, diff'in kendisi prompt'un içinde geliyor.</p>
+
+    <h3>3. Dene</h3>
+    <p>Bir git projesinde küçük bir değişiklik yap, <code>claude</code> ile başlat ve iki yoldan birini kullan:</p>
+    <ul>
+      <li><strong>Claude kendisi çağırsın:</strong> "Ne değiştirdim?" diye sor — description'la eşleşir.</li>
+      <li><strong>Sen çağır:</strong> <code>/summarize-changes</code> yaz.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Kolaylık</span>
+      Claude Code skill klasörlerini izler; <code>SKILL.md</code>'yi düzenlediğinde oturumu yeniden başlatman
+      gerekmez. Ayrıntısı ve tek istisnası bir sonraki bölümde.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m3">
+    <h2><span class="num">03</span> Anatomi ve skill nerede yaşar</h2>
+    <p>Bir skill her zaman bir klasördür ve giriş noktası <code>SKILL.md</code>'dir. Diğer her şey isteğe bağlıdır:</p>
+    <pre><code>my-skill/
+├── SKILL.md           <span class="c"># ana talimatlar (zorunlu)</span>
+├── template.md        <span class="c"># Claude'un dolduracağı şablon</span>
+├── examples/
+│   └── sample.md      <span class="c"># beklenen çıktı örneği</span>
+└── scripts/
+    └── validate.sh    <span class="c"># Claude'un çalıştırabileceği script</span></code></pre>
+
+    <p>Dosyayı nereye koyduğun, kimin kullanabileceğini belirler:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Konum</th><th>Yol</th><th>Kapsam</th></tr></thead>
+        <tbody>
+          <tr><td>Personal</td><td><code>~/.claude/skills/&lt;ad&gt;/SKILL.md</code></td><td>Bütün projelerin</td></tr>
+          <tr><td>Project</td><td><code>.claude/skills/&lt;ad&gt;/SKILL.md</code></td><td>Sadece bu proje (repoya commit edilir)</td></tr>
+          <tr><td>Plugin</td><td><code>&lt;plugin&gt;/skills/&lt;ad&gt;/SKILL.md</code></td><td>Plugin'in etkin olduğu yerler</td></tr>
+          <tr><td>Enterprise</td><td>managed settings üzerinden</td><td>Kurumdaki tüm kullanıcılar</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Aynı ad birden çok seviyede varsa öncelik sırası <strong>enterprise → personal → project</strong> şeklindedir;
+      bu seviyelerden herhangi biri aynı adlı bir yerleşik (bundled) skill'i de geçersiz kılar. Örneğin projendeki
+      <code>code-review</code> skill'i yerleşik <code>/code-review</code>'in yerine geçer. Plugin skill'leri
+      <code>plugin-adı:skill-adı</code> alanında yaşadığı için çakışmaz.</p>
+
+    <p>Komutun adı klasör adından gelir: <code>.claude/skills/deploy-staging/SKILL.md</code> →
+      <code>/deploy-staging</code>. Frontmatter'daki <code>name</code> alanı kişisel ve proje skill'lerinde yalnızca
+      listelerde görünen etiketi değiştirir, yazdığın komutu değil. (Plugin skill'lerinde <code>name</code> komutun
+      son parçasını da belirler; tüm yerleşimler için ad kaynağı tablosu
+      <a href="../archive/slash-commands-guide.html#m5" style="color:var(--ink-soft);">slash command sayfasında</a>.)</p>
+
+    <h3>Keşif ve canlı yenileme</h3>
+    <p>Skill'in ne zaman "var" olduğunu bilmek, yazdığın dosyanın neden görünmediğini anlamak için gerekiyor:</p>
+    <ul>
+      <li>Proje skill'leri, Claude Code'u başlattığın dizinden repo köküne kadar <strong>her üst dizindeki</strong>
+        <code>.claude/skills/</code>'ten yüklenir. Alt dizinde başlatsan bile kökteki skill'ler gelir.</li>
+      <li>Alt dizinlerdeki skill'ler açılışta yüklenmez; Claude o alt dizindeki bir dosyayı ilk kez okuduğunda veya
+        düzenlediğinde devreye girer ve oturum boyunca kalır. O ana kadar autocomplete'te görünmezler.</li>
+      <li>Ad çakışan iç içe skill'lerde <code>/deploy</code> kök skill'ini çalıştırır; alt dizindeki sürüm
+        <code>apps/web:deploy</code> gibi dizinle nitelenmiş bir adla listelenir ve açıkça öyle çağrılır.</li>
+      <li><code>--add-dir</code> ile eklenen dizinlerin <code>.claude/skills/</code> klasörü otomatik yüklenir —
+        ek dizinler normalde yapılandırma yüklemez, skill'ler bunun istisnasıdır.</li>
+      <li><strong>Canlı değişiklik algılama:</strong> skill dosyası ekleme, düzenleme ve silme aynı oturumda
+        etkili olur. Tek istisna: oturum başlarken <strong>hiç var olmayan</strong> bir üst düzey skills dizini
+        oluşturduysan Claude Code'u yeniden başlatman gerekir.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Gerçek bir örnek</span>
+      Bu sitedeki ilk skill tam da bu yüzden ilk çağrıda bulunamamıştı: <code>.claude/skills/</code> dizini oturum
+      başladığında yoktu, sonradan oluşturuldu. Dizin zaten varken eklenen skill'ler anında görünür.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m4">
+    <h2><span class="num">04</span> description: tetiklemeyi belirleyen alan</h2>
+    <p>Oturum başında Claude skill'lerin <strong>gövdesini görmez</strong> — yalnızca ad ve description'lardan oluşan
+      bir liste görür. Yani "skill'im neden tetiklenmiyor?" sorusunun cevabı hemen her zaman description'dadır.
+      Gövde ne kadar iyi yazılmış olursa olsun, description eşleşmezse hiç okunmaz.</p>
+
+    <p>İyi bir description iki şeyi birden söyler: <strong>ne yapar</strong> ve <strong>ne zaman kullanılır</strong>.
+      İkincisi için kullanıcının gerçekten yazacağı kelimeleri koy.</p>
+
+    <pre><code><span class="c"># iyi — ne yaptığı + tetikleyici terimler</span>
+<span class="k">description</span>: <span class="s">Extract text and tables from PDF files, fill forms, merge documents.
+  Use when working with PDF files or when the user mentions PDFs, forms, or
+  document extraction.</span>
+
+<span class="c"># iyi — hangi isteklerde devreye gireceği açık</span>
+<span class="k">description</span>: <span class="s">Generate descriptive commit messages by analyzing git diffs. Use when
+  the user asks for help writing commit messages or reviewing staged changes.</span>
+
+<span class="c"># kötü — hiçbir tetikleyici terim yok</span>
+<span class="k">description</span>: <span class="s">Helps with documents</span></code></pre>
+
+    <div class="note warn">
+      <span class="tag">Her zaman üçüncü şahıs</span>
+      Description doğrudan system prompt'a enjekte edilir. <span style="color:var(--ink)">"Processes Excel files and
+      generates reports"</span> yaz; <span style="color:var(--ink)">"I can help you process Excel files"</span> veya
+      <span style="color:var(--ink)">"You can use this to…"</span> yazma — karışık bakış açısı eşleştirmeyi bozar.
+    </div>
+
+    <p>Biçimsel sınırlar: <code>name</code> en fazla 64 karakter, yalnızca küçük harf/rakam/tire, "anthropic" ve
+      "claude" kelimelerini içeremez. <code>description</code> boş olamaz ve en fazla 1.024 karakterdir. Ayrıca
+      Claude Code'un skill listesinde <code>description</code> + <code>when_to_use</code> metni 1.536 karakterde
+      kesilir — <strong>en önemli kullanım senaryosunu başa koy</strong>.</p>
+
+    <h3>İsimlendirme</h3>
+    <p>Tutarlı bir kalıp seç. Belgeler fiil+ing biçimini öneriyor: <code>processing-pdfs</code>,
+      <code>analyzing-spreadsheets</code>, <code>writing-documentation</code>. İsim tamlaması
+      (<code>pdf-processing</code>) veya emir kipi (<code>process-pdfs</code>) de kabul edilir. Kaçınılacaklar:
+      <code>helper</code>, <code>utils</code>, <code>tools</code>, <code>data</code> gibi hiçbir şey söylemeyen adlar.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m5">
+    <h2><span class="num">05</span> Gövde: kısalık ve degrees of freedom</h2>
+    <p>Skill bir kez yüklendiğinde içeriği oturumun geri kalanında context'te <strong>kalır</strong>. Yani gövdedeki
+      her satır tekrarlanan bir maliyettir. Temel varsayım: <em>Claude zaten çok şey biliyor.</em> Sadece
+      bilmediği şeyi ekle — senin projene, senin tercihlerine, senin prosedürüne özgü olanı.</p>
+
+    <div class="note">
+      <span class="tag">Zaman kipi</span>
+      Claude Code skill dosyasını sonraki turlarda <strong>yeniden okumaz</strong>; içerik ilk çağrıda tek bir mesaj
+      olarak girer ve orada kalır. Bu yüzden görev boyunca geçerli olmasını istediğin şeyleri "önce şunu yap" gibi
+      tek seferlik adım cümleleriyle değil, <strong>sürekli talimat</strong> olarak yaz: "bu görev boyunca üretilen
+      her dosya şu şablonu kullanır."
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yaklaşık 50 token — yeterli</th><th>Yaklaşık 150 token — israf</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>"Metin çıkarmak için <code>pdfplumber</code> kullan:" + 3 satırlık kod örneği.</td>
+            <td>PDF'in ne olduğunun anlatımı, kütüphane seçeneklerinin karşılaştırması, pip ile kurulum anlatımı, sonra kod.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Her paragraf için şunu sor: "Claude bunu zaten bilmiyor mu? Bu paragraf token maliyetini hak ediyor mu?"</p>
+
+    <h3>Ne kadar serbestlik bırakmalı</h3>
+    <p>Talimatın kesinliğini işin <strong>kırılganlığına</strong> göre ayarla. Belgelerdeki benzetme şu: Claude bir
+      patikada ilerleyen bir robot. İki yanı uçurum olan dar bir köprüde tek bir güvenli yol vardır, açık bir
+      arazide onlarca yol vardır.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Serbestlik</th><th>Ne zaman</th><th>Nasıl yazılır</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Yüksek</strong></td>
+            <td>Birden çok yaklaşım geçerli, karar context'e bağlı</td>
+            <td>Düz metin adımlar: "kod yapısını incele, hataları ara, iyileştirme öner"</td>
+          </tr>
+          <tr>
+            <td><strong>Orta</strong></td>
+            <td>Tercih edilen bir kalıp var ama varyasyon kabul edilebilir</td>
+            <td>Parametreli pseudocode veya şablon fonksiyon</td>
+          </tr>
+          <tr>
+            <td><strong>Düşük</strong></td>
+            <td>İşlem kırılgan, sıra kritik, tutarlılık şart</td>
+            <td>Tam komut: "Tam olarak şunu çalıştır: <code>python scripts/migrate.py --verify --backup</code>. Komutu değiştirme, bayrak ekleme."</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Çok adımlı işler için workflow + checklist</h3>
+    <p>Karmaşık bir prosedürde Claude'un adım atlamasını engellemenin en pratik yolu, cevabına kopyalayıp
+      işaretleyebileceği bir checklist vermek:</p>
+    <pre><code>## Research synthesis workflow
+
+Copy this checklist and track your progress:
+
+- [ ] Step 1: Read all source documents
+- [ ] Step 2: Identify key themes
+- [ ] Step 3: Cross-reference claims
+- [ ] Step 4: Create structured summary
+- [ ] Step 5: Verify citations
+
+**Step 1: Read all source documents**
+...</code></pre>
+
+    <p>Kalite kritikse buna bir <strong>feedback loop</strong> ekle: doğrula → hataları düzelt → tekrar doğrula.
+      Doğrulayıcı bir script olabileceği gibi bir referans dosyası da olabilir ("STYLE_GUIDE.md'ye göre kontrol et,
+      uymayan her madde için düzelt, sonra listeyi baştan geç"). Kritik cümle şudur: <em>"Only proceed when
+      validation passes."</em></p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m6">
+    <h2><span class="num">06</span> Frontmatter: işe yarayan alanlar</h2>
+    <p>Alanların hepsi isteğe bağlıdır; pratikte yalnızca <code>description</code> gerçekten gereklidir. Aşağıdakiler
+      yeni başlarken işine yarayacak olanlar — tam liste
+      <a href="../archive/slash-commands-guide.html" style="color:var(--ink-soft);">slash command sayfasında</a>.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>description</code></td><td>Claude'un skill'i seçmesini sağlayan metin. Tek gerçekten önemli alan.</td></tr>
+          <tr><td><code>when_to_use</code></td><td>Tetikleyici cümle örnekleri. Listede description'a eklenir, aynı 1.536 karakterlik bütçeyi paylaşır.</td></tr>
+          <tr><td><code>name</code></td><td>Listelerde görünen etiket. Kişisel/proje skill'lerinde komut adını <em>değiştirmez</em>.</td></tr>
+          <tr><td><code>disable-model-invocation</code></td><td><code>true</code> ise skill'i yalnızca sen çağırabilirsin; Claude'un context'inden tamamen çıkar.</td></tr>
+          <tr><td><code>user-invocable</code></td><td><code>false</code> ise <code>/</code> menüsünde görünmez; yalnızca Claude çağırır.</td></tr>
+          <tr><td><code>allowed-tools</code></td><td>Skill'i çağıran <strong>tur boyunca</strong> izin sorulmadan kullanılabilecek araçlar. Bir sonraki mesajında iptal olur.</td></tr>
+          <tr><td><code>disallowed-tools</code></td><td>Skill etkinken araç havuzundan çıkarılacak araçlar.</td></tr>
+          <tr><td><code>argument-hint</code></td><td>Autocomplete'te gösterilen ipucu, ör. <code>[issue-number]</code>.</td></tr>
+          <tr><td><code>context: fork</code></td><td>Skill'i izole bir subagent context'inde çalıştırır; gövde subagent'ın prompt'u olur.</td></tr>
+          <tr><td><code>agent</code></td><td><code>context: fork</code> ile hangi subagent tipinin kullanılacağı (<code>Explore</code>, <code>Plan</code>, <code>general-purpose</code> veya kendi agent'ın).</td></tr>
+          <tr><td><code>model</code> / <code>effort</code></td><td>Skill etkinken model ve düşünme eforu. Yalnızca o tur için geçerlidir, ayarlara yazılmaz.</td></tr>
+          <tr><td><code>paths</code></td><td>Glob deseni; skill yalnızca eşleşen dosyalarla çalışılırken otomatik yüklenir.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Kimin çağırabileceğine karar ver</h3>
+    <p>Varsayılan olarak hem sen hem Claude her skill'i çağırabilir. İki alan bunu daraltır ve bu, yan etkisi olan
+      skill'lerde önemlidir:</p>
+    <ul>
+      <li><code>disable-model-invocation: true</code> — <strong>sadece sen</strong>. <code>/commit</code>,
+        <code>/deploy</code>, <code>/send-slack-message</code> gibi işler için. Claude'un "kod hazır görünüyor"
+        diye deploy etmesini istemezsin.</li>
+      <li><code>user-invocable: false</code> — <strong>sadece Claude</strong>. Arka plan bilgisi için:
+        <code>legacy-system-context</code> gibi bir skill Claude'un bilmesi gereken bir şeydir ama kullanıcının
+        yazacağı anlamlı bir komut değildir.</li>
+    </ul>
+
+    <pre><code>---
+<span class="k">name</span>: deploy
+<span class="k">description</span>: <span class="s">Deploy the application to production</span>
+<span class="k">disable-model-invocation</span>: <span class="k">true</span>
+<span class="k">allowed-tools</span>: Bash(git add *) Bash(git commit *) Bash(git status *)
+---
+
+Deploy $ARGUMENTS to production:
+
+1. Run the test suite
+2. Build the application
+3. Push to the deployment target
+4. Verify the deployment succeeded</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Güvenlik</span>
+      Projeye commit edilmiş bir skill kendine geniş araç izni verebilir. <code>allowed-tools</code> ancak o klasör
+      için workspace trust onayını verdikten sonra etkinleşir — yabancı bir repoya güvenmeden önce
+      <code>.claude/skills/</code> içeriğini oku.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m7">
+    <h2><span class="num">07</span> Progressive disclosure</h2>
+    <p>Skill klasöründeki diğer dosyalar context'e <strong>okunana kadar hiçbir maliyet bindirmez</strong>. Bu yüzden
+      doğru yapı şudur: <code>SKILL.md</code> bir içindekiler sayfası gibi davransın, ayrıntı ayrı dosyalarda dursun.</p>
+
+    <pre><code>pdf/
+├── SKILL.md          <span class="c"># genel bakış + yönlendirme (tetiklendiğinde yüklenir)</span>
+├── FORMS.md          <span class="c"># form doldurma rehberi (gerektiğinde okunur)</span>
+├── reference.md      <span class="c"># API referansı (gerektiğinde okunur)</span>
+└── scripts/
+    └── fill_form.py  <span class="c"># çalıştırılır, context'e yüklenmez</span></code></pre>
+
+    <p>Dosyaları <code>SKILL.md</code> içinden, <em>ne içerdiklerini söyleyerek</em> göster — Claude ancak o zaman
+      hangisini ne zaman açacağını bilir:</p>
+    <pre><code>## Advanced features
+
+**Form filling**: See [FORMS.md](FORMS.md) for the complete guide
+**API reference**: See [reference.md](reference.md) for all methods
+**Examples**: See [examples.md](examples.md) for common patterns</code></pre>
+
+    <p>Birden çok alan varsa dosyaları <strong>alana göre</strong> böl. Kullanıcı satış metriklerini sorduğunda
+      Claude yalnızca <code>reference/sales.md</code>'yi okur; finans ve pazarlama dosyaları diskte durur ve sıfır
+      token harcar.</p>
+
+    <div class="note warn">
+      <span class="tag">Kritik</span>
+      <strong>Referanslar tek seviye derinlikte kalsın.</strong> <code>SKILL.md → advanced.md → details.md</code>
+      zinciri kurma. İç içe referanslarda Claude dosyaları çoğu zaman tam okumaz, <code>head -100</code> gibi
+      komutlarla göz atar ve eksik bilgiyle devam eder. Bütün referans dosyaları doğrudan <code>SKILL.md</code>'den
+      linklensin.
+    </div>
+
+    <ul>
+      <li><code>SKILL.md</code> gövdesini <strong>500 satırın altında</strong> tut; yaklaşıyorsan böl.</li>
+      <li>100 satırı geçen referans dosyalarının başına <strong>içindekiler</strong> koy — Claude kısmi okumada bile kapsamı görür.</li>
+      <li>Dosya adları içeriği anlatsın: <code>form_validation_rules.md</code>, <code>doc2.md</code> değil.</li>
+      <li>Yollarda <strong>her zaman düz eğik çizgi</strong> kullan: <code>scripts/helper.py</code>. Ters eğik çizgi Unix'te kırılır.</li>
+    </ul>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m8">
+    <h2><span class="num">08</span> Script bağlamak</h2>
+    <p>Claude script'i kendisi de yazabilirdi; ama hazır script daha güvenilir, daha ucuz ve her seferinde aynıdır.
+      Deterministik işleri (doğrulama, dönüştürme, paketleme) script'e ver.</p>
+
+    <p>Script'i çağırırken <code>${CLAUDE_SKILL_DIR}</code> kullan — skill'in kişisel, proje veya plugin seviyesinde
+      kurulu olmasından bağımsız olarak doğru yola çözülür. Aynı değişkeni <code>allowed-tools</code> içinde de
+      kullanırsan, izin kuralı gövdedeki komutla birebir eşleşir ve script izin sorulmadan çalışır:</p>
+
+    <pre><code>---
+<span class="k">name</span>: render-chart
+<span class="k">description</span>: <span class="s">Render a chart from a CSV file</span>
+<span class="k">allowed-tools</span>: Bash(${CLAUDE_SKILL_DIR}/scripts/render.sh *)
+---
+
+Run `${CLAUDE_SKILL_DIR}/scripts/render.sh &lt;csv-file&gt;` to render the chart.</code></pre>
+
+    <h3>Script yazarken</h3>
+    <ul>
+      <li><strong>Çöz, devretme.</strong> Hata durumunu script'in içinde ele al. Dosya yoksa oluştur veya anlamlı bir
+        varsayılan dön; "patlasın, Claude halleder" yaklaşımı her çağrıda farklı davranışa yol açar.</li>
+      <li><strong>Voodoo sabit bırakma.</strong> <code>TIMEOUT = 47</code> neden 47? Değeri gerekçesiyle yorumla:
+        "HTTP istekleri tipik olarak 30 saniyede tamamlanır." Sen bilmiyorsan Claude hiç bilemez.</li>
+      <li><strong>Niyeti açıkça yaz.</strong> "Run <code>analyze_form.py</code> to extract fields" (çalıştır) ile
+        "See <code>analyze_form.py</code> for the extraction algorithm" (referans olarak oku) farklı şeylerdir.</li>
+      <li><strong>Bağımlılıkları varsayma.</strong> "Use the pdf library" yerine kurulum komutunu da yaz.</li>
+      <li><strong>MCP araçlarını tam adıyla çağır:</strong> <code>BigQuery:bigquery_schema</code>. Sunucu öneki
+        olmadan Claude aracı bulamayabilir.</li>
+    </ul>
+
+    <h3>plan → doğrula → uygula</h3>
+    <p>Toplu ve geri dönüşü zor işlerde (50 alanı güncelle, 200 dosyayı taşı) araya doğrulanabilir bir ara çıktı koy:
+      Claude önce planı <code>changes.json</code> gibi yapılandırılmış bir dosyaya yazsın, bir script planı
+      doğrulasın, ancak ondan sonra uygulansın. Hatalar orijinal dosyalara dokunulmadan yakalanır ve doğrulayıcının
+      hata mesajı Claude'a tam olarak neyi düzelteceğini söyler.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m9">
+    <h2><span class="num">09</span> Argümanlar ve dinamik context</h2>
+    <p>Skill'e argüman geçirilebilir; hem sen hem Claude geçirebilir.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yer tutucu</th><th>Karşılığı</th></tr></thead>
+        <tbody>
+          <tr><td><code>$ARGUMENTS</code></td><td>Komuttan sonra yazılan her şey. Gövdede hiç geçmiyorsa içerik sonuna <code>ARGUMENTS: …</code> olarak eklenir.</td></tr>
+          <tr><td><code>$0</code>, <code>$1</code>…</td><td>Sıraya göre tek tek argümanlar (<code>$ARGUMENTS[0]</code> kısaltması). Çok kelimeli değerleri tırnakla.</td></tr>
+          <tr><td><code>${CLAUDE_SKILL_DIR}</code></td><td>SKILL.md'nin bulunduğu klasör.</td></tr>
+          <tr><td><code>${CLAUDE_PROJECT_DIR}</code></td><td>Proje kök dizini.</td></tr>
+          <tr><td><code>${CLAUDE_SESSION_ID}</code></td><td>Oturum kimliği — log dosyası adlandırmak için kullanışlı.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><code>---
+<span class="k">name</span>: migrate-component
+<span class="k">description</span>: <span class="s">Migrate a component from one framework to another</span>
+---
+
+Migrate the $0 component from $1 to $2.
+Preserve all existing behavior and tests.</code></pre>
+    <p><code>/migrate-component SearchBar React Vue</code> çağrısında sırasıyla <code>SearchBar</code>,
+      <code>React</code> ve <code>Vue</code> yerine geçer.</p>
+
+    <h3>Dinamik context</h3>
+    <p><code>!`komut`</code> sözdizimi, skill içeriği Claude'a <em>gönderilmeden önce</em> shell komutunu çalıştırır
+      ve yer tutucuyu çıktısıyla değiştirir. Bu Claude'un yaptığı bir şey değil, bir ön işlemedir — Claude yalnızca
+      sonucu görür.</p>
+    <pre><code>---
+<span class="k">name</span>: pr-summary
+<span class="k">description</span>: <span class="s">Summarize changes in a pull request</span>
+<span class="k">context</span>: fork
+<span class="k">agent</span>: Explore
+<span class="k">allowed-tools</span>: Bash(gh *)
+---
+
+## Pull request context
+- PR diff: !`gh pr diff`
+- PR comments: !`gh pr view --comments`
+- Changed files: !`gh pr diff --name-only`
+
+## Your task
+Summarize this pull request...</code></pre>
+
+    <div class="note">
+      <span class="tag">Yazarken düşeceğin iki tuzak</span>
+      <code>!</code> yalnızca satır başında veya bir boşluktan hemen sonra tanınır; <code>KEY=!`cmd`</code> düz metin
+      olarak kalır ve komut hiç çalışmaz. Çok satırlı komutlar için satır içi form yerine <code>```!</code> ile
+      açılan bir kod bloğu kullan. Kalan davranış ayrıntıları — tek geçişli değiştirme, kurumsal olarak kapatma,
+      argüman tırnaklama ve kaçış kuralları — <a href="../archive/slash-commands-guide.html#m8" style="color:var(--ink-soft);">slash command sayfasının 07-08. bölümlerinde</a>.
+    </div>
+
+    <p><code>context: fork</code> ekleyen bir skill izole bir subagent'ta çalışır ve senin sohbet geçmişini görmez;
+      gövde doğrudan subagent'ın prompt'u olur. Bu yüzden <strong>fork yalnızca gerçek bir görev tarif eden
+      skill'lerde anlamlıdır</strong>. "Şu API kurallarına uy" gibi bir kılavuz fork edilirse subagent kuralları
+      alır ama yapacak bir iş bulamaz ve elleri boş döner.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m10">
+    <h2><span class="num">10</span> Gerçek örnek: bu sitenin skill'i</h2>
+    <p>Bu sitenin <code>.claude/skills/</code> klasöründe iki skill var ve bu sayfa da onlardan biriyle üretildi.
+      Yukarıdaki kuralların gerçek bir dosyada nasıl göründüğüne bakmak öğreticidir.</p>
+
+    <pre><code><span class="c"># .claude/skills/topic-page/SKILL.md (kısaltılmış)</span>
+---
+<span class="k">name</span>: topic-page
+<span class="k">description</span>: <span class="s">"Belirli bir konuda sıfırdan Türkçe rehber/anlatım HTML sayfası hazırlayıp
+  bu sitenin arşivine (posts/ klasörü) eklemek için bu skill'i kullan. Kullanıcı ortada tek
+  bir kaynak linki YOKKEN bir konu adı verip sayfa istediğinde MUTLAKA tetikle: 'X konusunda
+  rehber sayfa oluştur', 'şu konuyu anlatan bir sayfa yap', 'diğerleri gibi bir sayfa ekle'.
+  Ortada özetlenecek bir URL/dosya varsa bunun yerine summarize-source skill'ini kullan."</span>
+---
+
+## İş akışı
+### 1. Kapsamı netleştir
+### 2. Bilgiyi doğrula — ezberden yazma
+### 3. Sayfayı yaz
+### 4. Katalog meta etiketlerini doldur (ZORUNLU)
+### 5. Katalogu yeniden üret:  node scripts/build.mjs
+
+## KRİTİK KURALLAR
+1. Teknik terimleri orijinal dilinde bırak.
+...</code></pre>
+
+    <p>Dikkat edilecek noktalar:</p>
+    <ul>
+      <li><strong>Description tetikleyici cümleleri birebir taşıyor.</strong> Kullanıcının yazacağı ifadeler
+        ("diğerleri gibi bir sayfa ekle") tırnak içinde örneklenmiş.</li>
+      <li><strong>Kardeş skill'e yönlendirme var.</strong> Son cümle, yanlış skill'in tetiklenmesini engelliyor —
+        birbirine yakın iki skill'in olduğu her yerde bu cümleyi kur.</li>
+      <li><strong>Gövde numaralı bir workflow.</strong> Sıra önemli olduğu için düz tavsiye değil, adım listesi.</li>
+      <li><strong>Kırılgan adımda serbestlik düşük:</strong> "<code>node scripts/build.mjs</code> çalıştırmak
+        zorunludur, aksi halde sayfa sitede görünmez" — komut sabit, gerekçesi yazılı.</li>
+      <li><strong>Ortak malzeme ayrı dosyada.</strong> HTML/CSS şablonu skill'in gövdesine gömülmemiş;
+        <code>templates/page-template.html</code> dosyası gösterilmiş, Claude sırası gelince okuyor.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Kalıp</span>
+      Bu skill projeye commit edilmiş bir <strong>project skill</strong>. Repoyu klonlayan herkes aynı prosedürü
+      alır — takım içinde "biz bunu şöyle yapıyoruz" bilgisini paylaşmanın en ucuz yolu budur.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m11">
+    <h2><span class="num">11</span> Test et, ölç, iyileştir</h2>
+    <p>Skill'in tetiklendiğini görmek, doğru çalıştığını göstermez. İki şeyi <strong>ayrı ayrı</strong> ölç:
+      (a) tetiklenmesi gereken prompt'larda tetikleniyor mu, (b) tetiklendiğinde çıktı beklediğin gibi mi.</p>
+
+    <p>Her ikisinin de ölçüsü aynı: <strong>baseline karşılaştırması</strong>. Birkaç gerçekçi prompt topla, her
+      birini <em>temiz bir oturumda</em> önce skill açıkken sonra kapalıyken çalıştır, sonuçları karşılaştır.
+      Skill'i kapatmak için <code>/skills</code> menüsünden <code>off</code> durumuna al.</p>
+
+    <div class="note warn">
+      <span class="tag">En sık yapılan test hatası</span>
+      Skill'i yazdığın oturumda test etmek. O oturumda skill'de <em>yazmadığın</em> her şey zaten konuşmanın içinde
+      duruyordur; Claude eksik talimatı context'ten tamamlar ve skill olduğundan iyi görünür. Her zaman sıfırdan
+      bir oturum aç.
+    </div>
+
+    <h3>Değerlendirmeyi önce yaz</h3>
+    <p>Sıralamayı ters kurmak işe yarıyor: önce Claude'u skill olmadan gerçek görevlerde çalıştır ve <strong>nerede
+      tökezlediğini not et</strong>; sonra o boşlukları kapatan üç senaryo yaz; sonra sadece o senaryoları geçecek
+      kadar talimat yaz. Böylece hayali ihtiyaçları değil gerçek eksikleri belgelemiş olursun.</p>
+
+    <h3>Claude'la birlikte geliştir</h3>
+    <p>Belgelerin önerdiği döngü iki Claude örneği kullanır: <strong>Claude A</strong> ile skill'i yazar ve
+      düzenlersin, <strong>Claude B</strong> (skill yüklü, temiz oturum) onu gerçek işlerde kullanır. B'nin
+      takıldığı yeri A'ya somut olarak anlatırsın: "Bölgesel rapor isteyince test hesaplarını filtrelemeyi unuttu,
+      skill bundan bahsediyor ama yeterince öne çıkmıyor olabilir." A yapıyı yeniden düzenler veya dili
+      sertleştirir ("always" yerine "MUST"). Sonra tekrar test edersin.</p>
+
+    <div class="card">
+      <p style="margin-bottom:8px;"><strong>Otomatikleştirmek istersen:</strong> resmi marketplace'teki
+        <code>skill-creator</code> plugin'i bu döngüyü Claude Code içinde çalıştırır.</p>
+      <pre style="margin-bottom:8px;"><code>/plugin install skill-creator@claude-plugins-official
+/reload-plugins</code></pre>
+      <ul style="margin-bottom:0;">
+        <li>Test senaryolarını skill klasöründeki <code>evals/evals.json</code> dosyasında tutar.</li>
+        <li>Her senaryoyu ayrı bir subagent'ta çalıştırır; token ve süreyi kaydeder.</li>
+        <li>Skill'li ve skill'siz koşuları karşılaştıran bir benchmark üretir.</li>
+        <li>İki skill sürümü arasında kör A/B yapar — düzenlemenin gerçekten iyileştirme olduğunu commit etmeden görürsün.</li>
+        <li>Description'ı ayarlar: tetiklenmesi ve tetiklenmemesi gereken prompt'lar üretip isabet oranını ölçer.</li>
+      </ul>
+    </div>
+
+    <p>Marketplace bulunamazsa önce ekle: <code>/plugin marketplace add anthropics/claude-plugins-official</code>.</p>
+
+    <h3>Kullanırken izle</h3>
+    <p>Claude'un skill'de nasıl gezindiğine bak. Hiç açmadığı bir dosya ya gereksizdir ya da <code>SKILL.md</code>'de
+      yeterince iyi tanıtılmamıştır. Sürekli aynı referans dosyasını okuyorsa o içerik zaten ana dosyada olmalıdır.
+      Beklemediğin bir sırayla okuyorsa kurduğun yapı düşündüğün kadar sezgisel değildir.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m12">
+    <h2><span class="num">12</span> Sık yapılan hatalar</h2>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Belirti</th><th>Muhtemel sebep ve çözüm</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Skill hiç tetiklenmiyor</td>
+            <td>Description kullanıcının kullandığı kelimeleri içermiyor. Claude'a <em>"What skills are available?"</em>
+              diye sorup listede görünüyor mu bak; görünüyorsa description'ı zenginleştir, görünmüyorsa dosya yolu
+              veya YAML hatalıdır.</td>
+          </tr>
+          <tr>
+            <td><code>/skill-adı</code> çalışıyor ama Claude kendisi asla çağırmıyor</td>
+            <td>Frontmatter YAML'ı bozuk olabilir. Bu durumda gövde boş metadata ile yüklenir — komut çalışır ama
+              eşleşecek description yoktur. <code>claude --debug</code> ile parse hatasını gör. Ayrıca
+              <code>disable-model-invocation: true</code> kalmış olabilir.</td>
+          </tr>
+          <tr>
+            <td>Skill gereğinden sık devreye giriyor</td>
+            <td>Description fazla geniş. Daraltın; yalnızca elle çağırmak istiyorsan
+              <code>disable-model-invocation: true</code> ekle.</td>
+          </tr>
+          <tr>
+            <td>Description listede kırpılıyor</td>
+            <td>Çok sayıda skill varsa listeleme bütçesi (model context'inin %1'i) aşılır ve en az kullandığın
+              skill'lerin açıklamaları düşürülür. <code>/doctor</code> maliyeti ve en büyük katkıları raporlar.
+              Düşük öncelikli skill'leri <code>skillOverrides</code> ile <code>"name-only"</code> yap veya
+              <code>skillListingBudgetFraction</code> ayarını yükselt.</td>
+          </tr>
+          <tr>
+            <td>Skill ilk cevaptan sonra etkisini yitiriyor gibi</td>
+            <td>İçerik büyük ihtimalle hâlâ context'te; model başka bir yolu tercih ediyor. Talimatı ve description'ı
+              güçlendir, davranışı garanti altına alman gerekiyorsa hook kullan. Auto-compaction sonrasında ise
+              skill'ler bir token bütçesiyle geri iliştirilir; büyük bir skill'i compaction'dan sonra yeniden
+              çağırmak içeriğin tamamını geri getirir.</td>
+          </tr>
+          <tr>
+            <td>Fork edilen skill boş dönüyor</td>
+            <td><code>context: fork</code> ile gönderilen gövde bir görev tarif etmiyor. Kılavuz niteliğindeki
+              skill'lerde fork kullanma.</td>
+          </tr>
+          <tr>
+            <td>Referans dosyası eksik okunuyor</td>
+            <td>Referanslar iç içe. Hepsini doğrudan <code>SKILL.md</code>'den linkle, uzun dosyaların başına
+              içindekiler koy.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Hızlı karar rehberi</h3>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Her oturumda geçerli bir kural mı?</strong> → <code>CLAUDE.md</code>, skill değil.</li>
+        <li><strong>Sadece bazen gereken uzun prosedür mü?</strong> → skill; gövde yalnızca çağrılınca yüklenir.</li>
+        <li><strong>Yan etkisi var mı (deploy, commit, mesaj gönderme)?</strong> → <code>disable-model-invocation: true</code>.</li>
+        <li><strong>Girdisi canlı veri mi (diff, PR, test çıktısı)?</strong> → <code>!`komut`</code> ile enjekte et;
+          Claude'a "şunu çalıştır" demekten hem daha ucuz hem daha güvenilir.</li>
+        <li><strong>Uzun sürecek, konuşmayı kirletecek bir iş mi?</strong> → <code>context: fork</code>.</li>
+        <li><strong>Yalnızca belirli dosyalarla mı ilgili?</strong> → <code>paths</code> glob'ları.</li>
+        <li><strong>Deterministik ve kırılgan bir adım mı?</strong> → script yaz, talimat değil.</li>
+      </ul>
+    </div>
+
+    <h3>Yayına almadan önce kontrol listesi</h3>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Description hem <strong>ne yaptığını</strong> hem <strong>ne zaman kullanılacağını</strong> söylüyor ve üçüncü şahıs.</li>
+        <li><code>SKILL.md</code> gövdesi 500 satırın altında; ayrıntı ayrı dosyalarda ve tek seviye derinlikte.</li>
+        <li>Tarihe bağlı ifade yok ("Ağustos 2025'ten önceyse…"). Eskiyen bilgi ayrı bir "old patterns" bölümünde.</li>
+        <li>Terminoloji tutarlı — aynı şeye bazen "field" bazen "box" denmiyor.</li>
+        <li>Örnekler somut; soyut tarif yerine gerçek girdi/çıktı çiftleri var.</li>
+        <li>Gereksiz seçenek sunulmuyor: bir varsayılan ver, kaçış yolunu tek cümleyle belirt.</li>
+        <li>Yollar düz eğik çizgili; script'ler hata durumlarını kendisi ele alıyor.</li>
+        <li>En az üç senaryoyla, temiz oturumda ve kullanacağın modellerle test edildi.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    code.claude.com/docs/en/skills ·
+    platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices ·
+    agentskills.io
+  </footer>
+
+</div>
+</body>
+</html>

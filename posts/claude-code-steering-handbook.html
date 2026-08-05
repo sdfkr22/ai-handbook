@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills? Rules? Hooks? — Hangisi ne zaman?</title>
+<meta name="yazi:baslik" content="Skills? Rules? Hooks? Hangisi ne zaman?">
+<meta name="yazi:aciklama" content="CLAUDE.md, rules, skills, subagents, hooks, output styles ve system prompt — Claude'a talimat vermenin yedi yolu.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="CLAUDE.md, rules, skills, subagents, hooks, output styles">
+<meta name="yazi:kaynak" content="https://claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more">
+<meta name="yazi:tarih" content="2026-06-25">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:56px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:62ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note.good{border-left-color:var(--accent-2);background:rgba(127,176,105,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .note.good .tag{color:var(--accent-2);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .pill{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);background:var(--panel-2);}
+  .pill.hi{color:var(--danger);border-color:rgba(224,122,95,.4);}
+  .pill.mid{color:var(--accent);border-color:rgba(232,163,61,.4);}
+  .pill.lo{color:var(--accent-2);border-color:rgba(127,176,105,.4);}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:56px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  .scenario{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent-2);border-radius:0 12px 12px 0;padding:18px 22px;margin:0 0 16px;}
+  .scenario .q{color:var(--ink);font-weight:600;margin-bottom:6px;}
+  .scenario .a{font-size:14.5px;}
+  .scenario .a .pick{color:var(--accent-2);font-weight:600;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · Steering El Kitabı</p>
+    <h1>Skills? Rules? Hooks?<br><em>Hangisi, ne zaman?</em></h1>
+    <p class="lede">CLAUDE.md, rules, skills, subagents, hooks, output styles ve system prompt eklemek — Claude'a talimat vermenin yedi yolu. Her birinin <strong>ne zaman context'e yüklendiğini</strong>, <strong>compaction sonrası ne olduğunu</strong> ve <strong>ne kadar yetkiye/maliyete sahip olduğunu</strong> bilerek doğru aracı seç.</p>
+    <p class="source">Kaynak: <a href="https://claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more">claude.com/blog/steering-claude-code…</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m0"><span class="n">00</span> Önce büyük resim</a></li>
+      <li><a href="#m1"><span class="n">01</span> Karşılaştırma tablosu</a></li>
+      <li><a href="#m2"><span class="n">02</span> CLAUDE.md (root)</a></li>
+      <li><a href="#m3"><span class="n">03</span> CLAUDE.md (subdirectory)</a></li>
+      <li><a href="#m4"><span class="n">04</span> Rules</a></li>
+      <li><a href="#m5"><span class="n">05</span> Skills</a></li>
+      <li><a href="#m6"><span class="n">06</span> Subagents</a></li>
+      <li><a href="#m7"><span class="n">07</span> Hooks</a></li>
+      <li><a href="#m8"><span class="n">08</span> Output styles</a></li>
+      <li><a href="#m9"><span class="n">09</span> Append system prompt</a></li>
+      <li><a href="#m10"><span class="n">10</span> Senaryolar: hangisini seç?</a></li>
+      <li><a href="#m11"><span class="n">11</span> Karar ağacı & sık hatalar</a></li>
+    </ol>
+  </nav>
+
+  <!-- 00 -->
+  <section id="m0">
+    <h2><span class="num">00</span> Önce büyük resim</h2>
+    <p>Claude Code'a "şöyle davran" demenin bir değil <strong>yedi</strong> yolu var. Hangisini seçeceğin, aslında üç soruya verdiğin cevaba bağlı:</p>
+    <ul>
+      <li><strong>Talimat ne zaman context'e girmeli?</strong> Her oturumun başında mı, yoksa yalnızca ilgili dosyaya dokunulduğunda mı?</li>
+      <li><strong>Compaction'da ne olacak?</strong> Uzun oturumlarda Claude Code sohbeti sıkıştırır. Talimatın bu sırada olduğu gibi kalır mı, yeniden enjekte mi edilir, yoksa tamamen kaybolur mu?</li>
+      <li><strong>Ne kadar bağlayıcı olmalı?</strong> Model uyabilir de uymayabilir de olduğu bir öneri mi, yoksa istisnasız uygulanan deterministik bir kural mı?</li>
+    </ul>
+    <div class="note">
+      <span class="tag">Anahtar ayrım</span>
+      CLAUDE.md, rules, skills, output styles ve system prompt birer <strong>talimattır</strong>: model bunlara çoğu zaman uyar, ama uyacağının garantisi yoktur. Hooks ve permissions ise harness'in çalıştırdığı <strong>koddur</strong> ve deterministik davranır. Bu ayrım sayfanın geri kalanının belkemiğidir; "asla şu olmasın" dediğin bir guardrail istiyorsan onu talimat katmanında değil, hook veya permission olarak yazmalısın.
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section id="m1">
+    <h2><span class="num">01</span> Karşılaştırma tablosu</h2>
+    <p>Tüm yöntemlerin tek bakışta özeti. <span class="pill hi">Yüksek</span> <span class="pill mid">Orta</span> <span class="pill lo">Düşük</span> context maliyetini gösterir.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yöntem</th><th>Ne zaman yüklenir</th><th>Compaction davranışı</th><th>Maliyet</th><th>Ne için</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CLAUDE.md (root)</strong></td><td>Oturum başında; tüm oturum boyunca context'te kalır</td><td>Memoized. Bir kez okunur, oturum için cache'lenir; compaction sonrası cache temizlenip yeniden okunur</td><td><span class="pill hi">Yüksek</span></td><td>Build komutları, dizin yapısı, monorepo düzeni, kod kuralları, takım normları</td></tr>
+          <tr><td><strong>CLAUDE.md (subdirectory)</strong></td><td>On-demand; o alt dizindeki bir dosyaya dokununca</td><td>O alt dizine tekrar dokunulana kadar kaybolur</td><td><span class="pill lo">Düşük</span></td><td>Yalnızca o alt dizine özgü kurallar</td></tr>
+          <tr><td><strong>Rules</strong></td><td>Oturum başında (user-level) ya da sadece eşleşen dosyaya dokununca (path-scoped)</td><td>Compaction'da yeniden enjekte edilir</td><td><span class="pill mid">Orta</span></td><td>Belirli kısıtlar/kurallar (ör. tüm API handler'ları Zod ile doğrulamalı)</td></tr>
+          <tr><td><strong>Skills</strong></td><td>İsim+açıklama oturum başında; gövde çağrılınca</td><td>Çağrılan skill'ler ortak bütçeye kadar yeniden enjekte; en eski önce düşer</td><td><span class="pill lo">Düşük</span></td><td>Prosedürel iş akışları (deploy, release checklist)</td></tr>
+          <tr><td><strong>Subagents</strong></td><td>İsim+açıklama+araç listesi oturum başında; gövde sadece Agent tool ile çağrılınca</td><td>Sadece son mesaj (özet + metadata) ana oturuma döner</td><td><span class="pill lo">Düşük</span></td><td>Ana oturuma yalnızca özetin dönmesi gereken izole/paralel yan görevler</td></tr>
+          <tr><td><strong>Hooks</strong></td><td>Yaşam döngüsü olaylarında tetiklenir</td><td>Compaction'ı tamamen baypas eder</td><td><span class="pill lo">Düşük</span></td><td>Deterministik otomasyon: linter çalıştır, Slack'e bildir, komut blokla, PreCompact'te yedekle</td></tr>
+          <tr><td><strong>Output styles</strong></td><td>Oturum başında; system prompt'a enjekte</td><td>Asla compact edilmez</td><td><span class="pill hi">Yüksek</span></td><td>Ciddi rol değişiklikleri (kod asistanı → genel asistan)</td></tr>
+          <tr><td><strong>Append system prompt</strong></td><td>Oturum başında; CLI flag olarak geçilir</td><td>Asla compact edilmez; sadece o invocation'a uygulanır</td><td><span class="pill mid">Orta</span></td><td>Ton, yanıt uzunluğu, biçim tercihleri</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="m2">
+    <h2><span class="num">02</span> CLAUDE.md (root)</h2>
+    <p>Projenin kökünde duran bir markdown dosyasıdır. Oturum başında context'e yüklenir ve <strong>tüm oturum boyunca</strong> orada kalır. Compaction gerçekleştiğinde Claude Code dosyayı yeniden okuduğu için içeriği uzun oturumlarda da kaybolmaz.</p>
+    <h3>Ne koyulur</h3>
+    <ul>
+      <li>Build ve test komutları, kurulum adımları.</li>
+      <li>Dizin yapısı ve monorepo düzeni.</li>
+      <li>Kod yazım kuralları (conventions) ve takım normları.</li>
+      <li>Claude'un her zaman bilmesi gereken gerçekler — yani değişkenler değil, <strong>sabitler</strong>.</li>
+    </ul>
+    <div class="note warn">
+      <span class="tag">En önemli uyarı</span>
+      CLAUDE.md sahipsiz bir config dosyası gibi şişer: her takım kendi satırını ekler, kimse silmez. Oysa buradaki her satır, o oturumla ilgili olsun olmasın <strong>her mühendisin her oturumunda</strong> token harcar ve gerçekten önemli talimatlara uyumu seyreltir. Dosyayı <strong>200 satırın altında tut</strong>, bir sahibi olsun ve değişiklikleri kod gibi review et.
+    </div>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Bu dosyayı codebase'in <strong>index'i</strong> gibi düşün: detayı anlatan değil, "şu detay için şu dosyaya bak" diyen bir harita.</li>
+        <li>Organizasyon geneli güvenlik ve uyumluluk standartları için merkezî yönetilen bir CLAUDE.md, MDM ile cihazlara dağıtılabilir; kullanıcı bu dosyayı devre dışı bırakamaz.</li>
+      </ul>
+    </div>
+    <h3>Örnek</h3>
+    <pre><code><span class="c"># Proje: ödeme servisi</span>
+
+<span class="c">## Build & Test</span>
+<span class="k">-</span> Kurulum: `pnpm install`
+<span class="k">-</span> Test: `pnpm test` (commit öncesi zorunlu)
+<span class="k">-</span> Lint: `pnpm lint --fix`
+
+<span class="c">## Yapı</span>
+<span class="k">-</span> `src/api/`     HTTP handler'lar
+<span class="k">-</span> `src/domain/`  iş kuralları (framework bağımsız)
+<span class="k">-</span> `src/db/`      migration'lar (append-only)
+
+<span class="c">## Kurallar</span>
+<span class="k">-</span> Para: her zaman tamsayı cent, asla float
+<span class="k">-</span> Detay için ilgili dizindeki CLAUDE.md'ye bak</code></pre>
+  </section>
+
+  <!-- 03 -->
+  <section id="m3">
+    <h2><span class="num">03</span> CLAUDE.md (subdirectory)</h2>
+    <p>Oturumu başlattığın klasörün <strong>altındaki</strong> dizinlerde duran CLAUDE.md dosyalarıdır. Oturum başında değil <strong>on-demand</strong> yüklenirler: <code>app/api/CLAUDE.md</code>, ancak Claude <code>app/api</code> altında bir dosyaya dokunduğunda devreye girer.</p>
+    <p>Compaction davranışı path-scoped rules ile aynıdır: dosya, o alt dizine tekrar dokunulana kadar context'ten düşer.</p>
+    <div class="note good">
+      <span class="tag">Avantaj</span>
+      Context'i yalnızca ilgili alt dizinde çalışılırken tükettiği için maliyeti düşüktür. Monorepo'larda her takımın dizinine kendi CLAUDE.md'sini koy; böylece herkes sadece kendi kurallarını yükler. Geliştiriciler <code>claudeMdExcludes</code> ayarıyla hiç dokunmadıkları takımların dosyalarını tamamen dışarıda bırakabilir.
+    </div>
+    <h3>Örnek — <code>src/api/CLAUDE.md</code></h3>
+    <pre><code><span class="c"># API katmanı kuralları</span>
+
+<span class="k">-</span> Her endpoint için request/response tipini `schemas/` altında tanımla
+<span class="k">-</span> Hata yanıtları RFC 7807 (problem+json) formatında
+<span class="k">-</span> Yeni route eklerken `routes.index.ts`'e kaydet</code></pre>
+    <div class="note">
+      <span class="tag">root mu, subdirectory mi?</span>
+      Kural tüm proje için geçerliyse <strong>root</strong>, tek bir klasöre özgüyse <strong>subdirectory</strong> doğru yerdir. Birden fazla dizini ilgilendiren ama hepsini kapsamayan çapraz kesen (cross-cutting) bir konuysa, ikisi yerine bir sonraki bölümdeki <strong>path-scoped rule</strong>'a bak.
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="m4">
+    <h2><span class="num">04</span> Rules</h2>
+    <p><code>.claude/rules/</code> içindeki markdown dosyalarıdır ve Claude'a belirli kısıtlar koyar. İki türü vardır:</p>
+    <ul>
+      <li><strong>Unscoped rules:</strong> CLAUDE.md gibi davranır; oturum başında her zaman yüklenir ve compaction'da yeniden enjekte edilir. Konuyla ilgisi olmayan görevlerde de context'te durmaya devam eder.</li>
+      <li><strong>Path-scoped rules:</strong> <code>paths</code> alanı sayesinde yalnızca eşleşen dosyalara dokunulduğunda yüklenir. <code>src/api/**</code> ile kapsanmış bir kural, örneğin yalnızca dokümantasyonla uğraştığın bir oturumda hiç görünmez.</li>
+    </ul>
+    <h3>Örnek — path-scoped rule</h3>
+    <pre><code><span class="c">---</span>
+<span class="k">paths:</span>
+  <span class="k">-</span> <span class="s">"src/api/**"</span>
+  <span class="k">-</span> <span class="s">"**/*.handler.ts"</span>
+<span class="c">---</span>
+Tüm API handler'ları, işlemeden önce girdiyi Zod ile doğrulamalı.</code></pre>
+    <div class="note">
+      <span class="tag">İpucu</span>
+      "Migration'lar append-only" gibi belirli dosyalara bağlı bir kısıtın doğru yeri, <code>paths:</code> frontmatter'ı olan bir rule'dur. Kuralı ne kadar dar kapsarsan, ilgisiz oturumlarda o kadar az yer kaplar.
+    </div>
+    <div class="note warn">
+      <span class="tag">Tuzak</span>
+      Ayrı bir dosyaya yazmış olman tek başına bir kazanç sağlamaz: <code>paths:</code> almayan bir rule, aynı metni CLAUDE.md'ye koymakla mekanik olarak aynı şeydir. Kapsayabiliyorsan kapsa.
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="m5">
+    <h2><span class="num">05</span> Skills</h2>
+    <p><code>.claude/skills/</code> altında yer alan; talimat, script ve kaynaklardan oluşan klasörlerdir. Her skill'in name, description ve gövdeden oluşan bir <code>SKILL.md</code> dosyası vardır. Oturum başında <strong>yalnızca name ve description</strong> yüklenir; gövde ise skill çağrıldığında devreye girer — ya bir slash komutuyla (<code>/code-review</code>) ya da göreve otomatik eşleşerek.</p>
+    <div class="note good">
+      <span class="tag">Ne için</span>
+      Skill'ler <strong>prosedürel</strong> talimatların yeridir: deploy iş akışları, release checklist'leri, review süreçleri — kısacası "şu sırayla şu adımları izle" diyen tarifler. Uzunluğu bir maliyet yaratmaz, çünkü gövde ancak gerektiğinde yüklenir.
+    </div>
+    <p>Compaction'da Claude Code, çağrılmış skill'leri tüm skill'ler arası ortak bir bütçeye kadar yeniden enjekte eder. Çok skill çağırdıysan en eskiler önce düşer.</p>
+    <h3>Örnek — <code>.claude/skills/deploy/SKILL.md</code></h3>
+    <pre><code><span class="c">---</span>
+<span class="k">name:</span> deploy
+<span class="k">description:</span> <span class="s">"Production'a güvenli deploy adımları. Kullanıcı
+  'deploy et', 'yayına al' dediğinde tetikle."</span>
+<span class="c">---</span>
+<span class="c"># Deploy Checklist</span>
+1. `pnpm test` ve `pnpm lint` yeşil olmalı
+2. CHANGELOG.md güncelle, sürüm etiketle
+3. `staging`'e deploy et, smoke test çalıştır
+4. Onay sonrası `prod`'a deploy
+5. Slack #releases kanalına özet at</code></pre>
+    <div class="note">
+      <span class="tag">Hatırlatma</span>
+      Claude Code hazır skill'lerle gelir (ör. <code>/code-review</code> mevcut diff'i inceleyip dosya düzenlemeden rapor verir) ama kendi skill'lerini de yazabilirsin.
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="m6">
+    <h2><span class="num">06</span> Subagents</h2>
+    <p><code>.claude/agents/</code> altındaki markdown dosyalarıdır ve belirli yan görevler için izole asistanlar tanımlar. YAML frontmatter'da name ve description (opsiyonel olarak model ve tool erişimi) bulunur; gövde ise subagent'ın system prompt'u olur.</p>
+    <p>Skill'lere benzer şekilde name, description ve tool listesi oturum başında yüklenir. Fark şurada: gövde otomatik olarak tetiklenmez ve ana konuşmaya hiç girmez. Claude subagent'ı Agent tool ile, ona bir prompt geçerek çağırır.</p>
+    <div class="note good">
+      <span class="tag">İzolasyon = asıl sebep</span>
+      Subagent kendi taze context window'unda çalışır. Ana oturuma dönen tek şey, subagent'ın son mesajı ve metadata'sıdır; o son mesaj çoğu zaman onlarca alt görevin toplu sonucudur.
+    </div>
+    <h3>Skill mi, subagent mı?</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th></th><th>Skill</th><th>Subagent</th></tr></thead>
+        <tbody>
+          <tr><td>Çalışma yeri</td><td>Ana thread'in içinde</td><td>Ayrı, izole context window</td></tr>
+          <tr><td>Ara sonuçlar</td><td>Görünür — adım adım izleyip yönlendirebilirsin</td><td>Görünmez — sadece özet döner</td></tr>
+          <tr><td>İdeal kullanım</td><td>Prosedürün ana akışta işlemesini istediğin durumlar</td><td>Ana konuşmayı kirletecek yan görevler: deep search, log analizi, bağımlılık denetimi</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Bu desen ölçeklenir: subagent'lar beş seviyeye kadar iç içe geçebilir, dinamik iş akışları ise sen her detayı belirtmeden onlarca hatta yüzlerce arka plan agent'ını orkestre edebilir. Bu ölçekte orkestrasyon planı ve ara sonuçlar Claude'un context'inde değil, script değişkenlerinde yaşar.</p>
+    <h3>Örnek — <code>.claude/agents/dep-audit.md</code></h3>
+    <pre><code><span class="c">---</span>
+<span class="k">name:</span> dep-audit
+<span class="k">description:</span> <span class="s">"Bağımlılıkları güvenlik açığı ve eski sürüm
+  için tarar, kısa bir özet döner."</span>
+<span class="k">tools:</span> [Bash, Read, Grep]
+<span class="c">---</span>
+Sen bir bağımlılık denetçisisin. `pnpm audit` çalıştır,
+eski major sürümleri tespit et. Ana thread'e SADECE
+kritik bulguların kısa bir listesini döndür; ara çıktıyı
+döndürme.</code></pre>
+  </section>
+
+  <!-- 07 -->
+  <section id="m7">
+    <h2><span class="num">07</span> Hooks</h2>
+    <p><strong>Hooks</strong>, Claude'un yaşam döngüsündeki belirli olaylarda — dosya düzenleme, tool çağrısı, oturum başlangıcı gibi — tetiklenen kullanıcı tanımlı komutlar, HTTP endpoint'leri veya LLM prompt'larıdır. Talimatların aksine deterministik kontrol sağlarlar: çalışıp çalışmayacaklarına model karar vermez. <code>settings.json</code>'da, managed policy ayarlarında ya da skill/agent frontmatter'ında tanımlanırlar.</p>
+    <h3>Hook türleri</h3>
+    <ul>
+      <li><strong>command, http, mcp_tool:</strong> kurala göre, deterministik çalışır.</li>
+      <li><strong>prompt, agent:</strong> kural yerine Claude'un yargısını kullanır; ayrı bir pencerede model çağrısı yapar.</li>
+    </ul>
+    <div class="note good">
+      <span class="tag">Düşük maliyet</span>
+      Hook'un kendisi ana context'in dışında yaşar; handler'ı harness çalıştırır. Çoğu hook'un çıktısı da ana pencereye yazılmaz, konfigürasyon bunu açıkça istemedikçe. Tek istisna, blocking bir hook'un standard error çıktısıdır: çağrının neden reddedildiğini Claude'un bilmesi için context'e yazılır.
+    </div>
+    <div class="note warn">
+      <span class="tag">Dikkat</span>
+      Bir hook iş yapıp sonucu geri döndürmezse, Claude o işten habersiz kalır. Örneğin <code>PreCompact</code>'te sohbeti bir dosyaya yedeklediysen, Claude o yedeğin hangi dosya olduğunu bilmez.
+    </div>
+    <h3>Örnek — <code>settings.json</code></h3>
+    <pre><code><span class="k">"hooks"</span>: {
+  <span class="k">"PostToolUse"</span>: [{
+    <span class="k">"matcher"</span>: <span class="s">"Edit|Write"</span>,
+    <span class="k">"hooks"</span>: [{
+      <span class="k">"type"</span>: <span class="s">"command"</span>,
+      <span class="k">"command"</span>: <span class="s">"prettier --write $CLAUDE_FILE_PATHS"</span>
+    }]
+  }],
+  <span class="k">"PreToolUse"</span>: [{
+    <span class="k">"matcher"</span>: <span class="s">"Bash"</span>,
+    <span class="k">"hooks"</span>: [{
+      <span class="k">"type"</span>: <span class="s">"command"</span>,
+      <span class="c">// exit code 2 ile komutu reddeder</span>
+      <span class="k">"command"</span>: <span class="s">"./scripts/block-dangerous.sh"</span>
+    }]
+  }]
+}</code></pre>
+    <div class="note">
+      <span class="tag">İpucu</span>
+      Bir <code>PreToolUse</code> hook'u, herhangi bir tool çağrısını çalışmadan önce inceleyip <strong>exit code 2</strong> ile reddedebilir. Engelleme yeteneğinin talimat katmanında bir karşılığı yoktur; guardrail'lerin buraya ait olmasının sebebi de budur.
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="m8">
+    <h2><span class="num">08</span> Output styles</h2>
+    <p><code>.claude/output-styles/</code> içindeki dosyalardır ve doğrudan system prompt'a talimat enjekte ederler. Her oturum başında yüklenir, ilk istekten sonra cache'lenir ve asla compact edilmezler. System prompt'ta oturdukları için talimat-uyma ağırlıkları da en yüksektir; tam bu yüzden dikkatli kullanılmaları gerekir.</p>
+    <div class="note warn">
+      <span class="tag">Kritik</span>
+      Bir output style tanımlamak, varsayılan output style'ın yerini alır — frontmatter'a <code>keep-coding-instructions: true</code> yazmadığın sürece. Claude Code'da bu, "yazılım mühendisliği yapıyorsun" diyen talimatlarla birlikte şu varsayılanları da devreden çıkarır: değişikliğin kapsamını nasıl belirleyeceği, ne zaman kod yorumu ekleyeceği, güvenlik kaygılarını nasıl ele alacağı ve işi bitti demeden önce test çalıştırma alışkanlığı. Yani özel bir output style, varsayılan davranışıyla Claude Code'u mühendis olmaktan çıkarıp <strong>genel bir asistana</strong> dönüştürür.
+    </div>
+    <div class="note good">
+      <span class="tag">Önce yerleşikleri dene</span>
+      Kendi output style'ını yazmadan önce yerleşiklere bak: <strong>Proactive</strong> (otonomi), <strong>Explanatory</strong> (öğretme modu) ve <strong>Learning</strong> (işbirlikçi kodlama), en yaygın ihtiyaçları bakımını üstleneceğin bir dosya olmadan karşılar.
+    </div>
+    <h3>Örnek — <code>.claude/output-styles/tutor.md</code></h3>
+    <pre><code><span class="c">---</span>
+<span class="k">name:</span> Tutor
+<span class="k">keep-coding-instructions:</span> true
+<span class="c">---</span>
+Her değişiklikten sonra, ne yaptığını ve nedenini
+2-3 cümlede öğretici bir dille açıkla. Alternatif
+yaklaşımları kısaca belirt.</code></pre>
+  </section>
+
+  <!-- 09 -->
+  <section id="m9">
+    <h2><span class="num">09</span> Append system prompt</h2>
+    <p><code>--append-system-prompt</code>, bir önceki bölümdeki riski almadan system prompt'a talimat eklemenin yoludur: adı üstünde yalnızca <strong>ekleme</strong> yapar, Claude'un varsayılan rolünü olduğu gibi bırakır.</p>
+    <ul>
+      <li>Invocation anında geçilir ve yalnızca o invocation için geçerlidir; dosya olarak oturumlar arasında kalıcı olmaz.</li>
+      <li>Input token'larını artırır, ama prompt caching ilk istekten sonra maliyeti düşürür. "Daha ayrıntılı yaz" gibi bir talimat verirsen output token'ları da artar.</li>
+    </ul>
+    <h3>Örnek</h3>
+    <pre><code>claude <span class="k">--append-system-prompt</span> \
+  <span class="s">"Yanıtları kısa tut. Commit mesajlarında her zaman
+   semantic commit formatı kullan."</span></code></pre>
+    <div class="note warn">
+      <span class="tag">Azalan getiri</span>
+      Append system prompt'un uyum açısından azalan getirisi vardır: bu yöntemle ne kadar çok talimat verirsen, özellikle çelişenler varsa, Claude o kadar gevşek uyar. Ton, biçim, kısa-spesifik standartlar için idealdir; uzun kurallar listesi için değil.
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="m10">
+    <h2><span class="num">10</span> Senaryolar: hangisini seç?</h2>
+    <p>Aşağıdakiler, gerçek durumlar üzerinden doğru aracı seçme pratiğidir. Her birinde önce şu iki soruyu sor: <strong>bu davranış garanti mi olmalı, yoksa öneri düzeyi yeterli mi</strong> ve <strong>talimatın context'e ne zaman girmesi gerekiyor?</strong></p>
+
+    <div class="scenario">
+      <p class="q">1) "Her düzenlemeden sonra prettier çalışsın istiyorum."</p>
+      <p class="a"><span class="pick">→ hook</span> (PostToolUse). CLAUDE.md'ye "her zaman prettier çalıştır" yazmak, formatlayıcıyı çalıştırma kararını modele bırakır; hook ise onu doğrudan çalıştırır. Güvenilir biçimde tekrarlanması gereken her "X olunca Y yap" cümlesi aslında bir hook'tur.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">2) "Production veritabanını silen komutlar asla çalışmasın."</p>
+      <p class="a"><span class="pick">→ hook (PreToolUse, exit 2) veya permissions</span>. "Asla yapma" talimatla çözülmez: uzun bir oturumda, baskı altında ya da okunan bir dosyadaki prompt injection yüzünden model kuralı atlayabilir. Organizasyon genelinde geçerli olması gerekiyorsa doğru yer <strong>managed settings</strong>'tir; admin dağıtır, kullanıcı override edemez.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">3) "Deploy süreci 12 adımlık bir runbook. Claude bunu hep aynı şekilde izlesin."</p>
+      <p class="a"><span class="pick">→ skill</span>. Adımları ana thread'de görüp gerektiğinde yönlendirmek istiyorsun, izolasyona ihtiyacın yok; bu yüzden subagent değil skill. Gövdesi yalnızca skill çağrıldığında yükleneceği için de prosedürün uzunluğu her oturuma yansımaz.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">4) "Bağımlılık denetimi yaptır ama ara çıktı ana sohbeti doldurmasın."</p>
+      <p class="a"><span class="pick">→ subagent</span>. İzole bir context window'da çalışır ve ana oturuma yalnızca kısa özeti döner. Ölçüt basit: bir daha bakmayacağın ara sonuçlar üretilecekse subagent seç.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">5) "Tüm API handler'ları girdiyi Zod ile doğrulasın — ama bu kural docs çalışırken context'i şişirmesin."</p>
+      <p class="a"><span class="pick">→ path-scoped rule</span> (<code>paths: src/api/**</code>). Kısıt birden çok dosyayı ilgilendiriyor ama hepsini değil; yalnızca eşleşen dosyalara dokunulduğunda yüklenmesi tam da istediğin şey. Aynı metni unscoped rule ya da CLAUDE.md olarak koysaydın her oturumda yüklü kalırdı.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">6) "CLAUDE.md 400 satır oldu ve Claude bazı kuralları görmezden geliyor."</p>
+      <p class="a"><span class="pick">→ tek bir araç değil, bölme işi</span>. Dosyayı üçe ayır: her zaman gereken sabit gerçekler (build komutları, dizin yapısı) CLAUDE.md'de kalsın, prosedürler skill'e, belirli dosyalara özgü kısıtlar path-scoped rule'a taşınsın. Uzun bir CLAUDE.md yalnızca pahalı değil aynı zamanda etkisizdir: kritik satır, alakasız 380 satırın arasında kaybolur.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">7) "Her geliştiricide semantic commit kullanmak istiyorum ama bu benim kişisel tercihim."</p>
+      <p class="a"><span class="pick">→ user-level dosya</span> (kişisel CLAUDE.md ya da rule). Dosya tabanlı yöntemlerin hepsinin, hangi repo'da çalışırsan çalış yüklenen bir user-level karşılığı vardır. Ayrım şu: kişisel tercihler user dosyasına, takımın tamamını bağlayan ve o codebase'e özgü olanlar proje dosyasına gider.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">8) "Aynı release checklist'ini üç ayrı repoda kullanıyorum."</p>
+      <p class="a"><span class="pick">→ user-level skill</span> (<code>~/.claude/skills/</code>). Prosedür olduğu için CLAUDE.md değil skill, her repoda gerektiği için proje değil user seviyesi. Takımın da aynı adımları izlemesi gerekiyorsa kopyalama yapma: skill'i projeye commit'le ve kişisel kopyanı sil. Bir prosedürün tek bir doğru kopyası olmalı, aksi halde iki sürüm sessizce birbirinden uzaklaşır.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">9) "Uzun oturumlarda, özellikle compaction'dan sonra 'debug log bırakma' kuralını unutuyor."</p>
+      <p class="a"><span class="pick">→ rule</span>, çünkü rule'lar compaction'da yeniden enjekte edilir. Aynı kuralı bir skill gövdesine koyduysan sorunun kaynağı budur: skill'ler ortak bir bütçeye kadar yeniden enjekte edilir ve en eski çağrılan önce düşer. Kuralın gerçekten garanti olması gerekiyorsa talimat katmanından tamamen çık ve linter'ı bir <span class="pick">PostToolUse hook</span>'uyla çalıştır. Unutulma sorununu talimatı daha yüksek sesle yazarak değil, yükleme davranışını değiştirerek çöz.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">10) "Her oturumun başında açık PR'ları ve o sprint'in hedefini bilsin istiyorum."</p>
+      <p class="a"><span class="pick">→ hook</span> (SessionStart), çıktısını context'e döndürecek şekilde. Bu veri her gün değişir; CLAUDE.md'ye yazarsan bir hafta içinde yanlış bilgi öğretmeye başlar, çünkü statik dosyalar yalnızca sabitler içindir. Hook'un çıktısını açıkça geri döndürmeyi de unutma — sessizce çalışan bir hook Claude'a hiçbir bilgi taşımaz.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">11) "Claude artık kod asistanı gibi değil, bir editör gibi davransın."</p>
+      <p class="a"><span class="pick">→ output style</span>. Burada rolü kökten değiştiriyor, yani system prompt'taki mühendislik varsayılanlarını bilerek elden çıkarıyorsun. Niyetin yalnızca tonu ya da yanıt uzunluğunu ayarlamaksa aynı şeyi <span class="pick">append system prompt</span> ile, hem daha ucuza hem de rolü bozmadan yaparsın.</p>
+    </div>
+
+    <div class="scenario">
+      <p class="q">12) "Bir 'deploy' skill'im var ama Claude'un uygun gördüğünde kendiliğinden çalıştırmasını istemiyorum."</p>
+      <p class="a"><span class="pick">→ skill + <code>disable-model-invocation: true</code></span>. Skill <code>/deploy</code> ile senin çağırabileceğin yerde durmaya devam eder, ama Claude'un otomatik tetikleyicisinden çıkar; açıklaması context'e bile girmez. Yan etkisi geri alınamayan her iş (deploy, commit, mesaj gönderme) için doğru varsayılan budur, çünkü kodun hazır görünmesi tek başına deploy kararı için yeterli bir sinyal değildir.</p>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section id="m11">
+    <h2><span class="num">11</span> Karar ağacı & sık hatalar</h2>
+    <h3>Hızlı karar ağacı</h3>
+    <p>Sırayla sor; ilk "evet" cevabı aracını verir.</p>
+    <ul>
+      <li><strong>Davranış garanti olmalı mı?</strong> Evet ise <strong>hook</strong>, <strong>permissions</strong> ya da <strong>managed settings</strong>. Öneri düzeyi yeterliyse talimat yöntemlerine devam et.</li>
+      <li><strong>Adım adım bir prosedür mü?</strong> Ana akışta görünmesini istiyorsan <strong>skill</strong>, izole çalışıp yalnızca özet dönmesini istiyorsan <strong>subagent</strong>.</li>
+      <li><strong>Her zaman gereken sabit bir gerçek mi?</strong> Tüm proje için geçerliyse <strong>CLAUDE.md (root)</strong>, tek klasöre özgüyse <strong>CLAUDE.md (subdirectory)</strong>, birden çok yerde geçen bir kısıtsa <strong>path-scoped rule</strong>.</li>
+      <li><strong>Rol mü değişiyor?</strong> Köklü bir değişiklikse <strong>output style</strong>, yalnızca ton ve biçim meselesiyse <strong>append system prompt</strong>.</li>
+    </ul>
+
+    <h3>CLAUDE.md'de görürsen taşı</h3>
+    <p>Aşağıdakiler CLAUDE.md'de sık rastlanan, ama neredeyse her zaman başka bir katmana ait olan satırlardır:</p>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>"Her X olduğunda hep Y yap" → <strong>hook</strong></li>
+        <li>"Bunu asla yapma" → <strong>hook + permissions</strong>, organizasyon geneliyse <strong>managed settings</strong></li>
+        <li>Adım adım runbook veya checklist → <strong>skill</strong></li>
+        <li>Yalnızca belirli dosyaları ilgilendiren kısıt → <strong>path-scoped rule</strong></li>
+        <li>Her gün değişen bilgi (açık PR'lar, sprint hedefi) → <strong>SessionStart hook</strong></li>
+        <li>Kişisel tercih → <strong>user-level dosya</strong></li>
+      </ul>
+    </div>
+
+    <div class="note good">
+      <span class="tag">Son adım</span>
+      Bu araçlardan birkaçını çalışır hale getirdikten sonra skill'leri, subagent'ları, hook'ları ve output style'ları tek bir <strong>plugin</strong> olarak paketleyebilirsin. Böylece aynı kurulum takımlar ve projeler arasında birebir aynı şekilde paylaşılır.
+    </div>
+  </section>
+
+  <footer>
+    Kaynak: claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more
+  </footer>
+
+</div>
+</body>
+</html>

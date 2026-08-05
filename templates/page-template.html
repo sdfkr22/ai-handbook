@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAŞLIK</title>
+<!-- ===== Katalog meta bilgileri: ZORUNLU (data/yazilar.js bunlardan üretilir) ===== -->
+<meta name="yazi:baslik" content="Kartta görünecek kısa başlık">
+<meta name="yazi:aciklama" content="1-2 cümlelik açıklama, en fazla ~220 karakter.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="etiket1, etiket2, etiket3">
+<meta name="yazi:kaynak" content="https://ana-kaynak">
+<meta name="yazi:tarih" content="2026-01-01">
+<!-- Tek bir kaynak yoksa yazi:kaynak boş bırakılabilir; birden çok kaynak varsa ana
+     kaynağı yaz, tamamını sayfanın footer'ında listele. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
+     scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== KISIM: Başlık alanı ===== -->
+  <header class="hero">
+    <p class="kicker">Konu · Alt başlık</p>
+    <h1>Ana Başlık<br><em>vurgulu kısım</em></h1>
+    <p class="lede">Konunun bir-iki cümlelik giriş açıklaması buraya gelir.</p>
+    <!-- Tek kaynak varsa: -->
+    <p class="source">Kaynak: <a href="URL">kısa-link-metni</a></p>
+    <!-- Birden çok kaynak varsa bunun yerine:
+    <p class="source">1 Ocak 2026 · Referans: <a href="URL">docs.claude.com/…</a></p> -->
+  </header>
+
+  <!-- ===== KISIM: İçindekiler ===== -->
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Original Section Title</a></li>
+      <li><a href="#m2"><span class="n">02</span> Original Section Title</a></li>
+    </ol>
+  </nav>
+
+  <!-- ===== KISIM: Bölüm (her bölüm için kopyala) ===== -->
+  <section id="m1">
+    <h2><span class="num">01</span> Original Section Title</h2>
+    <p>Bölümün Türkçe açıklaması. Başlık orijinal dilinde kalır, açıklama Türkçedir.</p>
+
+    <!-- Uyarı kutusu (kritik notlar için) -->
+    <div class="note warn">
+      <span class="tag">En önemli kural</span>
+      Atlanmaması gereken kritik uyarı metni.
+    </div>
+
+    <!-- Normal bilgi kutusu -->
+    <div class="note">
+      <span class="tag">Ne işe yarar</span>
+      Açıklayıcı not metni.
+    </div>
+
+    <!-- Madde listesi -->
+    <ul>
+      <li><strong>Vurgu:</strong> madde açıklaması.</li>
+    </ul>
+
+    <!-- Kod bloğu: .k=anahtar kelime, .s=string, .c=yorum -->
+    <pre><code><span class="c"># yorum satırı</span>
+<span class="k">response</span> = client.messages.create(
+    model=<span class="s">"claude-opus-4-8"</span>,
+)</code></pre>
+
+    <!-- Bilgi kartı -->
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Kart içi madde.</li>
+      </ul>
+    </div>
+
+    <!-- Karşılaştırma tablosu -->
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Sütun</th><th>Sütun</th></tr></thead>
+        <tbody><tr><td>Hücre</td><td>Hücre</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Bu sayfanın Türkçe özetidir · Orijinal: URL
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kendi subagent'ını yazmak</title>
+<meta name="yazi:baslik" content="Kendi subagent'ını yazmak">
+<meta name="yazi:aciklama" content="Subagent ne zaman kurulur, dosyası nereye konur, hangi frontmatter alanı ne yapar ve araç erişimi nasıl kısıtlanır — altı bitmiş örnek senaryoyla.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="subagents, agents, frontmatter, tools, permissionMode, memory, orkestrasyon, background">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/sub-agents">
+<meta name="yazi:tarih" content="2026-08-03">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · Subagents</p>
+    <h1>Kendi subagent'ını<br><em>yazmak</em></h1>
+    <p class="lede">Subagent, kendi context window'unda çalışan ve ana konuşmaya yalnızca özetini döndüren
+      uzmanlaşmış bir asistandır. Bir klasöre koyduğun tek bir markdown dosyasından ibarettir. Bu sayfa
+      subagent'ın <strong>ne zaman doğru araç olduğunu</strong>, dosyanın nereye konduğunu, her frontmatter
+      alanının ne yaptığını ve araç erişiminin nasıl kısıtlandığını anlatıyor — sonunda kopyalayıp
+      kullanabileceğin altı bitmiş senaryoyla.</p>
+    <p class="source">3 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/sub-agents">code.claude.com/docs/en/sub-agents</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Subagent nedir, neyi çözer</a></li>
+      <li><a href="#m2"><span class="n">02</span> Ne zaman subagent?</a></li>
+      <li><a href="#m3"><span class="n">03</span> Yerleşik subagent'lar</a></li>
+      <li><a href="#m4"><span class="n">04</span> İlk subagent'ın: adım adım</a></li>
+      <li><a href="#m5"><span class="n">05</span> Dosya nerede yaşar</a></li>
+      <li><a href="#m6"><span class="n">06</span> Frontmatter alanları</a></li>
+      <li><a href="#m7"><span class="n">07</span> Araç erişimi ve izinler</a></li>
+      <li><a href="#m8"><span class="n">08</span> Context, skills ve memory</a></li>
+      <li><a href="#m9"><span class="n">09</span> Çağırma, background, resume</a></li>
+      <li><a href="#m10"><span class="n">10</span> Altı örnek senaryo</a></li>
+      <li><a href="#m11"><span class="n">11</span> Orkestrasyon ve limitler</a></li>
+      <li><a href="#m12"><span class="n">12</span> Sık yapılan hatalar</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============================================================ -->
+  <section id="m1">
+    <h2><span class="num">01</span> Subagent nedir, neyi çözer</h2>
+    <p>Subagent, Claude'un bir yan görevi devrettiği ayrı bir asistandır. Kendi context window'unda,
+      kendi system prompt'uyla, kendine özel araç listesiyle ve bağımsız izinlerle çalışır. İşi bitince
+      ana konuşmaya <strong>yalnızca son mesajı</strong> döner — arada okuduğu yüzlerce dosya, test çıktısı
+      veya log satırı senin oturumuna hiç girmez.</p>
+
+    <p>Çözdüğü problem tek cümleyle şudur: <strong>bir daha bakmayacağın çıktı, ana konuşmanın context'ini
+      yemesin.</strong> Test suite'ini çalıştırmak, bir dokümantasyon sitesini taramak, 40 dosyada bir
+      pattern aramak — hepsi devasa çıktı üretir, ama sana gereken sadece sonuçtur.</p>
+
+    <div class="card">
+      <p style="margin-bottom:8px;"><strong>Subagent sana ne kazandırır:</strong></p>
+      <ul style="margin-bottom:0;">
+        <li><strong>Context koruma:</strong> keşif ve gürültülü işler ana konuşmanın dışında kalır.</li>
+        <li><strong>Kısıtlama:</strong> hangi araçlara erişebileceğini sen belirlersin — read-only bir
+          reviewer gerçekten dosya yazamaz.</li>
+        <li><strong>Yeniden kullanım:</strong> aynı talimatla aynı işçiyi tekrar tekrar kurmaktan kurtulursun.</li>
+        <li><strong>Uzmanlaşma:</strong> dar bir alana odaklı system prompt yazarsın.</li>
+        <li><strong>Maliyet kontrolü:</strong> işi <code>haiku</code> gibi daha ucuz bir modele yönlendirebilirsin.</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <span class="tag">Ne zaman tanımlanır</span>
+      Tek seferlik bir iş için subagent <em>dosyası</em> yazmana gerek yok — Claude'a "bunu bir subagent'a
+      yaptır" demen yeter, yerleşik <code>general-purpose</code> devreye girer. Dosya yazmanın gerekçesi
+      <strong>aynı işçiyi aynı talimatlarla tekrar tekrar kurduğunu fark etmendir</strong>.
+    </div>
+
+    <p>Subagent'lar tek bir oturum içinde çalışır. Birbirinden bağımsız birçok oturumu paralel yürütmek
+      için background agent'lar, birbiriyle haberleşen oturumlar için agent teams ayrı özelliklerdir.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m2">
+    <h2><span class="num">02</span> Ne zaman subagent?</h2>
+    <p>Subagent her işin cevabı değil. Karar dört seçenek arasında verilir ve ayrım <strong>context'in
+      nereye gitmesi gerektiğine</strong> dayanır.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Seçenek</th><th>Ne zaman</th><th>Context davranışı</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Ana konuşma</strong></td>
+            <td>Sık gidip gelme gerektiren, aşamaları ortak bağlam paylaşan, küçük ve hedefli işler.
+              Gecikmenin önemli olduğu durumlar.</td>
+            <td>Her şey senin context'inde birikir.</td>
+          </tr>
+          <tr>
+            <td><strong>Skill</strong></td>
+            <td>Tekrar kullanılabilir bir prosedür/checklist; adımları görüp gerektiğinde yönlendirmek
+              istiyorsun.</td>
+            <td>Ana konuşmanın context'inde çalışır.</td>
+          </tr>
+          <tr>
+            <td><strong>Subagent</strong></td>
+            <td>Gürültülü çıktı üreten, kendi kendine yeten, özetle dönebilen işler. Araç kısıtlaması
+              dayatmak istediğin işler.</td>
+            <td>Taze context; geriye sadece son mesaj döner.</td>
+          </tr>
+          <tr>
+            <td><strong>Fork</strong> (<code>/subtask</code>)</td>
+            <td>Yan görev, mevcut konuşmanın tamamını bilmeden anlamsız olacaksa. Aynı noktadan birkaç
+              yaklaşımı paralel denemek.</td>
+            <td>Tüm geçmişi devralır; tool çağrıları yine dışarıda kalır.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Pratik ölçüt</span>
+      <strong>Ara sonuçlara bir daha bakacak mısın?</strong> Bakmayacaksan subagent. Bakacaksan ve
+      adımları yönlendirmek istiyorsan skill. Yan görev için "durumu baştan anlatmam gerekir" diyorsan fork.
+    </div>
+
+    <p>Konuşmanda zaten olan bir şeye dair kısa bir soru için subagent kurma; <code>/btw</code> tüm
+      context'i görür, araç erişimi yoktur ve cevabı geçmişe eklenmeden atılır.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m3">
+    <h2><span class="num">03</span> Yerleşik subagent'lar</h2>
+    <p>Kendi dosyanı yazmadan önce elinde ne olduğunu bil: Claude Code birkaç subagent'la birlikte gelir ve
+      uygun gördüğünde onlara kendiliğinden devreder. Hepsi ana konuşmanın izinlerini devralır, üzerine
+      araç kısıtları biner.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Agent</th><th>Model</th><th>Araçlar</th><th>Ne için</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Explore</strong></td><td>Ana konuşmadan devralır (Claude API'de Opus ile sınırlanır)</td><td>Read-only; Write ve Edit reddedilir</td><td>Dosya bulma, kod arama, kod tabanını tanıma</td></tr>
+          <tr><td><strong>Plan</strong></td><td>Ana konuşmadan devralır</td><td>Read-only</td><td>Plan mode'da, plan sunulmadan önce araştırma</td></tr>
+          <tr><td><strong>general-purpose</strong></td><td>Ana konuşmadan devralır</td><td>Subagent'lara açık tüm araçlar</td><td>Hem keşif hem değişiklik isteyen çok adımlı işler</td></tr>
+          <tr><td><strong>statusline-setup</strong></td><td>Sonnet</td><td>—</td><td><code>/statusline</code> çalıştırdığında</td></tr>
+          <tr><td><strong>claude-code-guide</strong></td><td>Haiku</td><td>—</td><td>Claude Code özellikleri hakkındaki sorular</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Dikkat çeken fark</span>
+      Explore ve Plan, <strong>CLAUDE.md dosyalarını ve git status'u okumaz</strong> — araştırmayı hızlı ve
+      ucuz tutmak için. Diğer tüm yerleşik ve özel subagent'lar ikisini de yükler. Explore'a mutlaka
+      geçmesi gereken bir kural varsa ("<code>vendor/</code> klasörünü atla" gibi) onu delegasyon
+      prompt'unda tekrar söylemen gerekir.
+    </div>
+
+    <p>Yerleşik bir subagent'ı ismini kullanarak kendi tanımınla <strong>ezebilirsin</strong>: <code>~/.claude/agents/</code>
+      altına <code>name: Explore</code> olan bir dosya koyarsan senin tanımın geçerli olur — örneğin
+      <code>model: haiku</code> ile keşfi ucuz modelde tutmak için.</p>
+
+    <h3>Yerleşikleri kapatmak</h3>
+    <pre><code><span class="c">// .claude/settings.json — belirli bir agent'ı engelle</span>
+{
+  <span class="s">"permissions"</span>: {
+    <span class="s">"deny"</span>: [<span class="s">"Agent(Explore)"</span>, <span class="s">"Agent(my-custom-agent)"</span>]
+  }
+}</code></pre>
+    <p>Claude'un hiçbir subagent'a devretmesini istemiyorsan <code>Agent</code> aracının kendisini
+      <code>permissions.deny</code> içinde reddet.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m4">
+    <h2><span class="num">04</span> İlk subagent'ın: adım adım</h2>
+    <p>Subagent, YAML frontmatter'lı bir markdown dosyasıdır. Kayıt defteri, kurulum, derleme adımı yok —
+      dosya oradaysa subagent vardır.</p>
+
+    <h3>1. Claude'a yazdır</h3>
+    <p>En hızlı yol dosyayı elle yazmak değil, tarif etmek:</p>
+    <pre><code><span class="c"># Claude Code içinde, düz metin olarak:</span>
+~/.claude/agents/ altına bir code-improver subagent'ı oluştur. Dosyaları
+tarayıp okunabilirlik, performans ve best practice açısından iyileştirme
+önersin. Her sorunda problemi açıklasın, mevcut kodu göstersin, düzeltilmiş
+halini versin. Read-only olsun ve Sonnet kullansın.</code></pre>
+
+    <h3>2. Çıkan dosyayı gözden geçir</h3>
+    <pre><code><span class="c"># ~/.claude/agents/code-improver.md</span>
+---
+<span class="k">name</span>: code-improver
+<span class="k">description</span>: Scans files and suggests improvements for readability,
+  performance, and best practices. Use after writing or modifying code.
+<span class="k">tools</span>: Read, Grep, Glob
+<span class="k">model</span>: sonnet
+---
+
+You are a code improvement specialist. For each issue you find, explain
+the problem, show the current code, and provide an improved version.</code></pre>
+    <p>Frontmatter yapılandırmayı, gövde ise system prompt'u tanımlar. Zorunlu olan yalnızca
+      <code>name</code> ve <code>description</code>'dır; gerisi opsiyoneldir.</p>
+
+    <h3>3. Dene</h3>
+    <pre><code><span class="c"># Yine düz metin:</span>
+code-improver agent'ını kullanarak bu projede iyileştirme önerileri çıkar</code></pre>
+
+    <div class="note warn">
+      <span class="tag">İlk seferde bulunmuyorsa</span>
+      Claude Code <code>.claude/agents/</code> ve <code>~/.claude/agents/</code> klasörlerini izler; dosyayı
+      değiştirdiğinde birkaç saniye içinde algılar, yeniden başlatmaya gerek yoktur. Tek istisna:
+      <strong>oturum başladığında o <code>agents</code> klasörü hiç yoksa</strong> izleyici onu göremez —
+      bir scope'un ilk agent dosyasını oluşturduktan sonra Claude Code'u yeniden başlat.
+    </div>
+
+    <div class="note">
+      <span class="tag">Sürüm notu</span>
+      v2.1.198'den itibaren <code>/agents</code> komutu artık interaktif oluşturma sihirbazını açmıyor;
+      Claude'dan istemeni ya da dosyayı doğrudan düzenlemeni hatırlatan bir mesaj basıyor. Dosya formatı,
+      frontmatter alanları ve klasör konumları değişmedi.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m5">
+    <h2><span class="num">05</span> Dosya nerede yaşar</h2>
+    <p>Dosyanın konumu, subagent'ın kimlere açık olduğunu belirler. Aynı <code>name</code> birden çok yerde
+      tanımlıysa öncelik sırası devreye girer.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Konum</th><th>Kapsam</th><th>Öncelik</th></tr></thead>
+        <tbody>
+          <tr><td>Managed settings</td><td>Kurum geneli</td><td>1 (en yüksek)</td></tr>
+          <tr><td><code>--agents</code> CLI bayrağı</td><td>Yalnızca o oturum</td><td>2</td></tr>
+          <tr><td><code>.claude/agents/</code></td><td>Bu proje</td><td>3</td></tr>
+          <tr><td><code>~/.claude/agents/</code></td><td>Tüm projelerin</td><td>4</td></tr>
+          <tr><td>Plugin'in <code>agents/</code> klasörü</td><td>Plugin etkin olan yerlerde</td><td>5 (en düşük)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ul>
+      <li><strong>Proje subagent'ları</strong> (<code>.claude/agents/</code>) kod tabanına özgü işler için
+        idealdir. Sürüm kontrolüne ekle ki ekip birlikte kullanıp geliştirsin.</li>
+      <li><strong>Kullanıcı subagent'ları</strong> (<code>~/.claude/agents/</code>) tüm projelerinde
+        yanında gelen kişisel araçlarındır.</li>
+      <li>Her iki klasör de <strong>özyinelemeli</strong> taranır; <code>agents/review/</code>,
+        <code>agents/research/</code> gibi alt klasörlere ayırabilirsin. Alt klasör adı kimliği etkilemez —
+        kimlik yalnızca <code>name</code> alanından gelir.</li>
+      <li>Proje subagent'ları çalışma dizininden yukarı doğru yürünerek bulunur; aradaki her
+        <code>.claude/agents/</code> taranır. Aynı <code>name</code> birden çok seviyede varsa çalışma
+        dizinine <strong>en yakın</strong> tanım kazanır.</li>
+    </ul>
+
+    <div class="note warn">
+      <span class="tag">İsim çakışması</span>
+      Aynı klasör ağacında iki dosya aynı <code>name</code>'i tanımlarsa Claude Code yalnızca birini
+      yükler ve hangisini seçtiği <strong>dosya sistemi okuma sırasına</strong> bağlıdır — belgelenmiş bir
+      öncelik yoktur. <code>name</code> değerlerini ağacın tamamında benzersiz tut; <code>/doctor</code>
+      çakışmaları raporlar.
+    </div>
+
+    <h3>Oturumluk subagent: <code>--agents</code></h3>
+    <p>Diske hiç yazmadan, sadece o oturum için subagent tanımlamak istersen JSON geçebilirsin. Hızlı test
+      ve otomasyon script'leri için kullanışlıdır:</p>
+    <pre><code><span class="c"># Windows PowerShell</span>
+claude --agents @'
+{
+  <span class="s">"code-reviewer"</span>: {
+    <span class="s">"description"</span>: <span class="s">"Expert code reviewer. Use proactively after code changes."</span>,
+    <span class="s">"prompt"</span>: <span class="s">"You are a senior code reviewer. Focus on quality and security."</span>,
+    <span class="s">"tools"</span>: [<span class="s">"Read"</span>, <span class="s">"Grep"</span>, <span class="s">"Glob"</span>, <span class="s">"Bash"</span>],
+    <span class="s">"model"</span>: <span class="s">"sonnet"</span>
+  },
+  <span class="s">"debugger"</span>: {
+    <span class="s">"description"</span>: <span class="s">"Debugging specialist for errors and test failures."</span>,
+    <span class="s">"prompt"</span>: <span class="s">"You are an expert debugger. Find root causes and fix them."</span>
+  }
+}
+'@</code></pre>
+    <p>JSON, dosya tabanlı subagent'larla aynı alanları kabul eder; markdown gövdesinin karşılığı
+      <code>prompt</code> alanıdır.</p>
+
+    <div class="note warn">
+      <span class="tag">Plugin sınırı</span>
+      Güvenlik nedeniyle plugin'lerden gelen subagent'larda <code>hooks</code>, <code>mcpServers</code> ve
+      <code>permissionMode</code> alanları <strong>yok sayılır</strong>. Bunlara ihtiyacın varsa agent
+      dosyasını <code>.claude/agents/</code> veya <code>~/.claude/agents/</code> içine kopyala.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m6">
+    <h2><span class="num">06</span> Frontmatter alanları</h2>
+    <p>Yalnızca <code>name</code> ve <code>description</code> zorunludur. Geri kalanı, subagent'ı nasıl
+      kısıtlamak ve konumlandırmak istediğine göre eklenir.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>name</code></td><td>Küçük harf ve tire ile benzersiz kimlik. Dosya adıyla aynı olmak zorunda değil. <code>:</code> içeremez — o karakter plugin kimlikleri için ayrılmıştır.</td></tr>
+          <tr><td><code>description</code></td><td>Claude'un <strong>ne zaman devredeceğini</strong> anlatır. Delegasyon kararı buradan çıkar.</td></tr>
+          <tr><td><code>tools</code></td><td>İzin verilen araçlar (allowlist). Yazılmazsa subagent'lara açık tüm araçlar devralınır.</td></tr>
+          <tr><td><code>disallowedTools</code></td><td>Yasaklanan araçlar (denylist). Devralınan veya belirtilen listeden çıkarılır.</td></tr>
+          <tr><td><code>model</code></td><td><code>sonnet</code>, <code>opus</code>, <code>haiku</code>, <code>fable</code>, tam model ID'si (<code>claude-opus-5</code>) veya <code>inherit</code>. Varsayılan: <code>inherit</code>.</td></tr>
+          <tr><td><code>permissionMode</code></td><td><code>default</code>, <code>acceptEdits</code>, <code>auto</code>, <code>dontAsk</code>, <code>bypassPermissions</code>, <code>plan</code>.</td></tr>
+          <tr><td><code>maxTurns</code></td><td>Subagent durmadan önceki azami agentic tur sayısı.</td></tr>
+          <tr><td><code>skills</code></td><td>Başlangıçta context'e enjekte edilecek skill'ler — sadece açıklaması değil, <strong>tam içeriği</strong>.</td></tr>
+          <tr><td><code>mcpServers</code></td><td>Bu subagent'a açık MCP sunucuları; isimle referans ya da satır içi tanım.</td></tr>
+          <tr><td><code>hooks</code></td><td>Yalnızca bu subagent aktifken çalışan lifecycle hook'ları.</td></tr>
+          <tr><td><code>memory</code></td><td>Kalıcı hafıza kapsamı: <code>user</code>, <code>project</code> veya <code>local</code>.</td></tr>
+          <tr><td><code>background</code></td><td><code>true</code> ise Claude sonucu hemen gerekse bile arka planda çalıştırır.</td></tr>
+          <tr><td><code>effort</code></td><td>Bu subagent aktifken efor seviyesi: <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, <code>max</code>.</td></tr>
+          <tr><td><code>isolation</code></td><td><code>worktree</code> ise geçici bir git worktree'de, deponun izole bir kopyasında çalışır.</td></tr>
+          <tr><td><code>color</code></td><td>Görev listesinde görünecek renk: <code>red</code>, <code>blue</code>, <code>green</code>, <code>yellow</code>, <code>purple</code>, <code>orange</code>, <code>pink</code>, <code>cyan</code>.</td></tr>
+          <tr><td><code>initialPrompt</code></td><td><code>--agent</code> ile ana oturum olarak çalıştığında otomatik gönderilen ilk kullanıcı mesajı.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3><code>description</code>: delegasyonu belirleyen alan</h3>
+    <p>Claude, subagent'ın gövdesini görmez — sadece adını, açıklamasını ve araç listesini bilir. Yani
+      <strong>yanlış yazılmış bir description, mükemmel bir gövdeyi hiç çalıştırmaz</strong>. Açıklama iki
+      şeyi birden söylemeli: ne yaptığı ve ne zaman kullanılacağı.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Zayıf</th><th>İşe yarayan</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>Reviews code</code></td>
+            <td><code>Expert code review specialist. Proactively reviews code for quality, security, and maintainability. Use immediately after writing or modifying code.</code></td>
+          </tr>
+          <tr>
+            <td><code>Runs tests</code></td>
+            <td><code>Runs the test suite and reports only failing tests with their error messages. Use after any change to source or test files.</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Claude'un kendiliğinden devretmesini istiyorsan açıklamaya <strong>"use proactively"</strong>,
+      <strong>"use immediately after…"</strong> gibi tetikleyici ifadeler koy.</p>
+
+    <h3>Model seçimi ve çözümleme sırası</h3>
+    <p>Bir subagent'ın modeli şu sırayla belirlenir:</p>
+    <ul>
+      <li><code>CLAUDE_CODE_SUBAGENT_MODEL</code> ortam değişkeni (bir alias veya model ID'ye ayarlıysa)</li>
+      <li>Claude'un o çağrı için geçtiği <code>model</code> parametresi</li>
+      <li>Subagent tanımındaki <code>model</code> frontmatter'ı</li>
+      <li>Ana konuşmanın modeli</li>
+    </ul>
+    <p>Extended thinking için ayrı bir subagent ayarı <strong>yoktur</strong>: subagent, ana konuşmanın
+      thinking yapılandırmasını devralır (v2.1.198+).</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m7">
+    <h2><span class="num">07</span> Araç erişimi ve izinler</h2>
+    <p>Subagent kurmanın en somut faydalarından biri: bir işçinin <em>yapabileceklerini</em> daraltmak.
+      İki alan var ve birlikte kullanılabilirler.</p>
+
+    <h3>allowlist: <code>tools</code></h3>
+    <pre><code>---
+<span class="k">name</span>: safe-researcher
+<span class="k">description</span>: Research agent with restricted capabilities
+<span class="k">tools</span>: Read, Grep, Glob, Bash
+---</code></pre>
+    <p>Bu subagent dosya düzenleyemez, dosya yazamaz ve hiçbir MCP aracını kullanamaz.</p>
+
+    <h3>denylist: <code>disallowedTools</code></h3>
+    <pre><code>---
+<span class="k">name</span>: no-writes
+<span class="k">description</span>: Inherits the available tools except file writes
+<span class="k">disallowedTools</span>: Write, Edit
+---</code></pre>
+    <p>Bu subagent Bash'i, MCP araçlarını ve havuzundaki diğer her şeyi korur; yalnızca yazma araçlarını
+      kaybeder.</p>
+
+    <div class="note">
+      <span class="tag">İkisi birden yazılırsa</span>
+      Önce <code>disallowedTools</code> uygulanır, sonra <code>tools</code> kalan havuza karşı çözümlenir.
+      Her ikisinde de geçen bir araç kaldırılır.
+    </div>
+
+    <h3>MCP sunucu düzeyinde desen</h3>
+    <p>Her iki alan da tam araç adının yanı sıra <code>mcp__&lt;server&gt;</code> veya
+      <code>mcp__&lt;server&gt;__*</code> desenlerini kabul eder. <code>disallowedTools</code> içinde
+      <code>mcp__*</code> tüm sunuculardan gelen tüm MCP araçlarını kaldırır.</p>
+    <pre><code>---
+<span class="k">name</span>: local-only
+<span class="k">description</span>: Inherits every tool except those from the github MCP server
+<span class="k">disallowedTools</span>: mcp__github
+---</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Background subagent'ların araç havuzu daha dar</span>
+      Arka planda çalışan subagent'lar tüm MCP araçlarını korur ama yerleşik araçlardan yalnızca şunları
+      alır: <code>Read</code>, <code>Grep</code>, <code>Glob</code>, <code>Bash</code>,
+      <code>PowerShell</code>, <code>Edit</code>, <code>Write</code>, <code>NotebookEdit</code>,
+      <code>WebFetch</code>, <code>WebSearch</code>, <code>TodoWrite</code>, <code>Skill</code>,
+      <code>ToolSearch</code>, <code>EnterWorktree</code>, <code>ExitWorktree</code>, <code>Monitor</code>,
+      <code>TaskStop</code>, <code>SendMessage</code>, <code>Artifact</code>. Diğerleri
+      <code>tools</code> listesinde yazsa bile kaldırılır — <strong>aynı tanım foreground ve background'da
+      farklı araç setine çözümlenebilir.</strong>
+    </div>
+
+    <p>Ayrıca <code>AskUserQuestion</code>, <code>EnterPlanMode</code>, <code>ScheduleWakeup</code> gibi
+      birkaç araç her subagent'tan kaldırılır — <code>tools</code> listesinde yazsan bile. Bu yüzden bir
+      subagent kullanıcıya soru soramaz; belirsizliği kendi kararıyla çözer ve raporunda belirtir.</p>
+
+    <div class="note warn">
+      <span class="tag">Yazım hatası = başlatılamaz</span>
+      <code>tools</code> listesindeki hiçbir girdi gerçek bir araca karşılık gelmiyorsa (hepsi yanlış
+      yazılmışsa veya subagent'lara kapalı araçları gösteriyorsa) Claude Code subagent'ı başlatmayı
+      reddeder ve çözülemeyen girdileri isimleriyle raporlar.
+    </div>
+
+    <h3><code>permissionMode</code></h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Mod</th><th>Davranış</th></tr></thead>
+        <tbody>
+          <tr><td><code>default</code></td><td>Standart izin kontrolü, sorularla</td></tr>
+          <tr><td><code>acceptEdits</code></td><td>Çalışma dizinindeki dosya düzenlemelerini ve yaygın dosya sistemi komutlarını otomatik kabul eder</td></tr>
+          <tr><td><code>auto</code></td><td>Arka planda bir sınıflandırıcı komutları ve korumalı dizin yazmalarını denetler</td></tr>
+          <tr><td><code>dontAsk</code></td><td>İzin sorularını otomatik reddeder; açıkça izin verilmiş araçlar çalışmaya devam eder</td></tr>
+          <tr><td><code>bypassPermissions</code></td><td>İzin sorularını atlar</td></tr>
+          <tr><td><code>plan</code></td><td>Plan mode — read-only keşif</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">bypassPermissions</span>
+      İzin sorularını atlar; <code>.git</code>, <code>.claude</code>, <code>.vscode</code>,
+      <code>.idea</code>, <code>.husky</code> gibi klasörlere yazmayı da kapsar. Ayrıca <strong>ebeveyn
+      oturum <code>bypassPermissions</code> veya <code>acceptEdits</code> kullanıyorsa bu öncelik kazanır
+      ve subagent'ın frontmatter'ı ezilemez</strong> — yani read-only sandığın bir subagent, ebeveynin
+      moduna göre daha geniş yetkiyle çalışabilir. Ebeveyn <code>auto</code> modundaysa subagent da auto
+      devralır ve frontmatter'daki <code>permissionMode</code> yok sayılır.
+    </div>
+
+    <h3>Hook'la koşullu kural</h3>
+    <p><code>tools</code> alanı "Bash var / Bash yok" seviyesinde çalışır. Bir aracın bazı kullanımlarına
+      izin verip bazılarını engellemek istiyorsan <code>PreToolUse</code> hook'u yaz:</p>
+    <pre><code>---
+<span class="k">name</span>: db-reader
+<span class="k">description</span>: Execute read-only database queries
+<span class="k">tools</span>: Bash
+<span class="k">hooks</span>:
+  <span class="k">PreToolUse</span>:
+    - <span class="k">matcher</span>: <span class="s">"Bash"</span>
+      <span class="k">hooks</span>:
+        - <span class="k">type</span>: command
+          <span class="k">command</span>: <span class="s">"./scripts/validate-readonly-query.sh"</span>
+---</code></pre>
+    <p>Hook girdiyi stdin'den JSON olarak alır; <strong>2 exit koduyla</strong> çıkarsa işlem engellenir ve
+      stderr'deki mesaj subagent'a geri döner. Windows'ta hook script'ini PowerShell ile yaz ve hook
+      girdisine <code>shell: powershell</code> ekle.</p>
+
+    <div class="note warn">
+      <span class="tag">Workspace trust</span>
+      Proje seviyesindeki bir subagent'ın frontmatter hook'larının çalışması için o klasöre ait
+      <strong>workspace trust onayını vermiş olman gerekir</strong> (v2.1.218+). Onay yoksa subagent yine
+      çalışır ama hook'ları sessizce atlanır ve debug log'a hata yazılır — yani hook'a güvenerek kurduğun
+      koruma devrede olmayabilir. <code>~/.claude/agents/</code> altındaki kullanıcı subagent'ları bu
+      adıma ihtiyaç duymaz.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m8">
+    <h2><span class="num">08</span> Context, skills ve memory</h2>
+    <p>Subagent'ın <strong>ne görmediğini</strong> bilmek, iyi bir prompt yazmanın yarısıdır. Fork dışındaki
+      her subagent taze bir context window'da başlar: konuşma geçmişini, senin çağırdığın skill'leri veya
+      Claude'un daha önce okuduğu dosyaları görmez.</p>
+
+    <div class="card">
+      <p style="margin-bottom:8px;"><strong>Başlangıçta context'e girenler:</strong></p>
+      <ul style="margin-bottom:0;">
+        <li><strong>System prompt:</strong> agent'ın kendi gövdesi + Claude Code'un eklediği ortam bilgisi
+          — Claude Code'un tam system prompt'u <em>değil</em>.</li>
+        <li><strong>Görev mesajı:</strong> Claude'un işi devrederken yazdığı delegasyon prompt'u.</li>
+        <li><strong>CLAUDE.md hiyerarşisi:</strong> ana konuşmanın yüklediği tüm seviyeler. (Explore ve
+          Plan bunu atlar.)</li>
+        <li><strong>Git status:</strong> ebeveyn oturumun başında alınmış anlık görüntü.</li>
+        <li><strong>Preload edilmiş skill'ler:</strong> <code>skills</code> alanında sayılanların tam içeriği.</li>
+      </ul>
+    </div>
+
+    <p>Ana konuşmadan <strong>hiç geçmeyenler:</strong> output style (subagent kendi system prompt'uyla
+      çalışır), ana konuşmanın auto memory'si ve context window boyutu (subagent'ın penceresi kendi
+      modeline göre boyutlanır — daha küçük pencereli bir modele devrederken bunu hesaba kat).</p>
+
+    <h3>Skill preload etmek</h3>
+    <pre><code>---
+<span class="k">name</span>: api-developer
+<span class="k">description</span>: Implement API endpoints following team conventions
+<span class="k">skills</span>:
+  - api-conventions
+  - error-handling-patterns
+---
+
+Implement API endpoints. Follow the conventions and patterns from the
+preloaded skills.</code></pre>
+    <p>Bu alan, subagent'ın <em>erişebileceği</em> skill'leri değil, <strong>başlangıçta yüklenenleri</strong>
+      belirler. Alan olmasa da subagent çalışma sırasında Skill aracıyla proje/kullanıcı/plugin
+      skill'lerini keşfedip çağırabilir. Tamamen engellemek için <code>Skill</code>'i <code>tools</code>
+      dışında bırak veya <code>disallowedTools</code>'a ekle.</p>
+
+    <h3>Kalıcı memory</h3>
+    <p><code>memory</code> alanı, subagent'a konuşmalar arasında yaşayan bir klasör verir. Zamanla kod tabanı
+      desenlerini, tekrar eden sorunları ve mimari kararları biriktirir.</p>
+    <pre><code>---
+<span class="k">name</span>: code-reviewer
+<span class="k">description</span>: Reviews code for quality and best practices
+<span class="k">memory</span>: project
+---
+
+You are a code reviewer. As you review code, update your agent memory with
+patterns, conventions, and recurring issues you discover.</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kapsam</th><th>Konum</th><th>Ne zaman</th></tr></thead>
+        <tbody>
+          <tr><td><code>user</code></td><td><code>~/.claude/agent-memory/&lt;ad&gt;/</code></td><td>Öğrendikleri tüm projelerde geçerli olmalı</td></tr>
+          <tr><td><code>project</code></td><td><code>.claude/agent-memory/&lt;ad&gt;/</code></td><td>Projeye özgü ve sürüm kontrolüyle paylaşılabilir <strong>(önerilen varsayılan)</strong></td></tr>
+          <tr><td><code>local</code></td><td><code>.claude/agent-memory-local/&lt;ad&gt;/</code></td><td>Projeye özgü ama repoya girmemeli</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Memory açıkken subagent'ın system prompt'una hafıza talimatları ve klasördeki <code>MEMORY.md</code>
+      dosyasının ilk 200 satırı (veya 25KB'ı) eklenir; Read, Write ve Edit araçları hafızayı yönetebilmesi
+      için otomatik açılır.</p>
+
+    <div class="note warn">
+      <span class="tag">Auto memory kapalıysa</span>
+      Subagent memory'si auto memory'nin parçasıdır. <code>autoMemoryEnabled</code> ayarını veya
+      <code>CLAUDE_CODE_DISABLE_AUTO_MEMORY</code> değişkenini kapatırsan <code>memory</code> alanının
+      <strong>hiçbir etkisi olmaz</strong> ve subagent hafıza talimatları olmadan başlar.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m9">
+    <h2><span class="num">09</span> Çağırma, background, resume</h2>
+    <p>Claude otomatik devreder; ama üç kademe halinde bu kararı sen de alabilirsin.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yöntem</th><th>Garanti</th><th>Nasıl</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Doğal dil</strong></td><td>Claude karar verir</td><td><code>test-runner subagent'ını kullanarak testleri düzelt</code></td></tr>
+          <tr><td><strong>@-mention</strong></td><td>O subagent kesin çalışır</td><td><code>@agent-code-reviewer</code> veya typeahead'den seç</td></tr>
+          <tr><td><strong>Oturum geneli</strong></td><td>Tüm oturum o agent olur</td><td><code>claude --agent code-reviewer</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>@-mention <strong>hangi</strong> subagent'ın çağrılacağını belirler, ona hangi prompt'un gideceğini
+      değil — mesajın yine Claude'a gider, görev prompt'unu Claude yazar.</p>
+
+    <p><code>--agent</code> ile başlatılan oturumda subagent'ın system prompt'u varsayılan Claude Code
+      system prompt'unun <strong>yerine geçer</strong>; CLAUDE.md ve proje hafızası normal akışla yüklenmeye
+      devam eder. Bunu bir projede kalıcı hale getirmek için:</p>
+    <pre><code><span class="c">// .claude/settings.json</span>
+{ <span class="s">"agent"</span>: <span class="s">"code-reviewer"</span> }</code></pre>
+
+    <h3>Foreground / background</h3>
+    <ul>
+      <li><strong>Foreground:</strong> ana konuşma bitene kadar bloke olur; izin soruları doğrudan sana gelir.</li>
+      <li><strong>Background:</strong> sen çalışmaya devam ederken paralel yürür. İzin gerektiren bir tool
+        çağrısına geldiğinde soru ana oturumunda, hangi subagent'ın sorduğu belirtilerek çıkar. Onaylarsın
+        ya da <kbd>Esc</kbd> ile o tek çağrıyı reddedersin — subagent durmaz.</li>
+    </ul>
+    <p>v2.1.198'den beri subagent'lar <strong>varsayılan olarak arka planda</strong> çalışır; Claude sonucu
+      devam etmek için hemen gerekiyorsa foreground'a alır. <kbd>Ctrl+B</kbd> ile çalışan bir görevi
+      arka plana atabilirsin.</p>
+
+    <h3>Devam ettirme (resume)</h3>
+    <p>Her çağrı taze context'li yeni bir örnek yaratır. Bitmiş bir subagent'ın işini sürdürmek istiyorsan
+      baştan başlatmak yerine devam ettir — geçmiş tüm tool çağrıları, sonuçlar ve muhakemesi korunur:</p>
+    <pre><code><span class="c"># 1. tur</span>
+code-reviewer subagent'ıyla authentication modülünü incele
+<span class="c">[agent biter]</span>
+
+<span class="c"># 2. tur — aynı agent kaldığı yerden devam eder</span>
+Aynı incelemeyi sürdür, şimdi de authorization mantığına bak</code></pre>
+    <p>Claude bunu <code>SendMessage</code> aracıyla, agent'ın ID'si veya adı üzerinden yapar.</p>
+
+    <div class="note warn">
+      <span class="tag">Explore ve Plan devam ettirilemez</span>
+      Yerleşik Explore ve Plan tek atımlıktır ve agent ID döndürmezler. İşi sürdürmen gerekebilecek
+      durumlarda <code>general-purpose</code>'u veya kendi subagent'ını kullan.
+    </div>
+
+    <p>Subagent transkriptleri ana konuşmadan bağımsız dosyalarda tutulur
+      (<code>~/.claude/projects/{proje}/{sessionId}/subagents/agent-{agentId}.jsonl</code>): ana konuşma
+      compact olduğunda etkilenmezler, oturum boyunca kalıcıdırlar ve <code>cleanupPeriodDays</code>
+      süresinden (varsayılan 30 gün) sonra silinirler.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m10">
+    <h2><span class="num">10</span> Altı örnek senaryo</h2>
+    <p>Aşağıdakiler farklı bir sorunu çözen altı gerçek desen. Her biri için önce <strong>durum</strong>,
+      sonra dosya, sonra <strong>ayarların neden öyle olduğu</strong> var.</p>
+
+    <h3>Senaryo 1 — Test çıktısı konuşmayı boğuyor</h3>
+    <p><strong>Durum:</strong> Test suite'in 2000 satır çıktı basıyor, sana gereken 3 başarısız test.
+      Ana konuşmada çalıştırınca context'in yarısı log'la doluyor.</p>
+    <pre><code><span class="c"># .claude/agents/test-runner.md</span>
+---
+<span class="k">name</span>: test-runner
+<span class="k">description</span>: Runs the test suite and reports only failing tests with their
+  error messages and the file:line they originate from. Use proactively
+  after any change to source or test files.
+<span class="k">tools</span>: Bash, Read, Grep, Glob
+<span class="k">model</span>: haiku
+---
+
+You run tests and report failures. You never fix code.
+
+When invoked:
+1. Detect the test command from package.json, Makefile, or pyproject.toml
+2. Run the full suite
+3. Report ONLY failures
+
+For each failure report:
+- Test name and file:line
+- The assertion that failed, expected vs actual
+- The shortest relevant slice of the stack trace
+
+If everything passes, reply with a single line: "All N tests passed."
+Never paste full test output. Never modify files.</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>model: haiku</code> — iş özetleme ve pattern eşleştirme; pahalı modele gerek yok.</li>
+        <li><code>tools</code> içinde <strong>Edit/Write yok</strong>: "önce düzelteyim" eğilimi
+          yapısal olarak engellenmiş.</li>
+        <li>Gövde <strong>çıktı formatını dayatıyor</strong> — subagent'ın tek değerli çıktısı son mesajı
+          olduğu için o mesajın şeklini tarif etmek en yüksek getirili iş.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 2 — Aynı kod inceleme hatalarını her hafta tekrar açıklıyorsun</h3>
+    <p><strong>Durum:</strong> Reviewer her seferinde sıfırdan başlıyor; projenin tekrar eden kalıplarını
+      ("bu repoda hata yönetimi şu şekilde yapılır") her defasında yeniden anlatıyorsun.</p>
+    <pre><code><span class="c"># .claude/agents/code-reviewer.md</span>
+---
+<span class="k">name</span>: code-reviewer
+<span class="k">description</span>: Expert code review specialist. Proactively reviews code for
+  quality, security, and maintainability. Use immediately after writing
+  or modifying code.
+<span class="k">tools</span>: Read, Grep, Glob, Bash
+<span class="k">model</span>: inherit
+<span class="k">memory</span>: project
+<span class="k">color</span>: yellow
+---
+
+You are a senior code reviewer ensuring high standards of quality and security.
+
+Before you start, read your agent memory for conventions and recurring
+issues previously found in this repository.
+
+When invoked:
+1. Run git diff to see recent changes
+2. Focus on modified files
+3. Begin review immediately
+
+Review checklist:
+- Clear, readable code; well-named functions and variables
+- No duplicated code
+- Proper error handling
+- No exposed secrets or API keys
+- Input validation implemented
+- Adequate test coverage
+
+Organise feedback by priority:
+- Critical issues (must fix)
+- Warnings (should fix)
+- Suggestions (consider improving)
+
+Include a concrete fix for every issue you raise.
+
+When you finish, write what you learned to your agent memory: new
+conventions, recurring mistakes, and where key patterns live.</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>memory: project</code> — birikim repoya girer, ekip aynı hafızayı paylaşır.</li>
+        <li>Gövde hafızayı <strong>hem okumayı hem yazmayı</strong> açıkça söylüyor; alan tek başına
+          davranışı garanti etmez.</li>
+        <li><code>Bash</code> var çünkü <code>git diff</code> gerekiyor; <code>Edit</code> yok çünkü
+          reviewer düzeltmez, rapor eder.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 3 — Veriye erişim lazım ama yazma riski var</h3>
+    <p><strong>Durum:</strong> Analiz için veritabanına sorgu atılması gerekiyor. Bash'i tamamen kapatamazsın
+      (sorgu atacak), ama açık bırakırsan bir <code>DELETE</code> ihtimali var.</p>
+    <pre><code><span class="c"># .claude/agents/db-reader.md</span>
+---
+<span class="k">name</span>: db-reader
+<span class="k">description</span>: Execute read-only database queries. Use when analyzing data
+  or generating reports.
+<span class="k">tools</span>: Bash
+<span class="k">hooks</span>:
+  <span class="k">PreToolUse</span>:
+    - <span class="k">matcher</span>: <span class="s">"Bash"</span>
+      <span class="k">hooks</span>:
+        - <span class="k">type</span>: command
+          <span class="k">command</span>: <span class="s">"./scripts/validate-readonly-query.sh"</span>
+---
+
+You are a database analyst with read-only access. Execute SELECT queries
+to answer questions about the data.
+
+When asked to analyze data:
+1. Identify which tables contain the relevant data
+2. Write efficient SELECT queries with appropriate filters
+3. Present results clearly with context
+
+You cannot modify data. If asked to INSERT, UPDATE, DELETE, or modify
+schema, explain that you only have read access.</code></pre>
+    <pre><code><span class="c">#!/bin/bash</span>
+<span class="c"># ./scripts/validate-readonly-query.sh</span>
+
+INPUT=$(cat)
+COMMAND=$(echo <span class="s">"$INPUT"</span> | jq -r <span class="s">'.tool_input.command // empty'</span>)
+
+<span class="k">if</span> [ -z <span class="s">"$COMMAND"</span> ]; <span class="k">then</span> exit 0; <span class="k">fi</span>
+
+<span class="c"># Yazma işlemlerini engelle (büyük/küçük harf duyarsız)</span>
+<span class="k">if</span> echo <span class="s">"$COMMAND"</span> | grep -iE <span class="s">'\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE)\b'</span> &gt; /dev/null; <span class="k">then</span>
+  echo <span class="s">"Blocked: Only SELECT queries are allowed"</span> &gt;&amp;2
+  exit 2
+<span class="k">fi</span>
+
+exit 0</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Bu, <strong>iki katmanlı bir savunma</strong>: system prompt niyeti şekillendirir, hook ise
+          mekanik olarak durdurur. Prompt'a güvenmek yetmez.</li>
+        <li>Exit kodu <strong>2</strong> kritik: komut engellenir ve stderr mesajı subagent'a geri döner,
+          böylece ne olduğunu anlar.</li>
+        <li>macOS/Linux'ta <code>chmod +x</code> yapmayı unutma — aksi halde hook çalışmaz, yani
+          <strong>hiçbir şeyi engellemez</strong>. Windows'ta PowerShell script'i yazıp hook girdisine
+          <code>shell: powershell</code> ekle.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 4 — Dış dokümantasyon araştırması ana context'i kirletiyor</h3>
+    <p><strong>Durum:</strong> Bir kütüphanenin API'sini araştırmak için 10 sayfa çekmek gerekiyor. Ayrıca
+      bu iş için bir MCP sunucusuna ihtiyacın var ama onu ana oturuma bağlarsan tool tanımları sürekli
+      context yiyor.</p>
+    <pre><code><span class="c"># ~/.claude/agents/docs-researcher.md</span>
+---
+<span class="k">name</span>: docs-researcher
+<span class="k">description</span>: Researches external library and API documentation on the web
+  and returns a condensed, citation-backed answer. Use when a question
+  needs current information from outside the codebase.
+<span class="k">tools</span>: WebFetch, WebSearch, Read, Grep
+<span class="k">model</span>: haiku
+<span class="k">mcpServers</span>:
+  - <span class="k">playwright</span>:
+      <span class="k">type</span>: stdio
+      <span class="k">command</span>: npx
+      <span class="k">args</span>: [<span class="s">"-y"</span>, <span class="s">"@playwright/mcp@latest"</span>]
+<span class="k">maxTurns</span>: 25
+---
+
+You research documentation and report findings, nothing else.
+
+Rules:
+- Prefer official documentation over blog posts and forum answers.
+- Every claim in your report carries the URL it came from.
+- If sources disagree or the information looks version-dependent, say so
+  explicitly instead of picking one.
+- If you cannot verify something, report it as unverified. Never guess a
+  flag name, default value, or price.
+
+Return at most 400 words: the answer, then a short source list.</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>mcpServers</code> satır içi tanımı: sunucu subagent başlarken bağlanır, bitince kapanır.
+          <strong>Tool tanımları ana konuşmanın context'ine hiç girmez.</strong></li>
+        <li><code>maxTurns: 25</code> — web araştırması sınırsız uzayabilir; tavan koymak maliyeti
+          öngörülebilir kılar.</li>
+        <li>"Doğrulayamadığını doğrulanmamış olarak raporla" talimatı, özetin uydurma bilgiyle dönmesini
+          engellemeye çalışır.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 5 — Riskli, geniş çaplı bir refactor</h3>
+    <p><strong>Durum:</strong> 60 dosyada bir API çağrısını değiştirmek gerekiyor. Ana çalışma kopyanda
+      yapılmasını istemiyorsun; yarım kalırsa temiz bir dönüş yolu olsun.</p>
+    <pre><code><span class="c"># .claude/agents/migration-worker.md</span>
+---
+<span class="k">name</span>: migration-worker
+<span class="k">description</span>: Performs mechanical, repository-wide code migrations such as
+  API renames and import path changes. Use for changes that touch many
+  files but follow one repeatable rule.
+<span class="k">tools</span>: Read, Edit, Write, Grep, Glob, Bash
+<span class="k">permissionMode</span>: acceptEdits
+<span class="k">isolation</span>: worktree
+<span class="k">maxTurns</span>: 80
+<span class="k">color</span>: orange
+---
+
+You perform mechanical migrations across the repository.
+
+Process:
+1. Grep for every occurrence before editing anything. Report the count.
+2. Apply the change file by file. Do not "improve" code you touch.
+3. After every 10 files, run the build or type check.
+4. If a case does not fit the rule, skip it and add it to a
+   "needs manual review" list. Never guess.
+
+Final report: files changed, build status, and the manual-review list.</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>isolation: worktree</code> — geçici bir git worktree'de, deponun izole kopyasında çalışır.
+          Worktree varsayılan olarak parent oturumun <code>HEAD</code>'inden değil,
+          <strong>default branch'inden</strong> dallanır. Subagent hiç değişiklik yapmazsa worktree
+          otomatik temizlenir.</li>
+        <li><code>permissionMode: acceptEdits</code> — 60 dosya için 60 onay sorusu pratik değil.</li>
+        <li>"Dokunduğun kodu iyileştirme" ve "uymayanı atla, listele" talimatları, mekanik bir işin
+          kontrolsüz bir refactor'a dönüşmesini engeller.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 6 — Sabit bir sürüm prosedürünü tek bir oturuma bağlamak</h3>
+    <p><strong>Durum:</strong> Sürüm hazırlığı hep aynı sırayla ilerliyor ve o oturumda başka bir şey
+      yapılmasını istemiyorsun. Ayrıca koordinatörün yalnızca belirli işçilere devretmesini istiyorsun.</p>
+    <pre><code><span class="c"># .claude/agents/release-coordinator.md</span>
+---
+<span class="k">name</span>: release-coordinator
+<span class="k">description</span>: Coordinates the release checklist across specialised agents.
+<span class="k">tools</span>: Agent(test-runner, code-reviewer), Read, Grep, Glob, Bash
+<span class="k">model</span>: opus
+<span class="k">initialPrompt</span>: Sürüm kontrol listesini baştan başlat ve durum raporu ver.
+---
+
+You coordinate releases. You do not write code yourself.
+
+Sequence:
+1. Delegate to test-runner. If anything fails, stop and report.
+2. Delegate to code-reviewer for the diff since the last tag.
+3. Verify the changelog covers every user-visible change.
+4. Report a go / no-go decision with the reasons.
+
+Never skip a step because it "probably passes". Report blockers plainly.</code></pre>
+    <pre><code><span class="c"># Bu agent'ı ana thread olarak çalıştır</span>
+claude --agent release-coordinator</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>Agent(test-runner, code-reviewer)</code> bir <strong>allowlist</strong>'tir: başka türde
+          subagent kurma isteği başarısız olur.</li>
+        <li><strong>Önemli sınır:</strong> parantez içindeki tür listesi yalnızca agent
+          <code>claude --agent</code> ile <em>ana thread olarak</em> çalışırken geçerlidir. Bir subagent
+          tanımında <code>tools</code> içinde <code>Agent</code> yazmak o subagent'ın kendi
+          subagent'larını kurabilmesini sağlar, ama <strong>parantez içindeki liste yok sayılır</strong>.</li>
+        <li><code>initialPrompt</code> yalnızca <code>--agent</code> ile ana oturum olarak çalışırken
+          otomatik gönderilir.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m11">
+    <h2><span class="num">11</span> Orkestrasyon ve limitler</h2>
+
+    <h3>Paralel araştırma</h3>
+    <p>Birbirinden bağımsız incelemeler için aynı anda birden çok subagent çalıştır:</p>
+    <pre><code>authentication, database ve API modüllerini ayrı subagent'larla
+paralel olarak araştır</code></pre>
+    <p>Her subagent kendi alanını bağımsız keşfeder, Claude bulguları birleştirir. Bu desen yalnızca
+      <strong>araştırma yolları birbirine bağlı değilse</strong> işe yarar.</p>
+
+    <div class="note warn">
+      <span class="tag">Paralellik bedava değil</span>
+      Subagent'lar bitince sonuçları ana konuşmana döner. Her biri detaylı rapor döndüren çok sayıda
+      subagent çalıştırmak, tam da kaçınmak istediğin context tüketimini yaratır. Ya sayıyı sınırla ya da
+      her subagent'ın gövdesinde çıktı uzunluğunu dayat.
+    </div>
+
+    <h3>Zincirleme</h3>
+    <pre><code>code-reviewer subagent'ıyla performans sorunlarını bul,
+sonra optimizer subagent'ıyla düzelt</code></pre>
+    <p>Her subagent işini bitirir ve sonucu Claude'a döner; Claude ilgili bağlamı bir sonrakine aktarır.</p>
+
+    <h3>İç içe subagent'lar</h3>
+    <p>Bir subagent kendi subagent'larını kurabilir — varsayılan olarak ana konuşmanın <strong>üç katman</strong>
+      altına kadar. Limitte Claude Code <code>Agent</code> aracını geri çeker, o subagent işi kendisi yapar
+      ve tek bir özet döner. Bu desen, devredilen bir işin kendi içinde paralel alt görevlere ayrıldığı
+      durumlar içindir: ara çıktılar senin konuşmana hiç ulaşmaz, sadece en üstteki subagent'ın özeti gelir.</p>
+    <pre><code><span class="c">// .claude/settings.json — iç içe geçmeyi iki katmanla sınırla</span>
+{
+  <span class="s">"env"</span>: { <span class="s">"CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH"</span>: <span class="s">"2"</span> }
+}</code></pre>
+    <p><code>1</code> değeri iç içe geçmeyi tamamen kapatır. Belirli bir subagent'ın devretmesini engellemek
+      istiyorsan <code>Agent</code>'ı onun <code>tools</code> listesinden çıkar veya
+      <code>disallowedTools</code>'a ekle.</p>
+
+    <div class="note">
+      <span class="tag">Sürüm notu</span>
+      Varsayılan derinlik sürümler arasında değişti: v2.1.172–v2.1.216'da beş katman ve değiştirilemezdi,
+      v2.1.217–v2.1.218'de bir katmana düştü, v2.1.219 ile üçe çıktı. Kendi sürümünde farklı davranış
+      görürsen sebebi budur.
+    </div>
+
+    <h3>Üç ayrı limit</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Limit</th><th>Varsayılan</th><th>Değişken</th></tr></thead>
+        <tbody>
+          <tr><td>Oturum başına toplam subagent</td><td>200</td><td><code>CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION</code></td></tr>
+          <tr><td>Aynı anda çalışan subagent</td><td>20</td><td><code>CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS</code></td></tr>
+          <tr><td>İç içe geçme derinliği</td><td>3 katman</td><td><code>CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Oturum limitine ulaşıldığında Agent aracı <code>Subagent spawn limit reached</code> ile başarısız olur
+      ve Claude'a kalan işi kendi araçlarıyla tamamlaması söylenir. <code>/clear</code> sayacı sıfırlar.
+      Bitmiş bir subagent da sayıya dahildir. Bu limitlerin tam davranışı sürüme bağlıdır
+      (v2.1.212 ve v2.1.217 gerektirir).</p>
+
+    <div class="note warn">
+      <span class="tag">Subagent raporu güvenilir girdi değildir</span>
+      Bir subagent senin görmediğin dosyaları, web sayfalarını ve komut çıktılarını okumuş olabilir; o
+      metinler ana konuşmaya yönelik talimatlar taşıyabilir. Claude Code her subagent raporunu Claude
+      okumadan önce tarar ve <code>&lt;system-reminder&gt;</code> taklidi yapan ya da izin ayarlarından
+      bahseden metinleri işaretler. Ama bu tarama <strong>içeriğin kötü niyetli olup olmadığına karar
+      vermez</strong> ve subagent'ın erişimini kısıtlamanın yerine geçmez.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m12">
+    <h2><span class="num">12</span> Sık yapılan hatalar</h2>
+
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Description'ı gövdeye güvenerek kısa yazmak.</strong> Claude gövdeyi görmez. Delegasyon
+          kararı sadece isim + description + araç listesinden çıkar; açıklama hem ne yaptığını hem ne zaman
+          kullanılacağını söylemeli.</li>
+        <li><strong>Çıktı formatını tarif etmemek.</strong> Subagent'tan geriye <em>yalnızca son mesajı</em>
+          döner. O mesajın neye benzemesi gerektiğini yazmazsan, izolasyonun tüm faydasını 3000 kelimelik
+          bir raporla geri verirsin.</li>
+        <li><strong>Tek işlik bir görev için dosya yazmak.</strong> Bir kez yapılacak iş için Claude'a
+          "bunu bir subagent'a yaptır" demek yeterli. Dosyanın gerekçesi tekrardır.</li>
+        <li><strong>Ana konuşmanın izin modunu hesaba katmamak.</strong> Ebeveyn oturum
+          <code>bypassPermissions</code> veya <code>acceptEdits</code> kullanıyorsa bu öncelik kazanır;
+          frontmatter'daki daha dar mod ezilemez.</li>
+        <li><strong>Background araç filtresini unutmak.</strong> Subagent'lar varsayılan olarak arka planda
+          çalışır ve orada yerleşik araç seti daha dardır. <code>tools</code> listende olan bir araç
+          background'da sessizce kaldırılmış olabilir.</li>
+        <li><strong>Hook'un çalıştığını varsaymak.</strong> Proje seviyesindeki bir agent'ın frontmatter
+          hook'ları, klasöre workspace trust vermediysen atlanır. macOS/Linux'ta çalıştırma izni verilmemiş
+          bir script de hiçbir şeyi engellemez.</li>
+        <li><strong>Explore'a CLAUDE.md kuralı geçtiğini sanmak.</strong> Explore ve Plan CLAUDE.md'yi ve
+          git status'u okumaz. Kritik bir kural varsa delegasyon prompt'unda tekrarla.</li>
+        <li><strong>Aynı <code>name</code>'i iki dosyada kullanmak.</strong> Aynı klasörde çakışma varsa
+          hangisinin yükleneceği belgelenmiş değildir. <code>/doctor</code> ile kontrol et.</li>
+        <li><strong>Subagent'tan soru sormasını beklemek.</strong> <code>AskUserQuestion</code> her
+          subagent'tan kaldırılır. Belirsizlik ihtimali varsa, ne varsayacağını gövdede sen söyle.</li>
+        <li><strong>Çok geniş bir subagent yazmak.</strong> Her subagent tek bir işte iyi olmalı; "her şeyi
+          yapan" bir agent'ın description'ı da tetikleme açısından belirsizleşir.</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <span class="tag">Yayına almadan önce</span>
+      Araç listesi gerçekten ihtiyaç duyduğu kadar dar mı · Çıktı formatı gövdede tarif edilmiş mi ·
+      Description üçüncü şahıs ve tetikleyici ifade içeriyor mu · Proje agent'ı sürüm kontrolüne eklendi mi ·
+      Temiz bir oturumda, kullanacağın modelle en az üç senaryoda denendi mi?
+    </div>
+  </section>
+
+  <footer>
+    code.claude.com/docs/en/sub-agents ·
+    code.claude.com/docs/en/hooks ·
+    code.claude.com/docs/en/skills ·
+    code.claude.com/docs/en/worktrees
+  </footer>
+
+</div>
+</body>
+</html>

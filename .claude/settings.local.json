@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p ozetler assets data scripts .claude/skills/turkce-ozet/assets)",
+      "Bash(mv claude-code-steering-handbook.html dynamic-workflows-turkce-ozet.html ozetler/)",
+      "Bash(cp \"C:/Users/z0049spf/AppData/Local/Temp/claude/D--docs-p-myprojects-claude-code-handbook/80f44828-6e53-4c5e-86de-cd12f1d5ebde/scratchpad/skillx/turkce-ozet/assets/template.html\" .claude/skills/turkce-ozet/assets/template.html)",
+      "Bash(node scripts/build.mjs)"
+    ]
+  }
+}

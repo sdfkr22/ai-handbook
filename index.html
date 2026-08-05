@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Handbook</title>
+<meta name="description" content="Claude Code ve yapay zekâ araçları üzerine teknik yazılar. Konu başlığına göre filtrelenebilir arşiv.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+</head>
+<body>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">AI Handbook</p>
+    <h1>Teknik içerikler,<br><em>tek sayfada</em></h1>
+    <p class="lede">Dokümantasyon sayfaları, blog yazıları ve makalelerden derlenmiş; kritik detayları atlamayan tek sayfalık yazılar. Konu başlığına göre filtrele veya ara.</p>
+  </header>
+
+  <div class="controls">
+    <div class="search-row">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input id="q" type="search" placeholder="Başlık, açıklama veya etikette ara…" autocomplete="off">
+      </div>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="filters" id="filters"></div>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>
+    <span id="updated"></span>
+  </footer>
+
+</div>
+
+<script src="data/posts.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

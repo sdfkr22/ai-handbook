@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talimat rica eder, hook zorlar</title>
+<meta name="yazi:baslik" content="Talimat rica eder, hook zorlar">
+<meta name="yazi:aciklama" content="CLAUDE.md'ye yazdığın kurala model uyabilir de uymayabilir de. Hook ise harness'in çalıştırdığı koddur: event'ler, matcher'lar, exit kod davranışı ve altı çalışan örnek.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="hooks, PreToolUse, PostToolUse, settings.json, exit code, matcher, guardrail, otomasyon">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/hooks">
+<meta name="yazi:tarih" content="2026-08-03">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · Hooks</p>
+    <h1>Talimat rica eder,<br><em>hook zorlar</em></h1>
+    <p class="lede">CLAUDE.md'ye "her düzenlemeden sonra prettier çalıştır" yazdığında, çalıştırma
+      kararını modele bırakmış olursun. Hook yazdığında ise kararı harness verir — model istese de
+      atlayamaz. Bu sayfa o farkın nasıl kurulduğunu anlatıyor: hangi event ne zaman ateşlenir,
+      matcher neyi filtreler, exit kodu ne anlama gelir ve bir hook sessizce çalışmadığında ne olur.</p>
+    <p class="source">3 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/hooks">code.claude.com/docs/en/hooks</a> + <a href="https://code.claude.com/docs/en/hooks-guide">hooks-guide</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Hook neden farklı</a></li>
+      <li><a href="#m2"><span class="n">02</span> İlk hook'un</a></li>
+      <li><a href="#m3"><span class="n">03</span> Yapılandırma anatomisi</a></li>
+      <li><a href="#m4"><span class="n">04</span> Hook nerede yaşar</a></li>
+      <li><a href="#m5"><span class="n">05</span> Event'lerin tamamı</a></li>
+      <li><a href="#m6"><span class="n">06</span> matcher ve if</a></li>
+      <li><a href="#m7"><span class="n">07</span> Girdi, çıktı, exit kodu</a></li>
+      <li><a href="#m8"><span class="n">08</span> Yapılandırılmış JSON çıktı</a></li>
+      <li><a href="#m9"><span class="n">09</span> command dışındaki türler</a></li>
+      <li><a href="#m10"><span class="n">10</span> Altı örnek senaryo</a></li>
+      <li><a href="#m11"><span class="n">11</span> İzin modları ve güvenlik</a></li>
+      <li><a href="#m12"><span class="n">12</span> Hata ayıklama ve tuzaklar</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============================================================ -->
+  <section id="m1">
+    <h2><span class="num">01</span> Hook neden farklı</h2>
+    <p>Claude'a talimat vermenin birçok yolu var: CLAUDE.md, rules, skills, output styles. Hepsinin ortak
+      özelliği şu — bunlar <strong>öneridir</strong>. Model çoğu zaman uyar, ama uzun bir oturumda, baskı
+      altında ya da okuduğu bir dosyadaki yönlendirme yüzünden atlayabilir.</p>
+
+    <p>Hook'lar bu kategoride değil. Hook, Claude'un yaşam döngüsündeki belirli bir anda
+      <strong>harness'in çalıştırdığı koddur</strong>. Çalışıp çalışmayacağına model karar vermez, hatta
+      çalıştığından haberi bile olmayabilir.</p>
+
+    <div class="note">
+      <span class="tag">Ayrım tek cümlede</span>
+      "Şunu yapmayı unutma" bir talimattır. <strong>"Şu olduğunda hep şu çalışır"</strong> bir hook'tur.
+      Güvenilir biçimde tekrarlanması gereken her cümle aslında bir hook'tur.
+    </div>
+
+    <div class="card">
+      <p style="margin-bottom:8px;"><strong>Hook'un tipik işleri:</strong></p>
+      <ul style="margin-bottom:0;">
+        <li><strong>Zorlamak:</strong> dosya düzenlemesinden sonra formatlayıcıyı çalıştır.</li>
+        <li><strong>Engellemek:</strong> korumalı dosyalara yazmayı ya da tehlikeli komutları durdur.</li>
+        <li><strong>Bilgilendirmek:</strong> Claude beklemeye geçtiğinde masaüstü bildirimi at.</li>
+        <li><strong>Context enjekte etmek:</strong> oturum başında ya da compaction sonrası kritik bilgiyi
+          geri ver.</li>
+        <li><strong>Kayıt tutmak:</strong> her Bash komutunu veya her config değişikliğini log'la.</li>
+      </ul>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Sessiz çalışan hook, olmayan hook gibidir</span>
+      Bir hook iş yapıp sonucu geri döndürmezse Claude o işten habersiz kalır. <code>PreCompact</code>'te
+      konuşmayı bir dosyaya yedeklediysen, Claude o yedeğin nerede olduğunu bilmez. Bilmesini istiyorsan
+      çıktıyı açıkça geri döndürmen gerekir.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m2">
+    <h2><span class="num">02</span> İlk hook'un</h2>
+    <p>Hook, bir ayar dosyasındaki JSON bloğudur. Aşağıdaki örnek, Claude senden bir şey beklemeye
+      geçtiğinde masaüstü bildirimi gönderir — terminale bakmadan başka işe dönebilirsin.</p>
+
+    <pre><code><span class="c">// ~/.claude/settings.json — macOS</span>
+{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"Notification"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">""</span>,
+        <span class="s">"hooks"</span>: [
+          {
+            <span class="s">"type"</span>: <span class="s">"command"</span>,
+            <span class="s">"command"</span>: <span class="s">"osascript -e 'display notification \"Claude bekliyor\" with title \"Claude Code\"'"</span>
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+
+    <p>Windows'ta aynı hook şöyle olur:</p>
+    <pre><code><span class="s">"command"</span>: <span class="s">"powershell.exe -Command \"[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.MessageBox]::Show('Claude bekliyor', 'Claude Code')\""</span></code></pre>
+
+    <p>Linux'ta: <code>notify-send 'Claude Code' 'Claude bekliyor'</code></p>
+
+    <h3>Doğrula</h3>
+    <p><code>/hooks</code> yazınca tüm event'lerin listesi açılır; yapılandırılmış olanların yanında sayı
+      görünür. <code>Notification</code>'ı seçtiğinde event, matcher, tür, kaynak dosya ve komut
+      görünür.</p>
+
+    <div class="note">
+      <span class="tag">/hooks salt okunurdur</span>
+      Menüden hook ekleyemez, düzenleyemez veya silemezsin — yalnızca yapılandırmayı görüntülemek için.
+      Değişiklikleri ayar dosyasında yaparsın (ya da Claude'a yaptırırsın).
+    </div>
+
+    <div class="note">
+      <span class="tag">Zaten hooks bloğun varsa</span>
+      Yeni event'i mevcut <code>hooks</code> nesnesinin <strong>içine kardeş anahtar olarak</strong> ekle;
+      bloğun tamamını değiştirme. Her event adı tek bir <code>hooks</code> nesnesinin içinde bir
+      anahtardır.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m3">
+    <h2><span class="num">03</span> Yapılandırma anatomisi</h2>
+    <p>Yapı üç katmanlıdır ve ilk bakışta kafa karıştırıcı gelen kısım, <code>hooks</code> kelimesinin iki
+      farklı seviyede geçmesidir: dıştaki event haritası, içteki ise o gruba bağlı handler listesi.</p>
+
+    <pre><code>{
+  <span class="s">"hooks"</span>: {                        <span class="c">// 1. event haritası</span>
+    <span class="s">"PreToolUse"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">"Bash"</span>,          <span class="c">// 2. grup: hangi durumlarda</span>
+        <span class="s">"hooks"</span>: [                   <span class="c">// 3. handler'lar: ne çalışacak</span>
+          {
+            <span class="s">"type"</span>: <span class="s">"command"</span>,
+            <span class="s">"command"</span>: <span class="s">"./scripts/kontrol.sh"</span>,
+            <span class="s">"if"</span>: <span class="s">"Bash(git *)"</span>,
+            <span class="s">"timeout"</span>: 30,
+            <span class="s">"statusMessage"</span>: <span class="s">"Politika kontrol ediliyor…"</span>
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Zorunlu</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>type</code></td><td>evet</td><td><code>command</code>, <code>http</code>, <code>mcp_tool</code>, <code>prompt</code> veya <code>agent</code></td></tr>
+          <tr><td><code>command</code></td><td>command için</td><td>Çalıştırılacak komut ya da script yolu</td></tr>
+          <tr><td><code>args</code></td><td>hayır</td><td>Verilirse <strong>exec form</strong>'a geçilir: shell yok, argümanlar doğrudan geçilir</td></tr>
+          <tr><td><code>if</code></td><td>hayır</td><td>Permission rule sözdizimiyle filtre: <code>Bash(git *)</code>, <code>Edit(*.ts)</code>. Yalnızca tool event'lerinde</td></tr>
+          <tr><td><code>timeout</code></td><td>hayır</td><td>Saniye cinsinden iptal süresi</td></tr>
+          <tr><td><code>statusMessage</code></td><td>hayır</td><td>Hook çalışırken gösterilen özel spinner metni</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>exec form vs shell form</h3>
+    <p><code>args</code> yazarsan komut PATH üzerinde bir çalıştırılabilir olarak çözümlenir ve argümanlar
+      shell'e uğramadan geçer. Yazmazsan komut bir shell'e verilir (Unix'te <code>sh -c</code>, Windows'ta
+      PowerShell) ve pipe, <code>&amp;&amp;</code>, glob, değişken genişletme kullanabilirsin. Tırnak
+      sorunlarından tamamen kaçınmak istiyorsan <code>"args": []</code> ekleyip exec form'a geç.</p>
+
+    <h3>Yol yer tutucuları</h3>
+    <ul>
+      <li><code>${CLAUDE_PROJECT_DIR}</code> — proje kökü</li>
+      <li><code>${CLAUDE_PLUGIN_ROOT}</code> — plugin kurulum klasörü</li>
+      <li><code>${CLAUDE_PLUGIN_DATA}</code> — plugin kalıcı veri klasörü</li>
+    </ul>
+    <p>Script'e göreli yolla erişmeye çalışma; hook'un çalışma dizini beklediğin yer olmayabilir.</p>
+
+    <h3>Zaman aşımı varsayılanları</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Tür</th><th>Varsayılan</th><th>İstisna</th></tr></thead>
+        <tbody>
+          <tr><td><code>command</code>, <code>http</code>, <code>mcp_tool</code></td><td>10 dakika</td><td><code>UserPromptSubmit</code>'te 30 sn, <code>MessageDisplay</code>'de 10 sn</td></tr>
+          <tr><td><code>prompt</code></td><td>30 saniye</td><td>—</td></tr>
+          <tr><td><code>agent</code></td><td>60 saniye</td><td>—</td></tr>
+          <tr><td><code>SessionEnd</code> (her tür)</td><td>1,5 saniye ortak bütçe</td><td>Daha uzun <code>timeout</code> yazarsan bütçe 60 sn'ye kadar yükselir</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m4">
+    <h2><span class="num">04</span> Hook nerede yaşar</h2>
+    <p>Dosyanın konumu hook'un kapsamını ve paylaşılabilirliğini belirler.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Konum</th><th>Kapsam</th><th>Paylaşılabilir mi</th></tr></thead>
+        <tbody>
+          <tr><td><code>~/.claude/settings.json</code></td><td>Tüm projelerin</td><td>Hayır, makinene özel</td></tr>
+          <tr><td><code>.claude/settings.json</code></td><td>Tek proje</td><td>Evet, repoya commit edilir</td></tr>
+          <tr><td><code>.claude/settings.local.json</code></td><td>Tek proje</td><td>Hayır, gitignore'lanır</td></tr>
+          <tr><td>Managed policy settings</td><td>Kurum geneli</td><td>Evet, admin denetiminde</td></tr>
+          <tr><td>Plugin <code>hooks/hooks.json</code></td><td>Plugin etkinken</td><td>Evet, plugin'le birlikte gelir</td></tr>
+          <tr><td>Skill / agent frontmatter</td><td>O bileşen aktifken</td><td>Evet, bileşen dosyasında</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Farklı seviyelerdeki hook'lar <strong>birleşir</strong>, birbirini değiştirmez. Ayar dosyalarını
+      Claude Code çalışırken düzenlersen file watcher değişikliği normalde kendiliğinden alır.</p>
+
+    <div class="note warn">
+      <span class="tag">disableAllHooks'un kapsamı dar</span>
+      <code>"disableAllHooks": true</code> yalnızca <strong>kendi bulunduğu ayar seviyesindeki</strong>
+      hook'ları kapatır. Managed settings'te tanımlı hook'lar, orada da ayarlanmadıkça çalışmaya devam
+      eder.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m5">
+    <h2><span class="num">05</span> Event'lerin tamamı</h2>
+    <p>Doğru hook'u yazmanın ilk adımı doğru anı seçmek. Event'ler yaşam döngüsündeki yerlerine göre
+      gruplanmış halde:</p>
+
+    <h3>Oturum</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Ne zaman ateşlenir</th></tr></thead>
+        <tbody>
+          <tr><td><code>SessionStart</code></td><td>Oturum başladığında veya devam ettirildiğinde</td></tr>
+          <tr><td><code>Setup</code></td><td><code>--init-only</code> ile, ya da <code>-p</code> modunda <code>--init</code>/<code>--maintenance</code> ile başlatıldığında. CI ve script'lerde tek seferlik hazırlık için</td></tr>
+          <tr><td><code>SessionEnd</code></td><td>Oturum sonlandığında</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Prompt ve turn</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Ne zaman ateşlenir</th></tr></thead>
+        <tbody>
+          <tr><td><code>UserPromptSubmit</code></td><td>Prompt'u gönderdiğinde, Claude işlemeden önce</td></tr>
+          <tr><td><code>UserPromptExpansion</code></td><td>Yazdığın bir komut prompt'a genişlediğinde. Genişlemeyi engelleyebilir</td></tr>
+          <tr><td><code>MessageDisplay</code></td><td>Asistan mesajı ekrana yazılırken</td></tr>
+          <tr><td><code>Stop</code></td><td>Claude yanıtını bitirdiğinde</td></tr>
+          <tr><td><code>StopFailure</code></td><td>Turn bir API hatasıyla bittiğinde. Çıktısı ve exit kodu yok sayılır</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Tool çağrıları</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Ne zaman ateşlenir</th></tr></thead>
+        <tbody>
+          <tr><td><code>PreToolUse</code></td><td>Bir tool çağrısı çalışmadan önce. <strong>Engelleyebilir</strong></td></tr>
+          <tr><td><code>PermissionRequest</code></td><td>Bir tool çağrısı izin kararı gerektirdiğinde</td></tr>
+          <tr><td><code>PermissionDenied</code></td><td>Çağrı auto mode sınıflandırıcısı tarafından reddedildiğinde. <code>{retry: true}</code> ile modele tekrar deneyebileceğini söylersin</td></tr>
+          <tr><td><code>PostToolUse</code></td><td>Tool çağrısı başarılı olduktan sonra</td></tr>
+          <tr><td><code>PostToolUseFailure</code></td><td>Tool çağrısı başarısız olduktan sonra</td></tr>
+          <tr><td><code>PostToolBatch</code></td><td>Paralel tool çağrılarından oluşan bir grup tamamlandığında, bir sonraki model çağrısından önce</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Subagent ve task</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Ne zaman ateşlenir</th></tr></thead>
+        <tbody>
+          <tr><td><code>SubagentStart</code> / <code>SubagentStop</code></td><td>Bir subagent kurulduğunda / bitirdiğinde</td></tr>
+          <tr><td><code>TaskCreated</code> / <code>TaskCompleted</code></td><td>Bir task oluşturulurken / tamamlanmış işaretlenirken</td></tr>
+          <tr><td><code>TeammateIdle</code></td><td>Bir agent team üyesi boşa geçmek üzereyken</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Context, config ve dosya sistemi</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Ne zaman ateşlenir</th></tr></thead>
+        <tbody>
+          <tr><td><code>PreCompact</code> / <code>PostCompact</code></td><td>Compaction öncesi / sonrası</td></tr>
+          <tr><td><code>InstructionsLoaded</code></td><td>Bir CLAUDE.md veya <code>.claude/rules/*.md</code> dosyası context'e yüklendiğinde</td></tr>
+          <tr><td><code>ConfigChange</code></td><td>Oturum sırasında bir yapılandırma dosyası değiştiğinde</td></tr>
+          <tr><td><code>CwdChanged</code></td><td>Çalışma dizini değiştiğinde (ör. Claude bir <code>cd</code> çalıştırdığında)</td></tr>
+          <tr><td><code>DirectoryAdded</code></td><td>Oturum ortasında <code>/add-dir</code> ile dizin eklendiğinde</td></tr>
+          <tr><td><code>FileChanged</code></td><td>İzlenen bir dosya diskte değiştiğinde. <code>matcher</code> hangi dosyalar olduğunu belirler</td></tr>
+          <tr><td><code>WorktreeCreate</code> / <code>WorktreeRemove</code></td><td>Bir worktree oluşturulurken / kaldırılırken. Varsayılan git davranışının yerine geçer</td></tr>
+          <tr><td><code>Notification</code></td><td>Claude Code bir bildirim gönderdiğinde</td></tr>
+          <tr><td><code>Elicitation</code> / <code>ElicitationResult</code></td><td>Bir MCP sunucusu kullanıcıdan girdi istediğinde / yanıt geri gönderilmeden önce</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Paralel çalışırlar</span>
+      Bir event ateşlendiğinde eşleşen tüm hook'lar <strong>paralel</strong> çalışır ve birebir aynı olan
+      komutlar tekilleştirilir. Bir hook'un <code>deny</code> dönmesi kardeş hook'ların çalışmasını
+      durdurmaz — birinin engellemesine güvenip diğerinin yan etkisini önlediğini varsayma.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m6">
+    <h2><span class="num">06</span> matcher ve if</h2>
+    <p>Matcher yazmazsan hook, event'in <strong>her gerçekleşmesinde</strong> çalışır. Her event farklı bir
+      alan üzerinde filtreler:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Neyi filtreler</th><th>Örnek değerler</th></tr></thead>
+        <tbody>
+          <tr><td><code>PreToolUse</code>, <code>PostToolUse</code>, <code>PermissionRequest</code>…</td><td>Tool adı</td><td><code>Bash</code>, <code>Edit|Write</code>, <code>mcp__.*</code></td></tr>
+          <tr><td><code>SessionStart</code></td><td>Oturumun nasıl başladığı</td><td><code>startup</code>, <code>resume</code>, <code>clear</code>, <code>compact</code>, <code>fork</code></td></tr>
+          <tr><td><code>SessionEnd</code></td><td>Bitiş sebebi</td><td><code>clear</code>, <code>resume</code>, <code>logout</code>, <code>prompt_input_exit</code></td></tr>
+          <tr><td><code>Notification</code></td><td>Bildirim türü</td><td><code>permission_prompt</code>, <code>idle_prompt</code>, <code>auth_success</code></td></tr>
+          <tr><td><code>SubagentStart</code>, <code>SubagentStop</code></td><td>Agent türü</td><td><code>Explore</code>, <code>Plan</code>, <code>general-purpose</code>, özel adlar</td></tr>
+          <tr><td><code>PreCompact</code>, <code>PostCompact</code></td><td>Compaction'ı ne tetikledi</td><td><code>manual</code>, <code>auto</code></td></tr>
+          <tr><td><code>ConfigChange</code></td><td>Yapılandırma kaynağı</td><td><code>user_settings</code>, <code>project_settings</code>, <code>policy_settings</code>, <code>skills</code></td></tr>
+          <tr><td><code>FileChanged</code></td><td>İzlenecek dosya adları</td><td><code>.envrc|.env</code> (yalnızca birebir eşleşme)</td></tr>
+          <tr><td><code>UserPromptSubmit</code>, <code>Stop</code>, <code>PostToolBatch</code>, <code>CwdChanged</code>…</td><td>Matcher desteklemez</td><td>Her zaman ateşlenir</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Desen sözdizimi</h3>
+    <ul>
+      <li><code>"*"</code>, <code>""</code> veya alan hiç yok — hepsiyle eşleşir</li>
+      <li><code>"Bash"</code> — birebir eşleşme</li>
+      <li><code>"Edit|Write"</code> — çoklu eşleşme (v2.1.191'den itibaren virgül de aynı işi görür)</li>
+      <li><code>"mcp__github__.*"</code> — regex; alfanümerik olmayan karakter içeren desenler regex olarak değerlendirilir</li>
+    </ul>
+    <p>MCP tool'ları <code>mcp__&lt;sunucu&gt;__&lt;tool&gt;</code> biçiminde adlandırılır; bir sunucunun
+      tüm tool'larını yakalamak için <code>mcp__github__.*</code> yazarsın.</p>
+
+    <div class="note warn">
+      <span class="tag">Matcher büyük/küçük harfe duyarlı</span>
+      <code>bash</code> yazarsan <code>Bash</code> tool'unu yakalamaz ve hook hiç çalışmaz — hata da
+      vermez. Hook'un neden ateşlenmediğini ararken ilk bakılacak yer burasıdır.
+    </div>
+
+    <h3><code>if</code>: tool adının ötesine geçmek</h3>
+    <p><code>matcher</code> grup seviyesinde ve yalnızca tool adına bakar. <code>if</code> ise permission
+      rule sözdizimiyle <strong>argümanları da</strong> filtreler; eşleşme yoksa hook süreci hiç
+      başlatılmaz.</p>
+    <pre><code>{
+  <span class="s">"type"</span>: <span class="s">"command"</span>,
+  <span class="s">"if"</span>: <span class="s">"Bash(git *)"</span>,
+  <span class="s">"command"</span>: <span class="s">"\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/git-politikasi.sh"</span>
+}</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th><code>if</code> deseni</th><th>Bash komutu</th><th>Çalışır mı</th><th>Neden</th></tr></thead>
+        <tbody>
+          <tr><td><code>Bash(git *)</code></td><td><code>git push</code></td><td>evet</td><td>Komut adı eşleşiyor</td></tr>
+          <tr><td><code>Bash(git *)</code></td><td><code>npm test &amp;&amp; git push</code></td><td>evet</td><td>Her alt komut ayrı denetlenir</td></tr>
+          <tr><td><code>Bash(git *)</code></td><td><code>echo $(git log)</code></td><td>evet</td><td><code>$()</code> ve backtick içindekiler de denetlenir</td></tr>
+          <tr><td><code>Bash(git *)</code></td><td><code>echo $(date)</code></td><td>hayır</td><td>Eşleşen alt komut yok</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">İki tuzak</span>
+      <code>if</code> <strong>yalnızca tool event'lerinde</strong> çalışır (<code>PreToolUse</code>,
+      <code>PostToolUse</code>, <code>PostToolUseFailure</code>, <code>PermissionRequest</code>,
+      <code>PermissionDenied</code>); başka bir event'e eklersen hook hiç çalışmaz. Ayrıca filtre
+      <strong>fail-open</strong>'dır: komut ayrıştırılamazsa hook yine de çalışır. Kesin bir izin/yasak
+      gerekiyorsa bunu <code>if</code> ile değil permission sistemiyle kur.
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Bash dosya da değiştirebilir</span>
+      <code>Edit|Write</code> matcher'ı, Claude'un <code>Bash</code> ile yaptığı dosya değişikliklerini
+      görmez. Her değişikliği yakalaman gerekiyorsa (denetim, uyumluluk) turn başına bir kez çalışan bir
+      <code>Stop</code> hook'uyla çalışma ağacını tara.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m7">
+    <h2><span class="num">07</span> Girdi, çıktı, exit kodu</h2>
+    <p>Hook, Claude Code ile dört kanal üzerinden konuşur: <strong>stdin</strong> (olay verisi),
+      <strong>stdout</strong>, <strong>stderr</strong> ve <strong>exit kodu</strong>.</p>
+
+    <h3>Girdi</h3>
+    <p>Event ateşlendiğinde olay verisi script'in stdin'ine JSON olarak yazılır. Her event ortak alanlar
+      (<code>session_id</code>, <code>cwd</code>, <code>hook_event_name</code>,
+      <code>transcript_path</code>, <code>permission_mode</code>) taşır, üstüne kendine özel alanları
+      ekler:</p>
+    <pre><code>{
+  <span class="s">"session_id"</span>: <span class="s">"abc123"</span>,
+  <span class="s">"cwd"</span>: <span class="s">"/Users/sarah/myproject"</span>,
+  <span class="s">"hook_event_name"</span>: <span class="s">"PreToolUse"</span>,
+  <span class="s">"tool_name"</span>: <span class="s">"Bash"</span>,
+  <span class="s">"tool_input"</span>: { <span class="s">"command"</span>: <span class="s">"npm test"</span> }
+}</code></pre>
+    <p><code>UserPromptSubmit</code> bunun yerine <code>prompt</code> metnini,
+      <code>SessionStart</code> ise <code>source</code> alanını alır. Subagent içinde çalışan hook'lara
+      ayrıca <code>agent_id</code> ve <code>agent_type</code> gelir.</p>
+
+    <h3>Exit kodu</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Exit</th><th>Anlamı</th><th>Ne olur</th></tr></thead>
+        <tbody>
+          <tr><td><code>0</code></td><td>İtiraz yok</td><td>Eylem normal akışta devam eder. stdout JSON olarak ayrıştırılır</td></tr>
+          <tr><td><code>2</code></td><td>Engelleyici hata</td><td>Eylem engellenir; <strong>stderr Claude'a geri bildirim olarak gider</strong>. stdout yok sayılır</td></tr>
+          <tr><td>diğer</td><td>Engellemeyen hata</td><td>Eylem devam eder; transkriptte hata notu ve stderr'in ilk satırı görünür</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><code><span class="c">#!/bin/bash</span>
+INPUT=$(cat)
+COMMAND=$(echo <span class="s">"$INPUT"</span> | jq -r <span class="s">'.tool_input.command'</span>)
+
+<span class="k">if</span> echo <span class="s">"$COMMAND"</span> | grep -q <span class="s">"drop table"</span>; <span class="k">then</span>
+  echo <span class="s">"Engellendi: tablo silme yasak"</span> &gt;&amp;2   <span class="c"># stderr = Claude'un gördüğü gerekçe</span>
+  exit 2                                    <span class="c"># 2 = engelle</span>
+<span class="k">fi</span>
+
+exit 0  <span class="c"># 0 = karar yok; normal izin akışı devam eder</span></code></pre>
+
+    <div class="note warn">
+      <span class="tag">Exit 0 onay değildir</span>
+      Bir <code>PreToolUse</code> hook'unun 0 dönmesi tool çağrısını <strong>onaylamaz</strong>; sadece
+      "itirazım yok" demektir. Normal izin akışı yine işler. Onaylamak istiyorsan JSON çıktı yazman gerekir.
+    </div>
+
+    <div class="note">
+      <span class="tag">Context'e metin enjekte etmek</span>
+      <code>UserPromptSubmit</code>, <code>UserPromptExpansion</code> ve <code>SessionStart</code>
+      hook'larında <strong>0 ile çıkarsan stdout'a yazdığın her şey Claude'un context'ine eklenir</strong>.
+      Diğer event'lerde stdout böyle davranmaz.
+    </div>
+
+    <h3>Engelleme hangi event'te işe yarar</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Exit 2'nin etkisi</th></tr></thead>
+        <tbody>
+          <tr><td><code>PreToolUse</code></td><td>Tool çağrısını engeller</td></tr>
+          <tr><td><code>PermissionRequest</code></td><td>İzni reddeder</td></tr>
+          <tr><td><code>UserPromptSubmit</code>, <code>UserPromptExpansion</code></td><td>Prompt'un işlenmesini engeller</td></tr>
+          <tr><td><code>Stop</code>, <code>SubagentStop</code>, <code>TeammateIdle</code></td><td>Durmayı/boşa geçmeyi engeller</td></tr>
+          <tr><td><code>TaskCreated</code>, <code>TaskCompleted</code></td><td>İşlemi geri alır veya engeller</td></tr>
+          <tr><td><code>ConfigChange</code>, <code>PreCompact</code></td><td>Değişikliği / compaction'ı engeller</td></tr>
+          <tr><td><code>PostToolUse</code>, <code>PostToolUseFailure</code></td><td>Tool zaten çalıştı — geri alamaz, yalnızca agentic döngüyü durdurur veya hata gösterir</td></tr>
+          <tr><td><code>SessionStart</code>, <code>Setup</code>, <code>Notification</code> ve diğerleri</td><td>Engellemez; stderr gösterilir, akış sürer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m8">
+    <h2><span class="num">08</span> Yapılandırılmış JSON çıktı</h2>
+    <p>Exit kodları yalnızca "engelle" ya da "sus" demeni sağlar. Daha ince kontrol için
+      <strong>0 ile çık ve stdout'a JSON yaz</strong>.</p>
+
+    <div class="note warn">
+      <span class="tag">İkisini karıştırma</span>
+      Ya exit 2 + stderr, ya exit 0 + JSON. <strong>Exit 2 verdiğinde stdout'taki JSON yok sayılır</strong>
+      — hook'unun neden dinlenmediğini ararken sık karşılaşılan sebeplerden biri budur.
+    </div>
+
+    <h3>Her event'te geçerli alanlar</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Etkisi</th></tr></thead>
+        <tbody>
+          <tr><td><code>continue: false</code></td><td>Claude'u tamamen durdurur</td></tr>
+          <tr><td><code>stopReason</code></td><td><code>continue: false</code> ile gösterilen mesaj</td></tr>
+          <tr><td><code>suppressOutput</code></td><td>stdout'u transkriptte gizler</td></tr>
+          <tr><td><code>systemMessage</code></td><td>Kullanıcıya gösterilen uyarı</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3><code>PreToolUse</code>: izin kararı</h3>
+    <pre><code>{
+  <span class="s">"hookSpecificOutput"</span>: {
+    <span class="s">"hookEventName"</span>: <span class="s">"PreToolUse"</span>,
+    <span class="s">"permissionDecision"</span>: <span class="s">"deny"</span>,
+    <span class="s">"permissionDecisionReason"</span>: <span class="s">"grep yerine rg kullan"</span>
+  }
+}</code></pre>
+    <p><code>permissionDecision</code> değerleri: <code>allow</code>, <code>deny</code>, <code>ask</code>,
+      <code>defer</code>. Aynı event'te birden çok hook karar dönerse <strong>en kısıtlayıcısı</strong>
+      uygulanır: <code>deny</code> &rarr; <code>defer</code> &rarr; <code>ask</code> &rarr;
+      <code>allow</code>. <code>additionalContext</code> metinleri ise hepsinden toplanıp Claude'a birlikte
+      verilir.</p>
+
+    <h3>Tool argümanını yeniden yazmak</h3>
+    <p><code>updatedInput</code> ile çağrının argümanlarını değiştirebilirsin — örneğin tehlikeli bir
+      komutu güvenli sürümüyle takas etmek için.</p>
+
+    <div class="note warn">
+      <span class="tag">Tek yazar kuralı</span>
+      Birden çok <code>PreToolUse</code> hook'u aynı çağrıya <code>updatedInput</code> döndürürse
+      <strong>en son bitenin</strong> yazdığı geçerli olur. Hook'lar paralel çalıştığı için bu sıra
+      belirsizdir. Aynı tool'un girdisini birden fazla hook'un değiştirmesine izin verme.
+    </div>
+
+    <h3>Diğer event'lerin karar biçimi</h3>
+    <ul>
+      <li><strong>Üst seviye <code>decision</code>:</strong> <code>UserPromptSubmit</code>,
+        <code>PostToolUse</code>, <code>Stop</code>, <code>SubagentStop</code>, <code>ConfigChange</code>,
+        <code>PreCompact</code> — <code>{"decision": "block", "reason": "…"}</code></li>
+      <li><strong>Yalnızca context:</strong> <code>SessionStart</code>, <code>Setup</code>,
+        <code>SubagentStart</code> — <code>additionalContext</code> döner, engelleyemez</li>
+      <li><strong><code>PermissionRequest</code>:</strong> <code>hookSpecificOutput.decision</code>
+        içinde <code>behavior: "allow" | "deny"</code></li>
+    </ul>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m9">
+    <h2><span class="num">09</span> command dışındaki türler</h2>
+    <p>Çoğu hook <code>"type": "command"</code>'dur, ama dört tür daha var ve her biri farklı bir problemi
+      çözer.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Tür</th><th>Ne yapar</th><th>Ne zaman</th></tr></thead>
+        <tbody>
+          <tr><td><code>command</code></td><td>Shell komutu çalıştırır</td><td>Varsayılan. Deterministik kural, script, CLI aracı</td></tr>
+          <tr><td><code>http</code></td><td>Olay verisini bir URL'e POST eder</td><td>Merkezi bir politika servisi; birden çok makinede aynı kural</td></tr>
+          <tr><td><code>mcp_tool</code></td><td>Bağlı bir MCP sunucusundaki tool'u çağırır</td><td>Doğrulama zaten bir MCP tool'u olarak varsa</td></tr>
+          <tr><td><code>prompt</code></td><td>Tek turluk LLM değerlendirmesi (varsayılan Haiku)</td><td>Karar kural değil <strong>muhakeme</strong> gerektiriyorsa</td></tr>
+          <tr><td><code>agent</code></td><td>Tool erişimi olan bir subagent kurar</td><td>Doğrulama için dosya okumak/komut çalıştırmak gerekiyorsa</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>prompt hook: "bu iş gerçekten bitti mi?"</h3>
+    <pre><code>{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"Stop"</span>: [
+      {
+        <span class="s">"hooks"</span>: [
+          {
+            <span class="s">"type"</span>: <span class="s">"prompt"</span>,
+            <span class="s">"prompt"</span>: <span class="s">"Tüm görevler tamamlandı mı? Değilse {\"ok\": false, \"reason\": \"eksik kalanlar\"} döndür."</span>
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <p>Model yalnızca bir evet/hayır kararı döner: <code>{"ok": true}</code> ise akış sürer,
+      <code>{"ok": false}</code> ise event'e göre davranış değişir — <code>Stop</code> ve
+      <code>SubagentStop</code>'ta <code>reason</code> Claude'a geri beslenir ve çalışmaya devam eder.</p>
+
+    <h3>http hook</h3>
+    <pre><code>{
+  <span class="s">"type"</span>: <span class="s">"http"</span>,
+  <span class="s">"url"</span>: <span class="s">"http://localhost:8080/validate"</span>,
+  <span class="s">"headers"</span>: { <span class="s">"Authorization"</span>: <span class="s">"Bearer $API_TOKEN"</span> },
+  <span class="s">"allowedEnvVars"</span>: [<span class="s">"API_TOKEN"</span>]
+}</code></pre>
+    <p>Yanıt gövdesi, command hook'larıyla aynı JSON biçimini kullanır. Yalnızca
+      <code>allowedEnvVars</code>'ta sayılan değişkenler header'lara enjekte edilir.</p>
+
+    <div class="note warn">
+      <span class="tag">http hook sessizce açılır</span>
+      2xx olmayan yanıtlar, bağlantı hataları ve zaman aşımları <strong>engellemeyen hata</strong> sayılır
+      — yani servisin çökmesi guardrail'ini sessizce devre dışı bırakır. Engellemek istiyorsan 2xx ile
+      birlikte <code>decision: "block"</code> ya da <code>permissionDecision: "deny"</code> dönmelisin.
+    </div>
+
+    <div class="note warn">
+      <span class="tag">agent hook deneyseldir</span>
+      <code>type: "agent"</code> deneysel; davranışı ve yapılandırması değişebilir. Üretim akışlarında
+      command hook'larını tercih et.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m10">
+    <h2><span class="num">10</span> Altı örnek senaryo</h2>
+    <p>Her biri farklı bir event ve farklı bir mekanizma kullanıyor. Önce <strong>durum</strong>, sonra
+      yapılandırma, sonra <strong>neden böyle</strong>.</p>
+
+    <h3>Senaryo 1 — Format tutarlılığı modele bırakılmasın</h3>
+    <p><strong>Durum:</strong> CLAUDE.md'de "prettier çalıştır" yazıyor ama bazen çalışıyor, bazen
+      çalışmıyor.</p>
+    <pre><code><span class="c">// .claude/settings.json</span>
+{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"PostToolUse"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">"Edit|Write"</span>,
+        <span class="s">"hooks"</span>: [
+          {
+            <span class="s">"type"</span>: <span class="s">"command"</span>,
+            <span class="s">"command"</span>: <span class="s">"jq -r '.tool_input.file_path' | xargs npx prettier --write"</span>
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>PostToolUse</code> çünkü dosya yazıldıktan <em>sonra</em> formatlanır.</li>
+        <li>Matcher <code>Edit|Write</code>: her tool çağrısında değil, sadece dosya yazanlarda.</li>
+        <li>Hook girdiyi stdin'den alır; <code>jq</code> sadece dosya yolunu çıkarıp prettier'a geçer.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 2 — Korumalı dosyalara dokunulmasın</h3>
+    <p><strong>Durum:</strong> <code>.env</code>, <code>package-lock.json</code> ve <code>.git/</code>
+      altındaki hiçbir şey değişmemeli. Talimat yazmak yetmiyor.</p>
+    <pre><code><span class="c">#!/bin/bash</span>
+<span class="c"># .claude/hooks/protect-files.sh</span>
+
+INPUT=$(cat)
+FILE_PATH=$(echo <span class="s">"$INPUT"</span> | jq -r <span class="s">'.tool_input.file_path // empty'</span>)
+
+PROTECTED=(<span class="s">".env"</span> <span class="s">"package-lock.json"</span> <span class="s">".git/"</span>)
+
+<span class="k">for</span> p <span class="k">in</span> <span class="s">"${PROTECTED[@]}"</span>; <span class="k">do</span>
+  <span class="k">if</span> [[ <span class="s">"$FILE_PATH"</span> == *<span class="s">"$p"</span>* ]]; <span class="k">then</span>
+    echo <span class="s">"Engellendi: $FILE_PATH korumalı desen '$p' ile eşleşiyor"</span> &gt;&amp;2
+    exit 2
+  <span class="k">fi</span>
+<span class="k">done</span>
+
+exit 0</code></pre>
+    <pre><code>{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"PreToolUse"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">"Edit|Write"</span>,
+        <span class="s">"hooks"</span>: [
+          { <span class="s">"type"</span>: <span class="s">"command"</span>, <span class="s">"command"</span>: <span class="s">"\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"</span> }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Exit 2 çağrıyı engeller ve stderr'deki gerekçe Claude'a gider — böylece
+          <strong>başka bir yol denemesi gerektiğini anlar</strong>, körlemesine tekrar denemez.</li>
+        <li>macOS/Linux'ta <code>chmod +x</code> zorunlu; çalıştırılamayan script hiçbir şeyi engellemez.</li>
+        <li><code>$CLAUDE_PROJECT_DIR</code> kullan — hook'un çalışma dizini beklediğin yer olmayabilir.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 3 — Compaction sonrası kritik bilgi kaybolmasın</h3>
+    <p><strong>Durum:</strong> Uzun oturumlarda context sıkıştırılıyor ve Claude proje konvansiyonlarını
+      unutuyor.</p>
+    <pre><code>{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"SessionStart"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">"compact"</span>,
+        <span class="s">"hooks"</span>: [
+          {
+            <span class="s">"type"</span>: <span class="s">"command"</span>,
+            <span class="s">"command"</span>: <span class="s">"echo 'Hatırlatma: npm değil bun. Commit öncesi bun test. Sprint: auth refactor.'"</span>
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>SessionStart</code> + <code>compact</code> matcher'ı: yalnızca compaction sonrasında.</li>
+        <li>Bu event'te <strong>stdout doğrudan context'e eklenir</strong> — hook'un tüm marifeti bu.</li>
+        <li><code>echo</code> yerine <code>git log --oneline -5</code> gibi dinamik bir komut da
+          koyabilirsin. Her oturumda sabit kalacak bilgi içinse hook değil CLAUDE.md doğru yerdir.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 4 — Her Bash komutu kayda geçsin</h3>
+    <p><strong>Durum:</strong> Claude'un ne çalıştırdığını sonradan denetlemek istiyorsun.</p>
+    <pre><code>{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"PreToolUse"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">"Bash"</span>,
+        <span class="s">"hooks"</span>: [
+          { <span class="s">"type"</span>: <span class="s">"command"</span>, <span class="s">"command"</span>: <span class="s">"jq -r .tool_input.command &gt;&gt; ~/.claude/bash.log"</span> },
+          { <span class="s">"type"</span>: <span class="s">"command"</span>, <span class="s">"command"</span>: <span class="s">"\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-rm-rf.sh"</span> }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Aynı gruba iki handler koyabilirsin; ikisi de <strong>paralel</strong> çalışır.</li>
+        <li>İkinci hook exit 2 ile reddederse çağrı engellenir — ama <strong>log yine yazılmıştır</strong>,
+          çünkü birinci hook zaten çalıştı. Engellemenin diğer hook'un yan etkisini iptal ettiğini varsayma.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 5 — Plan onayı her seferinde sorulmasın</h3>
+    <p><strong>Durum:</strong> Plan hazır olduğunda çıkan onay diyaloğunu her defasında sen
+      tıklıyorsun.</p>
+    <pre><code>{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"PermissionRequest"</span>: [
+      {
+        <span class="s">"matcher"</span>: <span class="s">"ExitPlanMode"</span>,
+        <span class="s">"hooks"</span>: [
+          {
+            <span class="s">"type"</span>: <span class="s">"command"</span>,
+            <span class="s">"command"</span>: <span class="s">"echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PermissionRequest\", \"decision\": {\"behavior\": \"allow\"}}}'"</span>
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Burada exit kodu değil <strong>JSON karar</strong> gerekir; otomatik onay ancak böyle verilir.</li>
+        <li><strong>Matcher'ı olabildiğince dar tut.</strong> Boş bırakmak veya <code>.*</code> yazmak
+          dosya yazma ve shell komutları dahil <em>her</em> izin sorusunu otomatik onaylar.</li>
+      </ul>
+    </div>
+
+    <h3>Senaryo 6 — Testler geçmeden turn bitmesin</h3>
+    <p><strong>Durum:</strong> Claude "bitti" deyip duruyor, ama testlerin gerçekten geçtiğini doğrulamak
+      dosya okumayı ve komut çalıştırmayı gerektiriyor.</p>
+    <pre><code>{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"Stop"</span>: [
+      {
+        <span class="s">"hooks"</span>: [
+          {
+            <span class="s">"type"</span>: <span class="s">"agent"</span>,
+            <span class="s">"prompt"</span>: <span class="s">"Tüm unit testlerin geçtiğini doğrula. Test suite'ini çalıştır ve sonucu kontrol et. $ARGUMENTS"</span>,
+            <span class="s">"timeout"</span>: 120
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><code>prompt</code> hook'u tek LLM çağrısıdır ve dosya okuyamaz; burada doğrulama
+          <em>çalıştırma</em> gerektirdiği için <code>agent</code> seçildi.</li>
+        <li><code>$ARGUMENTS</code> yer tutucusu hook girdisinin JSON'ıyla değiştirilir.</li>
+        <li>Varsayılan 60 saniye test suite'i için kısa kalabilir; <code>timeout</code> yükseltildi.</li>
+      </ul>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Stop hook'unun 8 blok sınırı</span>
+      Bir <code>Stop</code> hook'u peş peşe <strong>sekiz kez</strong> engellerse Claude Code onu geçersiz
+      kılar. Script'in bunu kendi kontrol etmeli: girdideki <code>stop_hook_active</code> alanı
+      <code>true</code> ise erken çık. Gerçekten daha fazla tur gerekiyorsa sınırı
+      <code>CLAUDE_CODE_STOP_HOOK_BLOCK_CAP</code> ile yükselt.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m11">
+    <h2><span class="num">11</span> İzin modları ve güvenlik</h2>
+
+    <p><code>PreToolUse</code> hook'ları <strong>izin modu kontrolünden önce</strong>, her modda ateşlenir —
+      <code>dontAsk</code> dahil. <code>permissionDecision: "deny"</code> dönen bir hook,
+      <code>bypassPermissions</code> modunda ve <code>--dangerously-skip-permissions</code> ile bile
+      çağrıyı engeller.</p>
+
+    <div class="note">
+      <span class="tag">Asimetrik kural</span>
+      Hook'lar kısıtlamayı <strong>sıkabilir ama gevşetemez</strong>. <code>allow</code> dönmek,
+      settings'teki deny kurallarını baypas etmez; kurumunun <code>ask</code>'e ayarladığı connector
+      tool'larının veya <code>requiresUserInteraction</code> işaretli MCP tool'larının sorusunu da
+      bastıramaz.
+    </div>
+
+    <p>Bu asimetri, hook'ları organizasyon politikası için doğru katman yapar: kullanıcı izin modunu
+      değiştirerek kuralı atlatamaz. Kurum genelinde geçerli olması gerekiyorsa doğru yer
+      <strong>managed policy settings</strong>'tir.</p>
+
+    <div class="note warn">
+      <span class="tag">Hook, senin yetkinle çalışan koddur</span>
+      Bir hook, makinende senin kimliğinle çalışan keyfi bir shell komutudur ve
+      <code>.claude/settings.json</code> bir repoya commit edilebilir. Denetlemediğin bir depoyu
+      klonlayıp içinde çalışmaya başlamadan önce hook yapılandırmasına bak. <code>/hooks</code> menüsü
+      tam olarak bunun için var: hangi komutun hangi event'te çalışacağını kaynak dosyasıyla birlikte
+      gösterir.
+    </div>
+
+    <p>Kurumsal tarafta üç denetim mevcut: <code>allowManagedHooksOnly</code> (kullanıcı, proje ve plugin
+      hook'larını tamamen kapatır), <code>allowedHttpHookUrls</code> (HTTP hook endpoint'lerini
+      allowlist'e bağlar) ve <code>httpHookAllowedEnvVars</code> (header'lara hangi ortam değişkenlerinin
+      enjekte edilebileceğini sınırlar). Managed policy hook'ları kullanıcı ayarlarıyla devre dışı
+      bırakılamaz.</p>
+
+    <div class="note warn">
+      <span class="tag">Skill ve agent frontmatter hook'ları</span>
+      Proje seviyesindeki bir skill veya subagent'ın frontmatter hook'larının çalışması için o klasöre
+      <strong>workspace trust</strong> onayı vermiş olman gerekir. Onay yoksa bileşen yine çalışır ama
+      hook'ları sessizce atlanır — guardrail sandığın şey devrede olmayabilir.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="m12">
+    <h2><span class="num">12</span> Hata ayıklama ve tuzaklar</h2>
+
+    <h3>Hook hiç çalışmıyor</h3>
+    <ul>
+      <li><code>/hooks</code> ile doğru event altında görünüyor mu bak.</li>
+      <li>Matcher tool adıyla birebir eşleşiyor mu — <strong>büyük/küçük harfe duyarlı</strong>.</li>
+      <li>Doğru event mi? <code>PreToolUse</code> öncesinde, <code>PostToolUse</code> sonrasında ateşlenir.</li>
+      <li><code>if</code> alanını tool dışı bir event'e koymadın mı? Koyduysan hook hiç çalışmaz.</li>
+    </ul>
+
+    <h3><code>/hooks</code> boş görünüyor</h3>
+    <ul>
+      <li>JSON geçerli mi — sondaki virgül ve yorum satırı kabul edilmez.</li>
+      <li>Dosya doğru yerde mi: proje için <code>.claude/settings.json</code>, global için
+        <code>~/.claude/settings.json</code>.</li>
+      <li>Birkaç saniyede görünmediyse file watcher değişikliği kaçırmış olabilir; oturumu yeniden başlat.</li>
+    </ul>
+
+    <h3>"hook error" görüyorum</h3>
+    <p>Script'i elle test et — hook'un aldığı girdiyi taklit et:</p>
+    <pre><code>echo <span class="s">'{"tool_name":"Bash","tool_input":{"command":"ls"}}'</span> | ./my-hook.sh
+echo $?  <span class="c"># exit kodunu gör</span></code></pre>
+    <ul>
+      <li><strong>command not found:</strong> mutlak yol ya da <code>${CLAUDE_PROJECT_DIR}</code> kullan.</li>
+      <li><strong>jq: command not found:</strong> <code>jq</code> kur, ya da JSON'ı Python/Node ile ayrıştır.</li>
+      <li><strong>Script hiç çalışmıyor:</strong> <code>chmod +x ./my-hook.sh</code>.</li>
+    </ul>
+
+    <div class="note warn">
+      <span class="tag">En sinsi hata: shell profili JSON'ı bozuyor</span>
+      Shell form'daki bir hook <code>sh -c</code> (Windows'ta Git Bash) ile çalışır. Profilinde koşulsuz
+      bir <code>echo</code> varsa çıktısı hook'unun JSON'ının <strong>önüne eklenir</strong> ve ayrıştırma
+      başarısız olur. Çözüm: profildeki echo'ları interaktif shell koşuluna al —
+      <code>if [[ $- == *i* ]]; then … fi</code> — ya da <code>"args": []</code> ile exec form'a geç.
+    </div>
+
+    <h3>Debug teknikleri</h3>
+    <ul>
+      <li><kbd>Ctrl+O</kbd> ile transkript görünümü: her hook için tek satırlık özet. Başarı sessizdir;
+        engelleyici hatalar stderr'i, engellemeyenler hata notunu gösterir.</li>
+      <li>Tam ayrıntı için debug log: <code>claude --debug-file /tmp/claude.log</code> ile başlat, başka bir
+        terminalde <code>tail -f /tmp/claude.log</code>. Oturum ortasındaysan <code>/debug</code> ile
+        aç.</li>
+    </ul>
+
+    <h3>Toparlarken</h3>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Exit 0 onay değildir</strong> — <code>PreToolUse</code>'da normal izin akışı sürer.</li>
+        <li><strong>Exit 2 ve JSON birlikte kullanılmaz</strong> — 2 verdiğinde stdout yok sayılır.</li>
+        <li><strong>Sessiz hook bilgi taşımaz</strong> — Claude'un bilmesi gerekeni açıkça döndür.</li>
+        <li><strong>Hook'lar paralel çalışır</strong> — birinin engellemesi diğerinin yan etkisini iptal
+          etmez, <code>updatedInput</code>'ta ise sıra belirsizdir.</li>
+        <li><strong><code>PostToolUse</code> geri alamaz</strong> — tool zaten çalıştı. Engelleme
+          <code>PreToolUse</code>'un işidir.</li>
+        <li><strong>Matcher büyük/küçük harfe duyarlı</strong> ve eşleşmeyen hook sessizce hiç çalışmaz.</li>
+        <li><strong>Otomatik onayda matcher'ı dar tut</strong> — geniş bir <code>PermissionRequest</code>
+          hook'u tüm güvenlik ağını kaldırır.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    code.claude.com/docs/en/hooks ·
+    code.claude.com/docs/en/hooks-guide ·
+    code.claude.com/docs/en/permissions ·
+    code.claude.com/docs/en/settings
+  </footer>
+
+</div>
+</body>
+</html>
