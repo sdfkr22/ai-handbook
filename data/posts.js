@@ -1,6 +1,26 @@
 // OTOMATİK ÜRETİLDİ — elle düzenleme. Yenilemek için: node scripts/build.mjs
 window.YAZILAR = [
   {
+    "dosya": "posts/doctor-command-guide.html",
+    "baslik": "Bir şey mi ters? Önce /doctor",
+    "aciklama": "Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server'lar, yavaş hook'lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "doctor",
+      "checkup",
+      "troubleshooting",
+      "kurulum",
+      "settings.json",
+      "auto-update",
+      "CLAUDE.md",
+      "hooks",
+      "MCP",
+      "context"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/commands",
+    "tarih": "2026-08-07"
+  },
+  {
     "dosya": "posts/context-management-guide.html",
     "baslik": "Context window dolduğunda!!",
     "aciklama": "Context window'a neler yükleniyor, sınır kaç token, auto-compact hangi eşikte devreye giriyor ve /compact, /clear, subagent arasında nasıl seçim yapılır — senaryo senaryo.",
@@ -107,4 +127,4 @@ window.YAZILAR = [
     "tarih": "2026-06-25"
   }
 ];
-window.YAZILAR_GUNCELLEME = "2026-08-05";
+window.YAZILAR_GUNCELLEME = "2026-08-07";

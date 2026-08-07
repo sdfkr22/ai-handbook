@@ -2,6 +2,7 @@
    Koyu varsayılan; açık tema sistem tercihinden gelir, toggle her iki yönde de ezer. */
 :root{
   --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13;
+  --card:#16140f; --card-line:#2c281e;
   --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
   --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
 }
@@ -11,6 +12,7 @@
    sistem açık temadayken. Değiştirirken iki bloğu birlikte güncelle. */
 :root[data-theme="light"]{
   --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
+  --card:#f8efdb; --card-line:#ead8b9;
   --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
   --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
 }
@@ -18,14 +20,14 @@
   background:var(--bg);
 }
 :root[data-theme="light"] .chip[aria-pressed="true"]{background:rgba(184,72,10,.13);}
-:root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
-:root[data-theme="light"] .card-link:hover .card{box-shadow:0 10px 26px rgba(122,74,20,.13);}
+:root[data-theme="light"] .card-link:hover .card{box-shadow:0 8px 22px rgba(122,74,20,.12);}
 :root[data-theme="light"] .card .cat{color:var(--accent);}
-:root[data-theme="light"] .card .tag{background:rgba(184,72,10,.06);border-color:rgba(184,72,10,.18);color:var(--ink-soft);}
+:root[data-theme="light"] .card .tag{background:rgba(184,72,10,.07);border-color:rgba(184,72,10,.20);color:var(--ink-soft);}
 
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
+    --card:#f8efdb; --card-line:#ead8b9;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
     --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
   }
@@ -33,10 +35,9 @@
     background:var(--bg);
   }
   :root:not([data-theme="dark"]) .chip[aria-pressed="true"]{background:rgba(184,72,10,.13);}
-  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
-  :root:not([data-theme="dark"]) .card-link:hover .card{box-shadow:0 10px 26px rgba(122,74,20,.13);}
+  :root:not([data-theme="dark"]) .card-link:hover .card{box-shadow:0 8px 22px rgba(122,74,20,.12);}
   :root:not([data-theme="dark"]) .card .cat{color:var(--accent);}
-  :root:not([data-theme="dark"]) .card .tag{background:rgba(184,72,10,.06);border-color:rgba(184,72,10,.18);color:var(--ink-soft);}
+  :root:not([data-theme="dark"]) .card .tag{background:rgba(184,72,10,.07);border-color:rgba(184,72,10,.20);color:var(--ink-soft);}
 }
 
 /* --- Tema düğmesi --- */
@@ -106,8 +107,8 @@ h1 em{font-style:italic;color:var(--accent);}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;}
 .card-link{text-decoration:none;color:inherit;display:block;}
 .card{
-  background:var(--panel);
-  border:1px solid var(--line);border-radius:14px;padding:24px;
+  background:var(--card);
+  border:1px solid var(--card-line);border-radius:14px;padding:24px;
   height:100%;display:flex;flex-direction:column;gap:12px;
   transition:border-color .18s, transform .18s, box-shadow .18s;
 }

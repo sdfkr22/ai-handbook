@@ -80,7 +80,8 @@
 (function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <style>
   :root[data-theme="light"]{
-    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#f8efdb; --card-line:#ead8b9;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
     --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
     --code-bg:#fcf3e3; --code-ink:#2b251b;
@@ -88,13 +89,15 @@
   :root[data-theme="light"] body{background:var(--bg);}
   :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
   :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
-  :root[data-theme="light"] .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root[data-theme="light"] .card code{background:#fdf7e9;border-color:rgba(184,72,10,.22);}
   :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
   :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
   :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
   @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
-    --bg:#fdf7ec; --panel:#ffffff; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#f8efdb; --card-line:#ead8b9;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
     --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
     --code-bg:#fcf3e3; --code-ink:#2b251b;
@@ -102,7 +105,8 @@
   :root:not([data-theme="dark"]) body{background:var(--bg);}
   :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
   :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
-  :root:not([data-theme="dark"]) .card{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root:not([data-theme="dark"]) .card code{background:#fdf7e9;border-color:rgba(184,72,10,.22);}
   :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
   :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
   :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
