@@ -86,8 +86,11 @@
 </head>
 <body>
 <!-- yazi:kabuk -->
-<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
-(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
+   Aynı yerde .yazi-yazim sınıfı eklenir: başlık, daktilo animasyonu hazırlanana
+   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür. */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}
+document.documentElement.classList.add("yazi-yazim");})();</script>
 <style>
   :root[data-theme="light"]{
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
@@ -130,6 +133,18 @@
     color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
     backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
   .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  /* --- Başlık: komut satırı görünümü --- */
+  .yazi-yazim header.hero h1{visibility:hidden;}
+  header.hero h1{
+    font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-weight:500;font-size:clamp(21px,5.2vw,46px);line-height:1.32;letter-spacing:-.02em;}
+  header.hero h1 em{font-style:normal;}
+  header.hero h1::before{content:"\276F ";color:var(--accent);opacity:.5;}
+  .yazi-imlec{display:inline-block;width:0;height:1em;vertical-align:-.12em;position:relative;}
+  .yazi-imlec::after{content:"";position:absolute;left:.04em;bottom:0;width:.52em;height:1em;
+    background:var(--accent);animation:yazi-imlec-yanip 1.05s steps(1) infinite;}
+  @keyframes yazi-imlec-yanip{0%,50%{opacity:1;}50.01%,100%{opacity:0;}}
+  @media (prefers-reduced-motion: reduce){.yazi-imlec::after{animation:none;}}
   @media (max-width:900px){
     .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
     .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
@@ -149,6 +164,57 @@
     ciz();
   });
   ciz();
+})();
+</script>
+<script>
+/* Başlığı komut satırında yazılıyormuş gibi harf harf gösterir.
+   Harfler en baştan yer kaplar (görünürlük kapatılır, kaldırılmaz), böylece
+   animasyon boyunca satır sarması ve sayfa düzeni hiç oynamaz.
+   JS kapalıysa veya reduced-motion açıksa başlık olduğu gibi görünür. */
+(function(){
+  var kok=document.documentElement;
+  function ac(){kok.classList.remove("yazi-yazim");}
+  function baslat(){
+    try{
+      var h1=document.querySelector("header.hero h1");
+      if(!h1){ac();return;}
+      if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){ac();return;}
+      /* Etiketi innerText'ten alma: başlık o an gizli olduğu için boş dönebilir.
+         <br> yerine boşluk koyup metni doğrudan çıkar. */
+      var gecici=document.createElement("div");
+      gecici.innerHTML=h1.innerHTML.replace(/<br\s*\/?>/gi," ");
+      h1.setAttribute("aria-label",(gecici.textContent||"").replace(/\s+/g," ").trim());
+      var gez=document.createTreeWalker(h1,NodeFilter.SHOW_TEXT),dugumler=[],d;
+      while(d=gez.nextNode())dugumler.push(d);
+      var harfler=[];
+      dugumler.forEach(function(tn){
+        var parca=document.createDocumentFragment();
+        tn.nodeValue.split("").forEach(function(h){
+          var s=document.createElement("span");
+          s.textContent=h;s.style.visibility="hidden";s.setAttribute("aria-hidden","true");
+          parca.appendChild(s);harfler.push(s);
+        });
+        tn.parentNode.replaceChild(parca,tn);
+      });
+      if(!harfler.length){ac();return;}
+      var imlec=document.createElement("span");
+      imlec.className="yazi-imlec";imlec.setAttribute("aria-hidden","true");
+      ac();
+      var i=0;
+      (function tik(){
+        if(i>=harfler.length){
+          setTimeout(function(){if(imlec.parentNode)imlec.parentNode.removeChild(imlec);},2600);
+          return;
+        }
+        var s=harfler[i++];
+        s.style.visibility="visible";
+        s.parentNode.insertBefore(imlec,s.nextSibling);
+        setTimeout(tik,/[,.:?!]/.test(s.textContent)?190:38);
+      })();
+    }catch(e){ac();}
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
 })();
 </script>
 <!-- /yazi:kabuk -->

@@ -149,3 +149,60 @@
   filtreleriCiz();
   ciz();
 })();
+
+// Başlığı komut satırında yazılıyormuş gibi harf harf gösterir.
+// Harfler en baştan yer kaplar (görünürlük kapatılır, kaldırılmaz), böylece
+// animasyon boyunca satır sarması ve sayfa düzeni hiç oynamaz.
+// JS kapalıysa veya reduced-motion açıksa başlık olduğu gibi görünür.
+(function () {
+  var kok = document.documentElement;
+  function ac() { kok.classList.remove("yazi-yazim"); }
+
+  try {
+    var h1 = document.querySelector("header.hero h1");
+    if (!h1) { ac(); return; }
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) { ac(); return; }
+
+    // Etiketi innerText'ten alma: başlık o an gizli olduğu için boş dönebilir.
+    // <br> yerine boşluk koyup metni doğrudan çıkar.
+    var gecici = document.createElement("div");
+    gecici.innerHTML = h1.innerHTML.replace(/<br\s*\/?>/gi, " ");
+    h1.setAttribute("aria-label", (gecici.textContent || "").replace(/\s+/g, " ").trim());
+
+    var gez = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT), dugumler = [], d;
+    while ((d = gez.nextNode())) dugumler.push(d);
+
+    var harfler = [];
+    dugumler.forEach(function (tn) {
+      var parca = document.createDocumentFragment();
+      tn.nodeValue.split("").forEach(function (h) {
+        var s = document.createElement("span");
+        s.textContent = h;
+        s.style.visibility = "hidden";
+        s.setAttribute("aria-hidden", "true");
+        parca.appendChild(s);
+        harfler.push(s);
+      });
+      tn.parentNode.replaceChild(parca, tn);
+    });
+    if (!harfler.length) { ac(); return; }
+
+    var imlec = document.createElement("span");
+    imlec.className = "yazi-imlec";
+    imlec.setAttribute("aria-hidden", "true");
+
+    ac();
+
+    var i = 0;
+    (function tik() {
+      if (i >= harfler.length) {
+        setTimeout(function () { if (imlec.parentNode) imlec.parentNode.removeChild(imlec); }, 2600);
+        return;
+      }
+      var s = harfler[i++];
+      s.style.visibility = "visible";
+      s.parentNode.insertBefore(imlec, s.nextSibling);
+      setTimeout(tik, /[,.:?!]/.test(s.textContent) ? 190 : 38);
+    })();
+  } catch (e) { ac(); }
+})();

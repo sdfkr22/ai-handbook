@@ -9,8 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/site.css">
-<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
-(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
+   Aynı yerde .yazi-yazim sınıfı eklenir: başlık, daktilo animasyonu hazırlanana
+   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür. */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}
+document.documentElement.classList.add("yazi-yazim");})();</script>
 </head>
 <body>
 <button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
