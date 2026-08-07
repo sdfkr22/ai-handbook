@@ -39,7 +39,7 @@
   },
   {
     "dosya": "posts/statusline-guide.html",
-    "baslik": "Statusline ne yazacağını senden öğrenir",
+    "baslik": "Statusline'ı sen yaz",
     "aciklama": "Ekranın dibindeki satırı çalıştıran şey senin yazdığın script. /statusline ile kurulumdan stdin'e gelen JSON alanlarına, renkli context barına, Windows tuzağına ve satır boş kaldığında ne olduğuna kadar.",
     "kategori": "Claude Code",
     "etiketler": [
