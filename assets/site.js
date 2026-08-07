@@ -13,8 +13,13 @@
     btn.textContent = aktif() === "light" ? "☾" : "☀";
   }
 
+  var gecisZaman;
   btn.addEventListener("click", function () {
     var yeni = aktif() === "light" ? "dark" : "light";
+    // Renkler anlık sıçramasın; sınıf kısa süre kalır (bkz. .yazi-tema-gecis).
+    kok.classList.add("yazi-tema-gecis");
+    clearTimeout(gecisZaman);
+    gecisZaman = setTimeout(function () { kok.classList.remove("yazi-tema-gecis"); }, 280);
     kok.dataset.theme = yeni;
     try { localStorage.setItem("tema", yeni); } catch (e) {}
     ciz();
@@ -27,6 +32,7 @@
 (function () {
   var yazilar = (window.YAZILAR || []).slice();
   var aktifKategori = "hepsi";
+  var aktifEtiket = "";
   var arama = "";
 
   var grid = document.getElementById("grid");
@@ -55,7 +61,50 @@
     return d.getDate() + " " + aylar[d.getMonth()] + " " + d.getFullYear();
   }
 
-  // --- Kategori sekmeleri ---
+  function kucult(s) {
+    return String(s == null ? "" : s).toLocaleLowerCase("tr");
+  }
+
+  // Aramadaki kelimeler; her çizimden önce bir kez hesaplanır.
+  var kelimeler = [];
+  function kelimeleriTazele() {
+    kelimeler = kucult(arama).split(/\s+/).filter(Boolean);
+  }
+
+  /**
+   * Eşleşen kelimeleri <mark> ile sarar. Metin önce eşleşme aralıklarına
+   * bölünür, sonra her parça ayrı ayrı escape edilir — böylece &amp; gibi
+   * diziler ortadan bölünmez ve HTML enjeksiyonu mümkün olmaz.
+   */
+  function vurgula(metin, sozler) {
+    var s = String(metin == null ? "" : metin);
+    if (!sozler.length || !s) return esc(s);
+
+    var kucuk = kucult(s);
+    // Türkçe küçültme uzunluğu değiştirirse konum eşlemesi güvenilmez olur.
+    if (kucuk.length !== s.length) return esc(s);
+
+    var isaret = [];
+    sozler.forEach(function (k) {
+      var i = kucuk.indexOf(k);
+      while (i !== -1) {
+        for (var j = i; j < i + k.length; j++) isaret[j] = true;
+        i = kucuk.indexOf(k, i + k.length);
+      }
+    });
+
+    var cikti = "", bas = 0;
+    while (bas < s.length) {
+      var son = bas + 1;
+      while (son < s.length && !isaret[son] === !isaret[bas]) son++;
+      var parca = esc(s.slice(bas, son));
+      cikti += isaret[bas] ? "<mark>" + parca + "</mark>" : parca;
+      bas = son;
+    }
+    return cikti;
+  }
+
+  // --- Filtre satırı: kategoriler + aktif etiket ---
   function kategoriler() {
     var sayac = {};
     yazilar.forEach(function (y) {
@@ -69,74 +118,197 @@
 
   function filtreleriCiz() {
     var list = kategoriler();
-    var html = '<button class="chip" data-kat="hepsi" aria-pressed="true">Tümü<span class="n">' + yazilar.length + "</span></button>";
-    list.forEach(function (k) {
-      html += '<button class="chip" data-kat="' + esc(k.ad) + '" aria-pressed="false">' + esc(k.ad) + '<span class="n">' + k.adet + "</span></button>";
-    });
+    var html = "";
+    // Tek kategori varsa sekmeler hiçbir şeyi ayırmıyor demektir; yer kaplamasın.
+    // İkinci kategori eklendiği anda kendiliğinden geri gelir.
+    if (list.length > 1) {
+      html +=
+        '<button class="chip" data-kat="hepsi" aria-pressed="' + (aktifKategori === "hepsi") +
+        '">Tümü<span class="n">' + yazilar.length + "</span></button>";
+      list.forEach(function (k) {
+        html +=
+          '<button class="chip" data-kat="' + esc(k.ad) + '" aria-pressed="' + (aktifKategori === k.ad) + '">' +
+          esc(k.ad) + '<span class="n">' + k.adet + "</span></button>";
+      });
+    }
+    if (aktifEtiket) {
+      html +=
+        '<button class="chip etiket-chip" data-etiket-sil="1" aria-pressed="true" ' +
+        'title="Etiket filtresini kaldır" aria-label="Etiket filtresini kaldır: ' + esc(aktifEtiket) + '">#' +
+        esc(aktifEtiket) + '<span class="x" aria-hidden="true">×</span></button>';
+    }
     filters.innerHTML = html;
+    filters.hidden = !html;
   }
 
-  // --- Kartlar ---
+  // --- Eşleşme ---
   function eslesir(y) {
     if (aktifKategori !== "hepsi" && (y.kategori || "Diğer") !== aktifKategori) return false;
-    if (!arama) return true;
-    var hay = [y.baslik, y.aciklama, y.kategori, (y.etiketler || []).join(" "), y.kaynak]
-      .join(" ")
-      .toLocaleLowerCase("tr");
-    return arama
-      .toLocaleLowerCase("tr")
-      .split(/\s+/)
-      .filter(Boolean)
-      .every(function (kelime) { return hay.indexOf(kelime) !== -1; });
+    if (aktifEtiket) {
+      var hedef = kucult(aktifEtiket);
+      var var_ = (y.etiketler || []).some(function (t) { return kucult(t) === hedef; });
+      if (!var_) return false;
+    }
+    if (!kelimeler.length) return true;
+    // Bölüm başlıkları da samanlığa dahil: arama yazının gövdesini de görür.
+    var hay = kucult(
+      [
+        y.baslik,
+        y.aciklama,
+        y.kategori,
+        (y.etiketler || []).join(" "),
+        y.kaynak,
+        (y.bolumler || []).map(function (b) { return b.ad; }).join(" "),
+      ].join(" ")
+    );
+    return kelimeler.every(function (k) { return hay.indexOf(k) !== -1; });
   }
 
-  function ciz() {
+  // Aramayla eşleşen bölümler — karttan doğrudan #mN bağlantısı verilir.
+  function eslesenBolumler(y) {
+    if (!kelimeler.length) return [];
+    return (y.bolumler || []).filter(function (b) {
+      var h = kucult(b.ad);
+      return kelimeler.some(function (k) { return h.indexOf(k) !== -1; });
+    });
+  }
+
+  function azHareket() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  // --- FLIP: filtre değişiminde kartlar zıplamasın, yeni yerlerine kaysın ---
+  function konumlariOlc() {
+    var harita = {};
+    Array.prototype.forEach.call(grid.querySelectorAll(".card"), function (el) {
+      harita[el.dataset.dosya] = el.getBoundingClientRect();
+    });
+    return harita;
+  }
+
+  function gecisiOynat(eskiKonumlar) {
+    Array.prototype.forEach.call(grid.querySelectorAll(".card"), function (el, i) {
+      var o = eskiKonumlar[el.dataset.dosya];
+      if (!o) {
+        // Listeye yeni giren kart: kayacak eski konumu yok, belirerek gelsin.
+        el.style.animationDelay = Math.min(i, 12) * 28 + "ms";
+        el.classList.add("giris");
+        return;
+      }
+      var y = el.getBoundingClientRect();
+      var dx = o.left - y.left, dy = o.top - y.top;
+      if (!dx && !dy) return;
+      el.animate(
+        [{ transform: "translate(" + dx + "px," + dy + "px)" }, { transform: "none" }],
+        { duration: 320, easing: "cubic-bezier(.22,.61,.36,1)" }
+      );
+    });
+  }
+
+  function kartHtml(y) {
+    var etiketler = (y.etiketler || [])
+      .slice(0, 5)
+      .map(function (t) {
+        return '<button type="button" class="tag" data-etiket="' + esc(t) + '">' + esc(t) + "</button>";
+      })
+      .join("");
+
+    var bolumler = eslesenBolumler(y);
+    var bolumHtml = "";
+    if (bolumler.length) {
+      bolumHtml =
+        '<div class="bolumler">' +
+        bolumler
+          .slice(0, 4)
+          .map(function (b) {
+            return (
+              '<a class="bolum" href="' + esc(y.dosya) + "#" + esc(b.id) + '">' +
+              '<span class="n">' + esc(b.no) + "</span>" + vurgula(b.ad, kelimeler) + "</a>"
+            );
+          })
+          .join("") +
+        (bolumler.length > 4 ? '<span class="bolum-daha">+' + (bolumler.length - 4) + " bölüm daha</span>" : "") +
+        "</div>";
+    }
+
+    return (
+      '<article class="card" data-dosya="' + esc(y.dosya) + '">' +
+        '<p class="cat">' + esc(y.kategori || "Diğer") + "</p>" +
+        '<h2><a class="card-link" href="' + esc(y.dosya) + '">' + vurgula(y.baslik, kelimeler) + "</a></h2>" +
+        "<p>" + vurgula(y.aciklama, kelimeler) + "</p>" +
+        bolumHtml +
+        (etiketler ? '<div class="tags">' + etiketler + "</div>" : "") +
+        '<div class="meta">' +
+          '<span class="src">' + esc(host(y.kaynak)) + "</span>" +
+          "<span>" + (y.sure ? y.sure + " dk · " : "") + esc(tarihTR(y.tarih)) + "</span>" +
+        "</div>" +
+      "</article>"
+    );
+  }
+
+  var ilkCizim = true;
+
+  // animasyonlu=true ise geçiş oynatılır. Arama yazarken false geçilir: her tuş
+  // vuruşunda ızgara yeniden çizildiği için animasyon takılma gibi görünür.
+  function ciz(animasyonlu) {
+    kelimeleriTazele();
+    var oyna = animasyonlu && !azHareket();
+    var eskiKonumlar = oyna && !ilkCizim ? konumlariOlc() : null;
+
     var gorunen = yazilar.filter(eslesir);
     count.textContent = gorunen.length + " / " + yazilar.length + " YAZI";
 
     if (!gorunen.length) {
-      grid.innerHTML = '<div class="empty">Eşleşen yazı yok. Aramayı veya kategoriyi değiştir.</div>';
+      grid.innerHTML =
+        '<div class="empty">Eşleşen yazı yok. Aramayı, etiketi veya kategoriyi değiştir.</div>';
       return;
     }
 
-    grid.innerHTML = gorunen
-      .map(function (y) {
-        var etiketler = (y.etiketler || [])
-          .slice(0, 5)
-          .map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; })
-          .join("");
-        return (
-          '<a class="card-link" href="' + esc(y.dosya) + '">' +
-            '<article class="card">' +
-              '<p class="cat">' + esc(y.kategori || "Diğer") + "</p>" +
-              "<h2>" + esc(y.baslik) + "</h2>" +
-              "<p>" + esc(y.aciklama) + "</p>" +
-              (etiketler ? '<div class="tags">' + etiketler + "</div>" : "") +
-              '<div class="meta">' +
-                '<span class="src">' + esc(host(y.kaynak)) + "</span>" +
-                "<span>" + esc(tarihTR(y.tarih)) + "</span>" +
-              "</div>" +
-            "</article>" +
-          "</a>"
-        );
-      })
-      .join("");
+    grid.innerHTML = gorunen.map(kartHtml).join("");
+    if (!oyna) return;
+
+    if (eskiKonumlar) {
+      gecisiOynat(eskiKonumlar);
+    } else {
+      // İlk çizim: kartlar sırayla belirsin. Gecikme 12. karttan sonra
+      // sabitlenir, uzun listelerde kuyruk beklenmesin.
+      Array.prototype.forEach.call(grid.children, function (el, i) {
+        el.style.animationDelay = Math.min(i, 12) * 34 + "ms";
+        el.classList.add("giris");
+      });
+    }
+    ilkCizim = false;
   }
 
   // --- Olaylar ---
   filters.addEventListener("click", function (e) {
     var btn = e.target.closest(".chip");
     if (!btn) return;
-    aktifKategori = btn.dataset.kat;
-    Array.prototype.forEach.call(filters.querySelectorAll(".chip"), function (c) {
-      c.setAttribute("aria-pressed", String(c === btn));
-    });
-    ciz();
+    if (btn.dataset.etiketSil) {
+      aktifEtiket = "";
+    } else {
+      aktifKategori = btn.dataset.kat;
+    }
+    filtreleriCiz();
+    ciz(true);
+  });
+
+  // Kartlardaki etiketlere tıklayınca o etikete filtrele.
+  grid.addEventListener("click", function (e) {
+    var t = e.target.closest(".tag");
+    if (!t) return;
+    e.preventDefault();
+    var ad = t.dataset.etiket;
+    aktifEtiket = kucult(aktifEtiket) === kucult(ad) ? "" : ad;
+    filtreleriCiz();
+    ciz(true);
+    // Filtre satırı yukarıda; seçim görünmeden değişmesin.
+    if (aktifEtiket) filters.scrollIntoView({ block: "nearest" });
   });
 
   input.addEventListener("input", function () {
     arama = input.value.trim();
-    ciz();
+    ciz(false);
   });
 
   // Yeniden eskiye sırala
@@ -147,7 +319,91 @@
   }
 
   filtreleriCiz();
-  ciz();
+  ciz(true);
+})();
+
+// Klavye gezinmesi: "/" aramaya odaklanır, Esc temizler,
+// ↑ ↓ kartlar arasında gezer, Enter kartı açar (bağlantı olduğu için kendiliğinden).
+(function () {
+  var input = document.getElementById("q");
+  var grid = document.getElementById("grid");
+  if (!input || !grid) return;
+
+  function kartlar() {
+    return grid.querySelectorAll(".card-link");
+  }
+
+  function odakla(el) {
+    if (!el) return;
+    el.focus();
+    // Bağlantı başlıkta; kartın tamamı görünsün diye kartı kaydır.
+    (el.closest(".card") || el).scrollIntoView({ block: "nearest" });
+  }
+
+  function yazilabilir(el) {
+    if (!el || !el.tagName) return false;
+    return el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable;
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var hedef = e.target;
+
+    if (e.key === "/" && !yazilabilir(hedef)) {
+      e.preventDefault();
+      input.focus();
+      input.select();
+      return;
+    }
+
+    if (e.key === "Escape") {
+      if (hedef === input) {
+        e.preventDefault();
+        // Dolu kutuyu önce boşalt, ikinci Esc'te odağı bırak.
+        if (input.value) {
+          input.value = "";
+          input.dispatchEvent(new Event("input"));
+        } else {
+          input.blur();
+        }
+      } else if (hedef.blur) {
+        hedef.blur();
+      }
+      return;
+    }
+
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+
+    var list = kartlar();
+    if (!list.length) return;
+
+    if (hedef === input) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        odakla(list[0]);
+      }
+      return;
+    }
+    if (yazilabilir(hedef)) return;
+
+    var i = Array.prototype.indexOf.call(list, hedef);
+    if (i === -1) {
+      // Odak ızgaranın dışında: aşağı ok listeye girer, yukarı ok yoksayılır.
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        odakla(list[0]);
+      }
+      return;
+    }
+
+    e.preventDefault();
+    if (e.key === "ArrowUp" && i === 0) {
+      input.focus();
+      input.select();
+      return;
+    }
+    odakla(list[e.key === "ArrowDown" ? Math.min(i + 1, list.length - 1) : i - 1]);
+  });
 })();
 
 // Başlığı komut satırında yazılıyormuş gibi harf harf gösterir.

@@ -17,7 +17,55 @@
       "context"
     ],
     "kaynak": "https://code.claude.com/docs/en/commands",
-    "tarih": "2026-08-07"
+    "tarih": "2026-08-07",
+    "sure": 8,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Tek komutluk bir check-up"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Kaputun altında neye bakıyor?"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Önce rapor eder, sonra izin ister"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "claude hiç açılmıyorsa: claude doctor"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "CLAUDE.md'ni budamaya gelir"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Ne zaman çalıştırmalısın?"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Senaryo defteri"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "/doctor'ın bakmadığı yerler"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Tuzaklar ve sürüm farkları"
+      }
+    ]
   },
   {
     "dosya": "posts/plugins-guide.html",
@@ -38,7 +86,80 @@
       "versioning"
     ],
     "kaynak": "https://code.claude.com/docs/en/plugins",
-    "tarih": "2026-08-07"
+    "tarih": "2026-08-07",
+    "sure": 21,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Skill'in .claude/'da kaldığı sürece senindir"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Beş dakikada ilk plugin"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Neyi nereye koyacaksın?"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "plugin.json'da tek zorunlu alan var"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Ad koymak, geri dönüşü zor bir karar"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Plugin'in içine ne sığar?"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Mutlak yol yazarsan kırılır"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Yayınlamadan önce: --plugin-dir"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Marketplace dediğin tek bir JSON"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Plugin'i nereden çekecek?"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "version bir alan değil, güncelleme sinyali"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Ekibe dağıtmak: kimse elle kurmasın"
+      },
+      {
+        "id": "m13",
+        "no": "13",
+        "ad": "Herkese açmak: host et, sonra submit et"
+      },
+      {
+        "id": "m14",
+        "no": "14",
+        "ad": "Üç senaryo, üç plugin"
+      }
+    ]
   },
   {
     "dosya": "posts/context-management-guide.html",
@@ -56,7 +177,60 @@
       "maliyet"
     ],
     "kaynak": "https://code.claude.com/docs/en/context-window",
-    "tarih": "2026-08-05"
+    "tarih": "2026-08-05",
+    "sure": 11,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Context window'da ne var?"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Sınır kaç token?"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Tahmin etme, /context'e bak"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Auto-compact sırtını sıvazlar"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "/compact mı /clear mı?"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Compaction'dan ne sağ çıkar?"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Tıkandığın anlar"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Şişmeden önlemek"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Uzun oturumda kullanım neden artar?"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Hızlı referans"
+      }
+    ]
   },
   {
     "dosya": "posts/statusline-guide.html",
@@ -75,7 +249,70 @@
       "OSC 8"
     ],
     "kaynak": "https://code.claude.com/docs/en/statusline",
-    "tarih": "2026-08-05"
+    "tarih": "2026-08-05",
+    "sure": 19,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Ekranın dibinde tam olarak ne var?"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "/statusline yaz, gerisini o kursun"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Elle kurmak: script + settings.json"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "stdin'den ne geliyor?"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "context_window'u yanlış okumak kolay"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Script tam olarak ne zaman koşuyor?"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Senaryo defteri"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Renk, çok satır, tıklanabilir link"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Windows'ta bir tuzak var"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Yavaş script'i statusline affetmez"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Subagent'ların kendi satırı"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Satır boş kaldığında"
+      }
+    ]
   },
   {
     "dosya": "posts/creating-subagents-guide.html",
@@ -83,7 +320,7 @@
     "aciklama": "Subagent ne zaman kurulur, dosyası nereye konur, hangi frontmatter alanı ne yapar ve araç erişimi nasıl kısıtlanır — altı bitmiş örnek senaryoyla.",
     "kategori": "Claude Code",
     "etiketler": [
-      "subagents",
+      "subagent",
       "agents",
       "frontmatter",
       "tools",
@@ -93,7 +330,70 @@
       "background"
     ],
     "kaynak": "https://code.claude.com/docs/en/sub-agents",
-    "tarih": "2026-08-03"
+    "tarih": "2026-08-03",
+    "sure": 22,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Subagent nedir, neyi çözer"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Ne zaman subagent?"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Yerleşik subagent'lar"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "İlk subagent'ın: adım adım"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Dosya nerede yaşar"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Frontmatter alanları"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Araç erişimi ve izinler"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Context, skills ve memory"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Çağırma, background, resume"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Altı örnek senaryo"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Orkestrasyon ve limitler"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Sık yapılan hatalar"
+      }
+    ]
   },
   {
     "dosya": "posts/hooks-guide.html",
@@ -111,7 +411,70 @@
       "otomasyon"
     ],
     "kaynak": "https://code.claude.com/docs/en/hooks",
-    "tarih": "2026-08-03"
+    "tarih": "2026-08-03",
+    "sure": 16,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Hook neden farklı"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "İlk hook'un"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Yapılandırma anatomisi"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Hook nerede yaşar"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Event'lerin tamamı"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "matcher ve if"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Girdi, çıktı, exit kodu"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Yapılandırılmış JSON çıktı"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "command dışındaki türler"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Altı örnek senaryo"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "İzin modları ve güvenlik"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Hata ayıklama ve tuzaklar"
+      }
+    ]
   },
   {
     "dosya": "posts/writing-skills-guide.html",
@@ -128,7 +491,70 @@
       "eval"
     ],
     "kaynak": "https://code.claude.com/docs/en/skills",
-    "tarih": "2026-07-30"
+    "tarih": "2026-07-30",
+    "sure": 17,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Skill nedir, ne zaman yazılır"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "İlk skill: adım adım"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Anatomi ve skill nerede yaşar"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "description: tetiklemeyi belirleyen alan"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Gövde: kısalık ve degrees of freedom"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Frontmatter: işe yarayan alanlar"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Progressive disclosure"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Script bağlamak"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Argümanlar ve dinamik context"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Gerçek örnek: bu sitenin skill'i"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Test et, ölç, iyileştir"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Sık yapılan hatalar"
+      }
+    ]
   },
   {
     "dosya": "posts/claude-code-steering-handbook.html",
@@ -139,11 +565,74 @@
       "CLAUDE.md",
       "rules",
       "skills",
-      "subagents",
+      "subagent",
       "hooks",
       "output styles"
     ],
     "kaynak": "https://claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more",
-    "tarih": "2026-06-25"
+    "tarih": "2026-06-25",
+    "sure": 13,
+    "bolumler": [
+      {
+        "id": "m0",
+        "no": "00",
+        "ad": "Önce büyük resim"
+      },
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Karşılaştırma tablosu"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "CLAUDE.md (root)"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "CLAUDE.md (subdirectory)"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Rules"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Skills"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Subagents"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Hooks"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Output styles"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Append system prompt"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Senaryolar: hangisini seç?"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Karar ağacı & sık hatalar"
+      }
+    ]
   }
 ]

@@ -20,9 +20,12 @@
   background:var(--bg);
 }
 :root[data-theme="light"] .chip[aria-pressed="true"]{background:rgba(184,72,10,.13);}
-:root[data-theme="light"] .card-link:hover .card{box-shadow:0 8px 22px rgba(122,74,20,.12);}
+:root[data-theme="light"] .card:hover{box-shadow:0 8px 22px rgba(122,74,20,.12);}
 :root[data-theme="light"] .card .cat{color:var(--accent);}
 :root[data-theme="light"] .card .tag{background:rgba(184,72,10,.07);border-color:rgba(184,72,10,.20);color:var(--ink-soft);}
+:root[data-theme="light"] .card:has(.card-link:focus-visible){box-shadow:0 0 0 3px rgba(184,72,10,.18);}
+:root[data-theme="light"] .card .bolum:hover{background:rgba(184,72,10,.09);}
+:root[data-theme="light"] mark{background:rgba(184,72,10,.18);}
 
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
@@ -35,9 +38,12 @@
     background:var(--bg);
   }
   :root:not([data-theme="dark"]) .chip[aria-pressed="true"]{background:rgba(184,72,10,.13);}
-  :root:not([data-theme="dark"]) .card-link:hover .card{box-shadow:0 8px 22px rgba(122,74,20,.12);}
+  :root:not([data-theme="dark"]) .card:hover{box-shadow:0 8px 22px rgba(122,74,20,.12);}
   :root:not([data-theme="dark"]) .card .cat{color:var(--accent);}
   :root:not([data-theme="dark"]) .card .tag{background:rgba(184,72,10,.07);border-color:rgba(184,72,10,.20);color:var(--ink-soft);}
+  :root:not([data-theme="dark"]) .card:has(.card-link:focus-visible){box-shadow:0 0 0 3px rgba(184,72,10,.18);}
+  :root:not([data-theme="dark"]) .card .bolum:hover{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) mark{background:rgba(184,72,10,.18);}
 }
 
 /* --- Tema düğmesi --- */
@@ -73,7 +79,9 @@ header.hero{margin-bottom:44px;}
 h1{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-weight:500;font-size:clamp(21px,5.2vw,46px);line-height:1.32;letter-spacing:-.02em;margin:0 0 20px;}
 h1 em{font-style:normal;color:var(--accent);}
-h1::before{content:"\276F ";color:var(--accent);opacity:.5;}
+/* Karakter düz yazılır: "\276F " biçiminde yazılırsa sondaki boşluk hex
+   kaçışın sonlandırıcısı sayılır ve içeriğe boşluk olarak geçmez. */
+h1::before{content:"❯ ";color:var(--accent);opacity:.5;}
 .yazi-imlec{display:inline-block;width:0;height:1em;vertical-align:-.12em;position:relative;}
 .yazi-imlec::after{content:"";position:absolute;left:.04em;bottom:0;width:.52em;height:1em;
   background:var(--accent);animation:yazi-imlec-yanip 1.05s steps(1) infinite;}
@@ -93,12 +101,20 @@ h1::before{content:"\276F ";color:var(--accent);opacity:.5;}
 }
 .search input{
   width:100%;background:var(--card);border:1px solid var(--card-line);border-radius:10px;
-  color:var(--ink);font-family:inherit;font-size:15px;padding:12px 16px 12px 40px;
+  color:var(--ink);font-family:inherit;font-size:15px;padding:12px 46px 12px 40px;
   outline:none;transition:border-color .15s;
 }
 .search input::placeholder{color:var(--ink-mute);}
 .search input:focus{border-color:var(--accent);}
 .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--ink-mute);fill:none;stroke-width:2;}
+/* "/" kısayol ipucu — kutuya odaklanınca kaybolur. */
+.search kbd{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1;color:var(--ink-mute);
+  background:var(--panel-2);border:1px solid var(--card-line);border-radius:5px;padding:4px 8px;
+  pointer-events:none;transition:opacity .15s;
+}
+.search input:focus + kbd{opacity:0;}
 .count{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-mute);letter-spacing:.08em;white-space:nowrap;}
 
 .filters{display:flex;flex-wrap:wrap;gap:8px;}
@@ -112,17 +128,35 @@ h1::before{content:"\276F ";color:var(--accent);opacity:.5;}
 .chip[aria-pressed="true"]{background:rgba(232,163,61,.14);border-color:var(--accent);color:var(--accent);}
 .chip .n{color:var(--ink-mute);margin-left:6px;}
 .chip[aria-pressed="true"] .n{color:var(--accent);opacity:.7;}
+/* Seçili etiket: filtre satırında kaldırılabilir bir rozet olarak durur. */
+.etiket-chip .x{margin-left:8px;font-size:14px;line-height:1;opacity:.75;}
+.etiket-chip:hover .x{opacity:1;}
 
-/* --- Kart ızgarası --- */
+/* --- Kart ızgarası ---
+   Kartın tamamı tıklanabilir ama tek bir bağlantı var: başlıktaki <a>, ::after
+   ile kartın üstüne yayılıyor. Etiketler ve bölüm linkleri z-index ile onun
+   üstünde durur. Böylece iç içe geçmiş tıklanabilir öge olmadan hem kart hem
+   etiketler tıklanabilir kalıyor. */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;}
-.card-link{text-decoration:none;color:inherit;display:block;}
 .card{
+  position:relative;
   background:var(--card);
   border:1px solid var(--card-line);border-radius:14px;padding:24px;
   height:100%;display:flex;flex-direction:column;gap:12px;
   transition:border-color .18s, transform .18s, box-shadow .18s;
 }
-.card-link:hover .card{border-color:var(--accent);transform:translateY(-2px);}
+.card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.card-link{text-decoration:none;color:inherit;}
+.card-link::after{content:"";position:absolute;inset:0;border-radius:14px;}
+/* Kartlar sırayla belirir: ilk yüklemede ve listeye yeni girdiklerinde.
+   Arama yazarken tetiklenmez (her tuşta yeniden oynardı). */
+@media (prefers-reduced-motion: no-preference){
+  .card.giris{animation:kart-giris .34s cubic-bezier(.22,.61,.36,1) both;}
+}
+@keyframes kart-giris{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+/* Klavyeyle gezinme: odaklanan kart hover ile aynı dili konuşur. */
+.card-link:focus{outline:none;}
+.card:has(.card-link:focus-visible){border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,163,61,.22);}
 .card .cat{
   font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--accent);margin:0;
@@ -132,11 +166,29 @@ h1::before{content:"\276F ";color:var(--accent);opacity:.5;}
   letter-spacing:-.01em;margin:0;color:var(--ink);
 }
 .card p{margin:0;color:var(--ink-soft);font-size:14.5px;line-height:1.6;}
-.card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px;}
+
+/* Aramayla eşleşen bölümler — doğrudan yazının o bölümüne gider. */
+.card .bolumler{display:flex;flex-direction:column;gap:2px;position:relative;z-index:1;}
+.card .bolum{
+  display:flex;gap:9px;align-items:baseline;text-decoration:none;
+  font-size:13px;color:var(--ink-soft);padding:4px 8px;margin-left:-8px;
+  border-radius:7px;transition:background .14s,color .14s;
+}
+.card .bolum:hover{background:rgba(232,163,61,.10);color:var(--accent);}
+.card .bolum .n{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);flex:none;}
+.card .bolum-daha{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-mute);padding-left:0;}
+
+.card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px;position:relative;z-index:1;}
 .card .tag{
   font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-mute);
   border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:rgba(0,0,0,.2);
+  cursor:pointer;line-height:1.4;transition:color .14s,border-color .14s;
 }
+.card .tag:hover{color:var(--accent);border-color:var(--accent);}
+.card .tag:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+/* Arama eşleşmelerinin vurgusu */
+mark{background:rgba(232,163,61,.22);color:inherit;border-radius:3px;padding:0 2px;}
 .card .meta{
   font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--ink-mute);
   border-top:1px solid var(--line);padding-top:12px;
@@ -159,4 +211,38 @@ footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var
 @media (max-width:620px){
   .wrap{padding:48px 20px 90px;}
   .grid{grid-template-columns:1fr;}
+  /* Fiziksel klavye yoksa kısayol ipucu anlamsız. */
+  .search kbd{display:none;}
+  .search input{padding-right:16px;}
+}
+
+/* Tema geçişi — sınıf yalnızca düğmeye basıldığı anda eklenir; sürekli açık
+   kalsa sıradan hover'lar da yavaşlardı. */
+:root.yazi-tema-gecis,:root.yazi-tema-gecis *{
+  transition:background-color .22s,border-color .22s,color .22s !important;
+}
+@media (prefers-reduced-motion: reduce){
+  :root.yazi-tema-gecis,:root.yazi-tema-gecis *{transition:none !important;}
+}
+
+/* Yazdırma: katalog düz bir liste olarak baskıya gitsin.
+   :root[data-theme] tema override'larıyla aynı özgüllükte ve daha sonra
+   geldiği için kazanır; yoksa koyu tema kâğıda basılırdı. */
+@media print{
+  :root,:root[data-theme]{
+    --bg:#fff; --panel:#fff; --panel-2:#f2f2f2; --card:#fff; --card-line:#bbb;
+    --ink:#000; --ink-soft:#1c1c1c; --ink-mute:#555; --line:#bbb; --accent:#7a3c00;
+  }
+  .tema-btn,.controls,.search kbd{display:none !important;}
+  /* Daktilo animasyonu sürerken yazdırılırsa başlık eksik basılırdı. */
+  .yazi-imlec{display:none !important;}
+  .yazi-yazim header.hero h1,header.hero h1 span{visibility:visible !important;}
+  body{background:#fff !important;color:#000;font-size:10.5pt;}
+  .wrap{max-width:none;padding:0;}
+  .grid{display:block;}
+  .card{break-inside:avoid;margin-bottom:12px;transform:none !important;}
+  .card .bolumler{display:none;}
+  .card-link::after{content:none;}
+  .card-link[href]::after{content:" (" attr(href) ")";font-family:"JetBrains Mono",monospace;
+    font-size:8.5pt;font-weight:400;color:#555;position:static;}
 }

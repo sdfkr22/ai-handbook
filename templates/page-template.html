@@ -68,7 +68,6 @@
   tr:last-child td{border-bottom:none;}
   td code{font-size:12px;}
   .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
-  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
   .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
   .toc li{padding-left:0;margin-bottom:8px;}
   .toc li::before{content:none;}
@@ -94,8 +93,7 @@
   </header>
 
   <!-- ===== KISIM: İçindekiler ===== -->
-  <nav class="toc">
-    <h4>İçindekiler</h4>
+  <nav class="toc" aria-label="İçindekiler">
     <ol>
       <li><a href="#m1"><span class="n">01</span> Original Section Title</a></li>
       <li><a href="#m2"><span class="n">02</span> Original Section Title</a></li>
