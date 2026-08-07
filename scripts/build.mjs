@@ -61,7 +61,7 @@ const KABUK_BITIR = "<!-- /yazi:kabuk -->";
 function isikKurallari(kok) {
   return `${kok}{
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
-    --card:#f8efdb; --card-line:#ead8b9;
+    --card:#fbf5e9; --card-line:#ecdfc8;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
     --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
     --code-bg:#fcf3e3; --code-ink:#2b251b;
@@ -70,7 +70,7 @@ function isikKurallari(kok) {
   ${kok} .note{background:rgba(184,72,10,.09);}
   ${kok} .note.warn{background:rgba(198,47,31,.08);}
   ${kok} .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
-  ${kok} .card code{background:#fdf7e9;border-color:rgba(184,72,10,.22);}
+  ${kok} .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
   ${kok} .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
   ${kok} pre{background:var(--code-bg);border-color:#eddec2;}
   ${kok} code{border-color:rgba(184,72,10,.20);}`;

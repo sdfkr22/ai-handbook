@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>.claude/ senin, plugin herkesin</title>
+<meta name="yazi:baslik" content=".claude/ senin, plugin herkesin">
+<meta name="yazi:aciklama" content="Bir klasör, bir plugin.json ve bir marketplace.json — skill'lerini, hook'larını ve MCP server'larını paketleyip ekibe dağıtmanın tam yolu. Yapı, adlandırma, test, sürümleme ve üç senaryo.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="plugins, plugin.json, marketplace.json, CLAUDE_PLUGIN_ROOT, --plugin-dir, enabledPlugins, extraKnownMarketplaces, skills, hooks, MCP, versioning">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/plugins">
+<meta name="yazi:tarih" content="2026-08-07">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc h4{margin:0 0 14px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+</head>
+<body>
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok). */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  :root[data-theme="light"]{
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root[data-theme="light"] .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root:not([data-theme="dark"]) .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · Plugins</p>
+    <h1>.claude/ senin,<br><em>plugin herkesin</em></h1>
+    <p class="lede">Bir klasör, bir <code>plugin.json</code> ve bir <code>marketplace.json</code>. Bu üçü, senin makinende çalışan skill'i tüm ekibin tek komutla kurabildiği bir pakete çevirir. Dizin yapısından adlandırmaya, testten sürümlemeye ve dağıtıma kadar.</p>
+    <p class="source">7 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/plugins">code.claude.com/docs/en/plugins</a></p>
+  </header>
+
+  <nav class="toc">
+    <h4>İçindekiler</h4>
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Skill'in .claude/'da kaldığı sürece senindir</a></li>
+      <li><a href="#m2"><span class="n">02</span> Beş dakikada ilk plugin</a></li>
+      <li><a href="#m3"><span class="n">03</span> Neyi nereye koyacaksın?</a></li>
+      <li><a href="#m4"><span class="n">04</span> plugin.json'da tek zorunlu alan var</a></li>
+      <li><a href="#m5"><span class="n">05</span> Ad koymak, geri dönüşü zor bir karar</a></li>
+      <li><a href="#m6"><span class="n">06</span> Plugin'in içine ne sığar?</a></li>
+      <li><a href="#m7"><span class="n">07</span> Mutlak yol yazarsan kırılır</a></li>
+      <li><a href="#m8"><span class="n">08</span> Yayınlamadan önce: --plugin-dir</a></li>
+      <li><a href="#m9"><span class="n">09</span> Marketplace dediğin tek bir JSON</a></li>
+      <li><a href="#m10"><span class="n">10</span> Plugin'i nereden çekecek?</a></li>
+      <li><a href="#m11"><span class="n">11</span> version bir alan değil, güncelleme sinyali</a></li>
+      <li><a href="#m12"><span class="n">12</span> Ekibe dağıtmak: kimse elle kurmasın</a></li>
+      <li><a href="#m13"><span class="n">13</span> Herkese açmak: host et, sonra submit et</a></li>
+      <li><a href="#m14"><span class="n">14</span> Üç senaryo, üç plugin</a></li>
+    </ol>
+  </nav>
+
+  <section id="m1">
+    <h2><span class="num">01</span> Skill'in .claude/'da kaldığı sürece senindir</h2>
+    <p>Claude Code'a özel yetenek eklemenin iki yolu var ve ikisi de aynı dosyaları kullanır. Fark, dosyaların
+    <strong>kime ulaştığında</strong>.</p>
+    <p><code>.claude/skills/</code>, <code>.claude/agents/</code>, <code>.claude/settings.json</code> — bunlar hızlı ve
+    yeterlidir; ta ki "bunu ekipteki herkes kullansın" diyene kadar. O noktada ya herkese tek tek dosya kopyalatırsın,
+    ya da paketlersin. Plugin tam olarak bu paketleme biçimi: skill'ler, subagent'lar, hook'lar, MCP server'lar ve
+    LSP server'lar tek bir klasörde, tek bir kurulum komutuyla.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yaklaşım</th><th>Skill adı</th><th>Ne için iyi</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Standalone</strong><br><code>.claude/</code> klasörü</td>
+            <td><code>/hello</code></td>
+            <td>Kişisel akışlar, projeye özgü düzenlemeler, hızlı deneme</td>
+          </tr>
+          <tr>
+            <td><strong>Plugin</strong><br>kendi kendine yeten klasör + <code>.claude-plugin/plugin.json</code></td>
+            <td><code>/plugin-adi:hello</code></td>
+            <td>Ekiple paylaşma, topluluğa dağıtma, sürümlü yayın, projeler arası tekrar kullanım</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Plugin'in tek başına getirdiği şeyler:</p>
+    <ul>
+      <li><strong>Tek kurulum, çok bileşen.</strong> Bir skill'i, onu tetikleyen hook'u ve ihtiyaç duyduğu MCP server'ı ayrı ayrı değil, birlikte kurarsın.</li>
+      <li><strong>Namespace.</strong> Plugin skill'leri her zaman <code>/plugin-adi:skill-adi</code> biçiminde görünür; iki plugin aynı adlı skill'i taşısa bile çakışmaz.</li>
+      <li><strong>Sürüm ve güncelleme.</strong> Marketplace üzerinden dağıtılan plugin'ler arka planda güncellenebilir.</li>
+      <li><strong>Kapatılabilirlik.</strong> <code>/plugin disable</code> ile tüm paket bir anda devre dışı kalır; dosya silmeye gerek yok.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Sıralama</span>
+      Doğru akış: önce <code>.claude/</code> altında hızlıca yaz ve çalıştığını gör, sonra paylaşmaya karar verdiğinde
+      plugin'e taşı. Bileşen dosyaları aynı olduğu için taşıma çoğunlukla <code>cp -r</code> işidir.
+    </div>
+  </section>
+
+  <section id="m2">
+    <h2><span class="num">02</span> Beş dakikada ilk plugin</h2>
+    <p>Bir plugin en sade halinde iki dosyadır: manifest ve bir skill.</p>
+
+    <pre><code><span class="c"># 1. Klasörler</span>
+mkdir my-first-plugin
+mkdir my-first-plugin/.claude-plugin
+mkdir -p my-first-plugin/skills/hello</code></pre>
+
+    <p><code>my-first-plugin/.claude-plugin/plugin.json</code>:</p>
+<pre><code>{
+  <span class="k">"name"</span>: <span class="s">"my-first-plugin"</span>,
+  <span class="k">"description"</span>: <span class="s">"A greeting plugin to learn the basics"</span>,
+  <span class="k">"version"</span>: <span class="s">"1.0.0"</span>,
+  <span class="k">"author"</span>: { <span class="k">"name"</span>: <span class="s">"Your Name"</span> }
+}</code></pre>
+
+    <p><code>my-first-plugin/skills/hello/SKILL.md</code>:</p>
+<pre><code><span class="c">---</span>
+<span class="k">description:</span> Greet the user with a personalized message
+<span class="c">---</span>
+
+Greet the user named "$ARGUMENTS" warmly and ask how you can help them today.</code></pre>
+
+    <p>Kurulum yok, marketplace yok — doğrudan yükleyip dene:</p>
+<pre><code>claude --plugin-dir ./my-first-plugin</code></pre>
+
+    <p>Oturum açıldığında skill'in adı plugin adıyla önekli olur:</p>
+<pre><code>/my-first-plugin:hello Alex</code></pre>
+
+    <h3>Daha da kısa yol: <code>claude plugin init</code></h3>
+    <p>Her açılışta <code>--plugin-dir</code> yazmak istemiyorsan, plugin'i doğrudan skills klasöründe geliştir:</p>
+<pre><code>claude plugin init my-tool
+claude plugin init my-tool --with skills hooks mcp</code></pre>
+    <p>Bu komut <code>~/.claude/skills/my-tool/</code> altında bir <code>.claude-plugin/plugin.json</code> ve başlangıç
+    <code>SKILL.md</code> dosyası oluşturur. Bir sonraki oturumda plugin <code>my-tool@skills-dir</code> adıyla
+    kendiliğinden yüklenir — ne marketplace ne de kurulum adımı gerekir. <code>--with</code> değerleri:
+    <code>skills</code>, <code>agents</code>, <code>hooks</code>, <code>mcp</code>, <code>lsp</code>,
+    <code>output-style</code>, <code>channel</code>.</p>
+
+    <div class="note">
+      <span class="tag">Skills-dir plugin'lerinin sınırı</span>
+      <code>~/.claude/skills/</code> altındaki plugin her projede yüklenir. Projenin <code>.claude/skills/</code>
+      klasöründeki bir plugin ise yalnızca workspace'e güven verdikten sonra yüklenir; MCP server'ları ayrıca onay ister,
+      LSP server'ları güven sonrası başlar ve background monitor'ları hiç yüklenmez. Ayrıca proje kapsamındaki bu
+      plugin'ler repo köküne kadar yukarı taranmaz — Claude Code'u repo kökünden başlatman gerekir.
+    </div>
+  </section>
+
+  <section id="m3">
+    <h2><span class="num">03</span> Neyi nereye koyacaksın?</h2>
+    <p>Plugin'lerde en sık yapılan hata tek bir cümleyle özetlenebilir: <strong><code>.claude-plugin/</code> klasörüne
+    yalnızca <code>plugin.json</code> girer.</strong> Diğer her şey plugin kökünde durur.</p>
+
+    <div class="note warn">
+      <span class="tag">En sık hata</span>
+      <code>commands/</code>, <code>agents/</code>, <code>skills/</code> veya <code>hooks/</code> klasörlerini
+      <code>.claude-plugin/</code> içine koyarsan plugin yüklenir ama bileşenlerin görünmez. Semptom tam olarak budur:
+      "plugin listede var, skill'i yok."
+    </div>
+
+<pre><code>enterprise-plugin/
+├── .claude-plugin/
+│   └── plugin.json        <span class="c"># tek başına buraya girer (opsiyonel)</span>
+├── skills/                <span class="c"># &lt;ad&gt;/SKILL.md yapısında skill'ler</span>
+│   ├── code-reviewer/
+│   │   └── SKILL.md
+│   └── pdf-processor/
+│       ├── SKILL.md
+│       └── scripts/
+├── commands/              <span class="c"># düz .md dosyaları (eski biçim)</span>
+├── agents/                <span class="c"># subagent tanımları</span>
+├── workflows/             <span class="c"># workflow script'leri</span>
+├── output-styles/
+├── themes/                <span class="c"># experimental</span>
+├── monitors/
+│   └── monitors.json      <span class="c"># experimental</span>
+├── hooks/
+│   └── hooks.json
+├── bin/                   <span class="c"># PATH'e eklenen çalıştırılabilirler</span>
+├── settings.json          <span class="c"># plugin etkinken uygulanan varsayılanlar</span>
+├── .mcp.json
+├── .lsp.json
+├── scripts/
+├── LICENSE
+└── CHANGELOG.md</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Bileşen</th><th>Varsayılan konum</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td>Manifest</td><td><code>.claude-plugin/plugin.json</code></td><td>Kimlik ve yapılandırma. <strong>Opsiyoneldir</strong></td></tr>
+          <tr><td>Skills</td><td><code>skills/</code></td><td><code>&lt;ad&gt;/SKILL.md</code> yapısı; yeni plugin'ler için tercih edilen biçim</td></tr>
+          <tr><td>Commands</td><td><code>commands/</code></td><td>Düz <code>.md</code> dosyaları olarak skill'ler</td></tr>
+          <tr><td>Agents</td><td><code>agents/</code></td><td>Subagent markdown dosyaları</td></tr>
+          <tr><td>Workflows</td><td><code>workflows/</code></td><td>Workflow script dosyaları</td></tr>
+          <tr><td>Output styles</td><td><code>output-styles/</code></td><td>Yanıt biçimi tanımları</td></tr>
+          <tr><td>Themes</td><td><code>themes/</code></td><td><code>/theme</code> içinde görünen renk temaları</td></tr>
+          <tr><td>Hooks</td><td><code>hooks/hooks.json</code></td><td>Olay yakalayıcılar</td></tr>
+          <tr><td>MCP servers</td><td><code>.mcp.json</code></td><td>Plugin etkinken otomatik başlar</td></tr>
+          <tr><td>LSP servers</td><td><code>.lsp.json</code></td><td>Kod zekâsı: tanıma git, referans bul, anlık diagnostic</td></tr>
+          <tr><td>Monitors</td><td><code>monitors/monitors.json</code></td><td>Arka planda log/durum izleyen kalıcı komutlar</td></tr>
+          <tr><td>Executables</td><td><code>bin/</code></td><td>Plugin etkinken Bash tool'un <code>PATH</code>'ine eklenir</td></tr>
+          <tr><td>Settings</td><td><code>settings.json</code></td><td>Yalnızca <code>agent</code> ve <code>subagentStatusLine</code> anahtarları destekleniyor</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Tek skill'lik plugin</span>
+      Plugin'in yalnızca bir skill taşıyacaksa <code>skills/</code> klasörü açmadan <code>SKILL.md</code>'yi doğrudan
+      plugin köküne koyabilirsin. Bu durumda frontmatter'daki <code>name</code> alanını mutlaka yaz — yoksa skill adı
+      kurulum klasörünün adından türetilir ve bu ad marketplace kurulumlarında her güncellemede değişen bir sürüm
+      dizesidir.
+    </div>
+
+    <div class="note warn">
+      <span class="tag">CLAUDE.md burada işlemez</span>
+      Plugin kökündeki bir <code>CLAUDE.md</code> proje context'i olarak yüklenmez. Plugin, context'e katkısını
+      skill'ler, agent'lar ve hook'lar üzerinden yapar. Talimat göndermek istiyorsan onu bir skill'in içine koy.
+    </div>
+  </section>
+
+  <section id="m4">
+    <h2><span class="num">04</span> plugin.json'da tek zorunlu alan var</h2>
+    <p>Şaşırtıcı olabilir: manifest dosyasının kendisi opsiyoneldir. Yoksa Claude Code bileşenleri varsayılan
+    konumlardan keşfeder ve plugin adını klasör adından türetir. Manifest yazdığın anda ise zorunlu tek alan
+    <code>name</code>'dir.</p>
+
+<pre><code>{
+  <span class="k">"$schema"</span>: <span class="s">"https://json.schemastore.org/claude-code-plugin-manifest.json"</span>,
+  <span class="k">"name"</span>: <span class="s">"plugin-name"</span>,
+  <span class="k">"displayName"</span>: <span class="s">"Plugin Name"</span>,
+  <span class="k">"version"</span>: <span class="s">"1.2.0"</span>,
+  <span class="k">"description"</span>: <span class="s">"Brief plugin description"</span>,
+  <span class="k">"author"</span>: {
+    <span class="k">"name"</span>: <span class="s">"Author Name"</span>,
+    <span class="k">"email"</span>: <span class="s">"author@example.com"</span>,
+    <span class="k">"url"</span>: <span class="s">"https://github.com/author"</span>
+  },
+  <span class="k">"homepage"</span>: <span class="s">"https://docs.example.com/plugin"</span>,
+  <span class="k">"repository"</span>: <span class="s">"https://github.com/author/plugin"</span>,
+  <span class="k">"license"</span>: <span class="s">"MIT"</span>,
+  <span class="k">"keywords"</span>: [<span class="s">"deployment"</span>, <span class="s">"ci-cd"</span>],
+  <span class="k">"skills"</span>: <span class="s">"./custom/skills/"</span>,
+  <span class="k">"agents"</span>: [<span class="s">"./custom/agents/reviewer.md"</span>],
+  <span class="k">"hooks"</span>: <span class="s">"./config/hooks.json"</span>,
+  <span class="k">"mcpServers"</span>: <span class="s">"./mcp-config.json"</span>,
+  <span class="k">"lspServers"</span>: <span class="s">"./.lsp.json"</span>,
+  <span class="k">"experimental"</span>: { <span class="k">"themes"</span>: <span class="s">"./themes/"</span>, <span class="k">"monitors"</span>: <span class="s">"./monitors.json"</span> },
+  <span class="k">"dependencies"</span>: [<span class="s">"helper-lib"</span>, { <span class="k">"name"</span>: <span class="s">"secrets-vault"</span>, <span class="k">"version"</span>: <span class="s">"~2.1.0"</span> }]
+}</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Tip</th><th>Ne işe yarar</th></tr></thead>
+        <tbody>
+          <tr><td><code>name</code></td><td>string</td><td><strong>Zorunlu.</strong> Benzersiz kimlik, kebab-case, boşluksuz. Bileşenlerin namespace'i budur</td></tr>
+          <tr><td><code>displayName</code></td><td>string</td><td><code>/plugin</code> arayüzünde görünen okunabilir ad. Boşluk ve büyük harf içerebilir; namespace için kullanılmaz</td></tr>
+          <tr><td><code>version</code></td><td>string</td><td>Semantic version. Yazdığın anda plugin bu dizeye sabitlenir — ayrıntısı bölüm 11'de</td></tr>
+          <tr><td><code>description</code></td><td>string</td><td>Plugin yöneticisinde kullanıcının gördüğü açıklama</td></tr>
+          <tr><td><code>author</code></td><td>object</td><td><code>name</code> zorunlu; <code>email</code> ve <code>url</code> opsiyonel</td></tr>
+          <tr><td><code>homepage</code> / <code>repository</code> / <code>license</code></td><td>string</td><td>Dokümantasyon URL'i, kaynak kod URL'i, SPDX lisans kimliği</td></tr>
+          <tr><td><code>keywords</code></td><td>array</td><td>Keşif etiketleri. String verirsen plugin <strong>yüklenmez</strong> — tip hatası yükleme hatasıdır</td></tr>
+          <tr><td><code>metadata</code></td><td>object</td><td>Serbest alan. Claude Code okumaz; kendi katalog/yetkilendirme verini koyabilirsin</td></tr>
+          <tr><td><code>defaultEnabled</code></td><td>boolean</td><td><code>false</code> yaparsan plugin kapalı kurulur, kullanıcı açar. Maliyet veya dış servis bağlantısı getiren plugin'ler için</td></tr>
+          <tr><td><code>userConfig</code></td><td>object</td><td>Plugin etkinleştirilirken kullanıcıya sorulacak değerler (token, endpoint…)</td></tr>
+          <tr><td><code>dependencies</code></td><td>array</td><td>Bu plugin'in gerektirdiği diğer plugin'ler, opsiyonel semver aralığıyla</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Tanınmayan alanlar sorun çıkarmaz</h3>
+    <p>Claude Code tanımadığı üst düzey alanları yok sayar. Böylece aynı <code>plugin.json</code>'ı başka bir
+    ekosistemin manifest'i olarak da tutabilirsin. <code>claude plugin validate</code> bunları hata değil
+    <strong>uyarı</strong> olarak raporlar; bir alan tanınan bir addan bir-iki karakter farklıysa doğru adı da önerir.
+    CI'da yazım hatalarını yakalamak için <code>--strict</code> ile uyarıları hataya çevir.</p>
+
+    <h3><code>userConfig</code>: kullanıcıya <code>settings.json</code> düzenlettirme</h3>
+<pre><code>{
+  <span class="k">"userConfig"</span>: {
+    <span class="k">"api_endpoint"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>,
+      <span class="k">"title"</span>: <span class="s">"API endpoint"</span>,
+      <span class="k">"description"</span>: <span class="s">"Your team's API endpoint"</span>
+    },
+    <span class="k">"api_token"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>,
+      <span class="k">"title"</span>: <span class="s">"API token"</span>,
+      <span class="k">"description"</span>: <span class="s">"API authentication token"</span>,
+      <span class="k">"sensitive"</span>: <span class="k">true</span>
+    }
+  }
+}</code></pre>
+    <p><code>type</code> değerleri: <code>string</code>, <code>number</code>, <code>boolean</code>,
+    <code>directory</code>, <code>file</code>. Değerler MCP ve LSP yapılandırmalarında ve hook komutlarında
+    <code>${user_config.KEY}</code> ile kullanılır, hook süreçlerine ayrıca
+    <code>CLAUDE_PLUGIN_OPTION_&lt;KEY&gt;</code> ortam değişkeni olarak geçer.
+    <code>sensitive: true</code> olan değerler <code>settings.json</code> yerine güvenli depoya (macOS Keychain veya
+    <code>~/.claude/.credentials.json</code>) yazılır.</p>
+
+    <div class="note warn">
+      <span class="tag">Shell'e giden alanlar reddeder</span>
+      Shell biçimindeki hook komutları, monitor komutları ve MCP <code>headersHelper</code> alanı
+      <code>${user_config.*}</code> ikamesini <strong>kabul etmez</strong> — çünkü değerin içeriği shell'de
+      çalıştırılabilirdi. Hook'larda <code>args</code> ile exec form kullan veya ortam değişkenini oku; monitor
+      script'lerinde değeri kendi config dosyandan okut.
+    </div>
+  </section>
+
+  <section id="m5">
+    <h2><span class="num">05</span> Ad koymak, geri dönüşü zor bir karar</h2>
+    <p>Plugin'in <code>name</code> değeri yalnızca bir etiket değil; kullanıcıların <code>enabledPlugins</code>
+    ayarında, <code>pluginConfigs</code> kaydında ve <code>/plugin install</code> komutunda yazdıkları kimliktir.
+    Değiştirdiğinde mevcut tüm kurulumlar kırılır.</p>
+
+    <ul>
+      <li><strong>kebab-case, boşluksuz.</strong> Küçük harf, rakam ve tire. Claude Code başka biçimleri de kabul eder ama <code>claude plugin validate</code> uyarı verir ve claude.ai marketplace senkronizasyonu reddeder.</li>
+      <li><strong>ASCII ve kısa.</strong> Claude Desktop'ın yönetilen marketplace senkronizasyonu en fazla 128 karakter, yalnızca harf/rakam/<code>.</code>/<code>_</code>/<code>-</code> kabul eder ve harf veya rakamla başlamalıdır. Uymayan bir plugin adı sessizce düşürülür.</li>
+      <li><strong>Ad = namespace.</strong> <code>plugin-dev</code> adlı plugin'in <code>agent-creator</code> agent'ı arayüzde <code>plugin-dev:agent-creator</code> olarak görünür; skill'leri <code>/plugin-dev:skill-adi</code> ile çağrılır. Öneki değiştirmek istiyorsan <code>plugin.json</code>'daki <code>name</code>'i değiştirirsin.</li>
+      <li><strong>Marketplace adı kazanır.</strong> Bir marketplace girdisi plugin'i farklı bir adla listeliyorsa, <code>enabledPlugins</code> anahtarlarında ve <code>/plugin</code> arayüzünde geçerli olan marketplace girdisindeki addır.</li>
+      <li><strong>Görünen adı değiştirmek için <code>displayName</code>.</strong> Arayüzdeki etiketi güncellemek istiyorsan <code>name</code>'e dokunma, <code>displayName</code> ekle.</li>
+    </ul>
+
+    <h3>Adı gerçekten değiştirmen gerekirse: <code>renames</code></h3>
+    <p>Marketplace dosyasına üst düzey bir <code>renames</code> haritası ekle; mevcut kullanıcılar
+    <code>plugin-not-found</code> hatası almak yerine otomatik göç eder.</p>
+<pre><code>{
+  <span class="k">"name"</span>: <span class="s">"acme-tools"</span>,
+  <span class="k">"owner"</span>: { <span class="k">"name"</span>: <span class="s">"Acme"</span> },
+  <span class="k">"plugins"</span>: [
+    { <span class="k">"name"</span>: <span class="s">"code-formatter"</span>, <span class="k">"source"</span>: <span class="s">"./plugins/code-formatter"</span> }
+  ],
+  <span class="k">"renames"</span>: {
+    <span class="k">"formatter"</span>: <span class="s">"code-formatter"</span>,   <span class="c">// yeni ada yönlendir</span>
+    <span class="k">"legacy-linter"</span>: <span class="k">null</span>          <span class="c">// tamamen kaldırıldı</span>
+  }
+}</code></pre>
+    <p><code>renames</code>'i <strong>append-only bir tarih kaydı</strong> gibi düşün: eski girdileri silme, yeni
+    yeniden adlandırmalarda zincire halka ekle. Claude Code zinciri takip eder. Düzenledikten sonra
+    <code>claude plugin validate .</code> çalıştır — döngü oluşturan veya <code>null</code>'a ya da mevcut bir plugin
+    adına ulaşmayan zincirleri reddeder.</p>
+
+    <div class="note warn">
+      <span class="tag">Rezerve marketplace adları</span>
+      Marketplace'ine şu adları veremezsin: <code>claude-code-marketplace</code>, <code>claude-code-plugins</code>,
+      <code>claude-plugins-official</code>, <code>claude-plugins-community</code>, <code>claude-community</code>,
+      <code>anthropic-marketplace</code>, <code>anthropic-plugins</code>, <code>agent-skills</code>,
+      <code>anthropic-agent-skills</code> ve benzerleri. Resmî kaynakları taklit eden adlar
+      (<code>official-claude-plugins</code> gibi) da engellenir. Claude Code bu kontrolü her yüklemede tekrarlar.
+    </div>
+  </section>
+
+  <section id="m6">
+    <h2><span class="num">06</span> Plugin'in içine ne sığar?</h2>
+    <p>Bir plugin sadece slash command taşıyıcısı değil. Aşağıdakilerin hepsi aynı pakette yaşayabilir.</p>
+
+    <h3>Skills</h3>
+    <p><code>skills/&lt;ad&gt;/SKILL.md</code>. Kurulumda otomatik keşfedilir, <code>/plugin-adi:skill-adi</code> ile
+    çağrılır. Kurulum özeti <code>Run /reload-plugins to activate.</code> diyorsa o komutu çalıştır.</p>
+
+    <h3>Agents</h3>
+<pre><code><span class="c">---</span>
+<span class="k">name:</span> agent-name
+<span class="k">description:</span> What this agent specializes in and when Claude should invoke it
+<span class="k">model:</span> sonnet
+<span class="k">effort:</span> medium
+<span class="k">maxTurns:</span> 20
+<span class="k">disallowedTools:</span> Write, Edit
+<span class="c">---</span>
+
+Detailed system prompt for the agent.</code></pre>
+    <p>Desteklenen frontmatter alanları: <code>name</code>, <code>description</code>, <code>model</code>,
+    <code>effort</code>, <code>maxTurns</code>, <code>tools</code>, <code>disallowedTools</code>, <code>skills</code>,
+    <code>memory</code>, <code>background</code>, <code>isolation</code> (tek geçerli değer <code>"worktree"</code>).</p>
+
+    <div class="note warn">
+      <span class="tag">Plugin agent'larında yasak</span>
+      Güvenlik nedeniyle plugin'in getirdiği agent'larda <code>hooks</code>, <code>mcpServers</code> ve
+      <code>permissionMode</code> alanları desteklenmez. Kendi <code>.claude/agents/</code> dosyalarında çalışan bu
+      alanları plugin'e taşırsan sessizce beklediğin gibi davranmaz.
+    </div>
+
+    <h3>Hooks</h3>
+<pre><code>{
+  <span class="k">"hooks"</span>: {
+    <span class="k">"PostToolUse"</span>: [
+      {
+        <span class="k">"matcher"</span>: <span class="s">"Write|Edit"</span>,
+        <span class="k">"hooks"</span>: [
+          { <span class="k">"type"</span>: <span class="s">"command"</span>, <span class="k">"command"</span>: <span class="s">"\"${CLAUDE_PLUGIN_ROOT}\"/scripts/format-code.sh"</span> }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+    <p>Plugin hook'ları kullanıcı hook'larıyla aynı olaylara tepki verir: <code>SessionStart</code>,
+    <code>UserPromptSubmit</code>, <code>PreToolUse</code>, <code>PostToolUse</code>, <code>PostToolUseFailure</code>,
+    <code>SubagentStart</code>, <code>SubagentStop</code>, <code>PreCompact</code>, <code>SessionEnd</code> ve
+    onlarca diğeri. Hook tipleri: <code>command</code>, <code>http</code>, <code>mcp_tool</code>, <code>prompt</code>,
+    <code>agent</code>.</p>
+
+    <h3>MCP servers</h3>
+<pre><code>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"plugin-database"</span>: {
+      <span class="k">"command"</span>: <span class="s">"${CLAUDE_PLUGIN_ROOT}/servers/db-server"</span>,
+      <span class="k">"args"</span>: [<span class="s">"--config"</span>, <span class="s">"${CLAUDE_PLUGIN_ROOT}/config.json"</span>],
+      <span class="k">"env"</span>: { <span class="k">"DB_PATH"</span>: <span class="s">"${CLAUDE_PLUGIN_ROOT}/data"</span> }
+    }
+  }
+}</code></pre>
+    <p>Plugin MCP server'ları plugin etkinleştirildiğinde otomatik başlar.</p>
+
+    <div class="note">
+      <span class="tag">Kendi MCP tool'unu hook'la yakalamak</span>
+      Plugin'in kendi MCP server'ını hedefleyen hook'lar <strong>scoped ad</strong> kullanmak zorundadır. Tool
+      matcher'ları için <code>mcp__plugin_&lt;plugin-adi&gt;_&lt;server-adi&gt;__&lt;tool&gt;</code>,
+      <code>mcp_tool</code> hook'unun <code>server</code> alanı için
+      <code>plugin:&lt;plugin-adi&gt;:&lt;server-adi&gt;</code>. Çıplak server anahtarıyla yazılmış bir matcher
+      hiçbir zaman tetiklenmez.
+    </div>
+
+    <h3>LSP servers</h3>
+<pre><code>{
+  <span class="k">"go"</span>: {
+    <span class="k">"command"</span>: <span class="s">"gopls"</span>,
+    <span class="k">"args"</span>: [<span class="s">"serve"</span>],
+    <span class="k">"extensionToLanguage"</span>: { <span class="s">".go"</span>: <span class="s">"go"</span> }
+  }
+}</code></pre>
+    <p>Zorunlu alanlar <code>command</code> ve <code>extensionToLanguage</code>. Python, TypeScript, Rust, Go, Java,
+    C/C++, PHP gibi yaygın diller için resmî marketplace'te hazır LSP plugin'leri var — kendi LSP plugin'ini yalnızca
+    kapsanmayan diller için yaz. Dil sunucusu ikilisini plugin kurmaz, kullanıcı kendisi kurar.</p>
+
+    <h3>Monitors, themes, bin/, settings.json</h3>
+    <ul>
+      <li><strong>Monitors</strong> (<code>monitors/monitors.json</code>): oturum boyunca çalışan bir komutun her stdout satırını Claude'a bildirim olarak iletir. <code>name</code>, <code>command</code>, <code>description</code> zorunlu; <code>when</code> ile <code>"always"</code> veya <code>"on-skill-invoke:&lt;skill-adi&gt;"</code> seçilir. Yalnızca etkileşimli CLI oturumlarında çalışır, hook'larla aynı güven seviyesindedir.</li>
+      <li><strong>Themes</strong> (<code>themes/</code>): <code>base</code> preset + seyrek <code>overrides</code> haritası. <code>/theme</code> içinde görünür, salt okunurdur.</li>
+      <li><strong><code>bin/</code></strong>: buradaki dosyalar plugin etkinken Bash tool'un <code>PATH</code>'ine eklenir; Claude çıplak komut olarak çağırabilir.</li>
+      <li><strong><code>settings.json</code></strong>: yalnızca <code>agent</code> ve <code>subagentStatusLine</code> anahtarları desteklenir. <code>agent</code> ile plugin, kendi agent'ını ana thread olarak etkinleştirip Claude Code'un varsayılan davranışını değiştirebilir.</li>
+    </ul>
+  </section>
+
+  <section id="m7">
+    <h2><span class="num">07</span> Mutlak yol yazarsan kırılır</h2>
+    <p>Marketplace'ten kurulan plugin'ler yerinde kullanılmaz — <code>~/.claude/plugins/cache</code> altına kopyalanır
+    ve her sürüm ayrı bir klasördür. Bu yüzden plugin'in kendi dosyalarına makine üstündeki gerçek yolla değil,
+    değişkenle erişmelisin.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Değişken</th><th>Neye çözülür</th><th>Ne için</th></tr></thead>
+        <tbody>
+          <tr><td><code>${CLAUDE_PLUGIN_ROOT}</code></td><td>Plugin'in kurulum dizininin mutlak yolu</td><td>Pakete gömülü script, binary ve config dosyaları</td></tr>
+          <tr><td><code>${CLAUDE_PLUGIN_DATA}</code></td><td>Güncellemeleri aşan kalıcı dizin (<code>~/.claude/plugins/data/{id}/</code>)</td><td><code>node_modules</code>, venv, üretilen kod, cache</td></tr>
+          <tr><td><code>${CLAUDE_PROJECT_DIR}</code></td><td>Proje kökü</td><td>Projeye ait script ve config dosyaları</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Üçü de hook süreçlerine, MCP ve LSP alt süreçlerine ortam değişkeni olarak geçer. Satır içi ikame ise bileşene
+    göre değişir: skill ve agent içeriğinde her yerde, hook ve monitor komutlarında her yerde, MCP <code>stdio</code>
+    server'larında <code>command</code>/<code>args</code>/<code>env</code>, HTTP tabanlı MCP server'larında
+    <code>url</code>/<code>headers</code>/<code>headersHelper</code>, LSP'de
+    <code>command</code>/<code>args</code>/<code>env</code>/<code>workspaceFolder</code>.</p>
+
+    <div class="note warn">
+      <span class="tag">Plugin kökünün dışına çıkamazsın</span>
+      Kurulmuş bir plugin kendi dizininin dışındaki dosyalara erişemez. <code>../shared-utils</code> gibi yollar
+      kurulumdan sonra çalışmaz çünkü o dosyalar cache'e kopyalanmaz. Aynı marketplace içinde dosya paylaşman
+      gerekiyorsa symlink kullan: plugin'in kendi dizini içine çözülen symlink korunur, aynı marketplace içindeki
+      başka bir yere çözülen symlink'in hedefi kopyalanır, marketplace dışına çıkan symlink güvenlik gereği atlanır.
+    </div>
+
+    <h3>Manifest yolları: hangisi ekler, hangisi değiştirir?</h3>
+    <ul>
+      <li><strong>Varsayılanın yerine geçer:</strong> <code>commands</code>, <code>agents</code>, <code>workflows</code>, <code>outputStyles</code>, <code>experimental.themes</code>, <code>experimental.monitors</code>. Varsayılanı korumak istiyorsan listeye açıkça ekle: <code>"commands": ["./commands/", "./extras/"]</code>.</li>
+      <li><strong>Varsayılana eklenir:</strong> <code>skills</code>. <code>skills/</code> klasörü her zaman taranır, manifest'te yazdıkların onun yanına yüklenir.</li>
+      <li><strong>Kendi birleştirme kuralı olanlar:</strong> <code>hooks</code>, <code>mcpServers</code>, <code>lspServers</code>.</li>
+      <li>Tüm yollar plugin köküne göreli ve <code>./</code> ile başlamalı. Tek istisna: <code>skills</code> alanı <code>"."</code> değerini de kabul eder.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Güncelleme sonrası yol değişir</span>
+      <code>${CLAUDE_PLUGIN_ROOT}</code> plugin her güncellendiğinde değişir; oraya kalıcı durum yazma. Eski sürümün
+      dizini yaklaşık iki hafta diskte kalır (açık oturumlar hata almasın diye), sonra temizlenir. Bir plugin oturum
+      ortasında güncellenirse hook'lar, monitor'lar ve server'lar eski yolu kullanmaya devam eder;
+      <code>/reload-plugins</code> hook'ları, MCP ve LSP server'larını yeni yola geçirir, monitor'lar için oturumu
+      yeniden başlatman gerekir.
+    </div>
+  </section>
+
+  <section id="m8">
+    <h2><span class="num">08</span> Yayınlamadan önce: --plugin-dir</h2>
+    <p>Plugin'i test etmek için marketplace kurmana, hatta kurulum yapmana gerek yok.</p>
+
+<pre><code><span class="c"># Klasörden yükle</span>
+claude --plugin-dir ./my-plugin
+
+<span class="c"># Zip arşivinden de olur</span>
+claude --plugin-dir ./my-plugin.zip
+
+<span class="c"># Birden çok plugin'i aynı anda</span>
+claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two
+
+<span class="c"># CI çıktısı gibi uzakta duran bir zip'i tek oturumluk yükle</span>
+claude --plugin-url https://example.com/my-plugin.zip</code></pre>
+
+    <p><code>--plugin-dir</code> ile yüklenen bir plugin, aynı adlı kurulu bir marketplace plugin'inin önüne geçer —
+    yani kurulu sürümü kaldırmadan değişikliklerini deneyebilirsin. İstisna: yönetilen ayarların zorla açtığı veya
+    kapattığı plugin'leri <code>--plugin-dir</code> geçersiz kılamaz.</p>
+
+    <h3>Değişiklikleri yeniden yüklemek</h3>
+<pre><code>/reload-plugins</code></pre>
+    <p>Plugin'leri, skill'leri, agent'ları, hook'ları, plugin MCP ve LSP server'larını yeniden yükler. Yeniden yükleme
+    prompt cache'ini geçersiz kılacaksa komut uyarır ve uygulamaz; <code>--force</code> ile zorlarsın.</p>
+
+    <div class="note warn">
+      <span class="tag">Yanıltıcı çıktı</span>
+      <code>/reload-plugins</code> özetindeki skill sayacı yalnızca <code>commands/</code> klasörünü sayar. Yani
+      <code>skills/</code> altındaki skill'lerin yeniden yüklendiği halde özet <code>0 skills</code> yazabilir. Bu bir
+      hata değil; skill'i çağırarak doğrula.
+    </div>
+
+    <h3>Doğrulama ve tanılama</h3>
+<pre><code><span class="c"># plugin.json + skill/agent/command frontmatter + hooks.json şema kontrolü</span>
+claude plugin validate ./my-plugin
+claude plugin validate ./my-plugin --strict   <span class="c"># uyarıları hata say (CI için)</span>
+
+<span class="c"># Marketplace dizininden çalıştırınca marketplace.json'u denetler</span>
+claude plugin validate .
+
+<span class="c"># Yükleme ayrıntıları: hangi plugin yüklendi, hangi bileşen kaydedildi, ne hata verdi</span>
+claude --debug
+
+<span class="c"># Bileşen envanteri + oturuma eklediği tahmini token maliyeti</span>
+claude plugin details my-plugin</code></pre>
+
+    <p>Doğrulama geçtiğinde <code>✔ Validation passed</code>, uyarı varsa
+    <code>✔ Validation passed with warnings</code> yazar. <code>claude plugin details</code> iki maliyet gösterir:
+    <strong>always-on</strong> (plugin hiç tetiklenmese bile her oturuma eklenen listeleme metni) ve
+    <strong>on-invoke</strong> (bileşen çalıştığında ödenen).</p>
+
+    <h3>Test kontrol listesi</h3>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>Skill'leri <code>/plugin-adi:skill-adi</code> ile çağır.</li>
+        <li>Agent'lar <code>/context</code> altında <strong>Custom Agents</strong> bölümünde görünüyor mu, ya da scoped adıyla @-mention edilebiliyor mu?</li>
+        <li>Her hook'un eşleştiği olayı gerçekten tetikle (örneğin <code>PostToolUse</code> için Claude'a bir dosya düzenlet) ve etkisini gör.</li>
+        <li>LSP veya MCP hatası varsa <code>/plugin</code> arayüzündeki <strong>Errors</strong> sekmesine bak.</li>
+      </ul>
+    </div>
+
+    <h3>Çalışmıyor: nereye bakılır</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Belirti</th><th>Sebep</th><th>Çözüm</th></tr></thead>
+        <tbody>
+          <tr><td>Plugin hiç yüklenmiyor</td><td>Geçersiz <code>plugin.json</code></td><td><code>claude plugin validate ./my-plugin</code></td></tr>
+          <tr><td>Plugin var, skill'leri yok</td><td>Klasörler <code>.claude-plugin/</code> içinde</td><td><code>skills/</code> ve <code>commands/</code>'ı plugin köküne taşı</td></tr>
+          <tr><td>Hook tetiklenmiyor</td><td>Script çalıştırılabilir değil</td><td><code>chmod +x script.sh</code>, shebang satırını kontrol et</td></tr>
+          <tr><td>Hook yanlış olayda</td><td>Olay adı büyük/küçük harf duyarlı</td><td><code>PostToolUse</code>, <code>postToolUse</code> değil</td></tr>
+          <tr><td>MCP server başlamıyor</td><td><code>${CLAUDE_PLUGIN_ROOT}</code> kullanılmamış</td><td>Tüm plugin yollarında değişkeni kullan, <code>claude --debug</code> ile bak</td></tr>
+          <tr><td>Yol hataları</td><td>Mutlak yol yazılmış</td><td><code>./</code> ile başlayan göreli yollar</td></tr>
+          <tr><td>LSP <code>Executable not found in $PATH</code></td><td>Dil sunucusu kurulu değil</td><td>İkiliyi ayrıca kur (ör. <code>npm install -g typescript-language-server typescript</code>)</td></tr>
+          <tr><td>Skill'ler hiçbir şekilde görünmüyor</td><td>Bozuk cache</td><td><code>rm -rf ~/.claude/plugins/cache</code>, yeniden başlat, plugin'i tekrar kur</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Sessiz katil</span>
+      Bozuk bir <code>hooks/hooks.json</code> yalnızca hook'ları değil, <strong>tüm plugin'in yüklenmesini</strong>
+      engeller. JSON'u elle düzenledikten sonra <code>claude plugin validate</code> çalıştırmayı alışkanlık edin.
+    </div>
+  </section>
+
+  <section id="m9">
+    <h2><span class="num">09</span> Marketplace dediğin tek bir JSON</h2>
+    <p>Marketplace, plugin'lerini ve nerede durduklarını listeleyen bir katalogdur. Repo kökünde
+    <code>.claude-plugin/marketplace.json</code> olarak durur; barındırma işini GitHub, GitLab veya herhangi bir git
+    sunucusu yapar.</p>
+
+<pre><code>{
+  <span class="k">"name"</span>: <span class="s">"company-tools"</span>,
+  <span class="k">"owner"</span>: {
+    <span class="k">"name"</span>: <span class="s">"DevTools Team"</span>,
+    <span class="k">"email"</span>: <span class="s">"devtools@example.com"</span>
+  },
+  <span class="k">"description"</span>: <span class="s">"Internal Claude Code plugins"</span>,
+  <span class="k">"plugins"</span>: [
+    {
+      <span class="k">"name"</span>: <span class="s">"code-formatter"</span>,
+      <span class="k">"source"</span>: <span class="s">"./plugins/formatter"</span>,
+      <span class="k">"description"</span>: <span class="s">"Automatic code formatting on save"</span>,
+      <span class="k">"version"</span>: <span class="s">"2.1.0"</span>
+    },
+    {
+      <span class="k">"name"</span>: <span class="s">"deployment-tools"</span>,
+      <span class="k">"source"</span>: { <span class="k">"source"</span>: <span class="s">"github"</span>, <span class="k">"repo"</span>: <span class="s">"company/deploy-plugin"</span> },
+      <span class="k">"description"</span>: <span class="s">"Deployment automation tools"</span>
+    }
+  ]
+}</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Zorunlu</th><th>Açıklama</th></tr></thead>
+        <tbody>
+          <tr><td><code>name</code></td><td>Evet</td><td>Marketplace kimliği, kebab-case. Kullanıcıya görünür: <code>/plugin install my-tool@bu-ad</code></td></tr>
+          <tr><td><code>owner</code></td><td>Evet</td><td><code>name</code> zorunlu; <code>email</code> ve <code>url</code> opsiyonel</td></tr>
+          <tr><td><code>plugins</code></td><td>Evet</td><td>Plugin girdileri dizisi</td></tr>
+          <tr><td><code>description</code></td><td>Hayır</td><td>Kısa marketplace açıklaması</td></tr>
+          <tr><td><code>version</code></td><td>Hayır</td><td>Katalog dosyasının sürümü</td></tr>
+          <tr><td><code>metadata.pluginRoot</code></td><td>Hayır</td><td>Göreli kaynak yollarının önüne eklenen taban dizin (<code>"./plugins"</code> yazarsan girdilerde <code>"source": "formatter"</code> yeter)</td></tr>
+          <tr><td><code>renames</code></td><td>Hayır</td><td>Eski plugin adlarını yenilerine (veya <code>null</code>'a) eşleyen harita</td></tr>
+          <tr><td><code>allowCrossMarketplaceDependenciesOn</code></td><td>Hayır</td><td>Bu marketplace'teki plugin'lerin bağımlı olabileceği diğer marketplace'ler</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Plugin girdilerinde zorunlu olan yalnızca <code>name</code> ve <code>source</code>'tur. Girdi ayrıca
+    manifest şemasındaki her alanı (<code>description</code>, <code>version</code>, <code>author</code>,
+    <code>commands</code>, <code>agents</code>, <code>hooks</code>, <code>mcpServers</code>…) ve marketplace'e özgü
+    <code>category</code>, <code>tags</code>, <code>strict</code>, <code>relevance</code>,
+    <code>defaultEnabled</code> alanlarını kabul eder.</p>
+
+    <div class="note">
+      <span class="tag">Tek marketplace adı, çok plugin</span>
+      Her kullanıcı bir ada karşılık yalnızca bir marketplace kaydedebilir; aynı adla ikinci bir marketplace eklemek
+      ilkinin yerine geçer. Birden çok plugin yayınlayacaksan hepsini <strong>tek bir <code>marketplace.json</code></strong>
+      içinde listele.
+    </div>
+
+    <h3><code>strict</code>: manifest mi, katalog mu otorite?</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Değer</th><th>Davranış</th></tr></thead>
+        <tbody>
+          <tr><td><code>true</code> (varsayılan)</td><td><code>plugin.json</code> otoritedir. Marketplace girdisi üstüne bileşen ekleyebilir; iki kaynak birleştirilir</td></tr>
+          <tr><td><code>false</code></td><td>Marketplace girdisi tanımın tamamıdır. Plugin'in kendi <code>plugin.json</code>'ı da bileşen tanımlıyorsa bu bir çakışmadır ve plugin yüklenmez</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><code>strict: false</code>, marketplace işletmecisinin ham dosyalardan hangilerinin skill/agent/hook olarak
+    açığa çıkacağına kendisi karar vermek istediği durumlar içindir.</p>
+
+    <h3>Yerelde uçtan uca deneme</h3>
+<pre><code>claude plugin validate .
+<span class="c"># Claude Code içinden:</span>
+/plugin marketplace add ./my-marketplace
+/plugin install quality-review-plugin@my-plugins
+/quality-review-plugin:quality-review</code></pre>
+  </section>
+
+  <section id="m10">
+    <h2><span class="num">10</span> Plugin'i nereden çekecek?</h2>
+    <p>Katalogdaki her girdinin <code>source</code> alanı, o plugin'in dosyalarının nereden alınacağını söyler.
+    Marketplace kaynağı (kataloğun kendisi nereden gelir) ile plugin kaynağı (tek bir plugin nereden gelir) farklı
+    şeylerdir ve bağımsız sabitlenir.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kaynak</th><th>Alanlar</th><th>Not</th></tr></thead>
+        <tbody>
+          <tr><td>Göreli yol<br><code>"./my-plugin"</code></td><td>—</td><td>Marketplace repo'sunun içindeki klasör. <code>./</code> ile başlamalı, <code>../</code> kullanılamaz. Marketplace köküne göre çözülür</td></tr>
+          <tr><td><code>github</code></td><td><code>repo</code>, <code>ref?</code>, <code>sha?</code></td><td><code>owner/repo</code> biçimi</td></tr>
+          <tr><td><code>url</code></td><td><code>url</code>, <code>ref?</code>, <code>sha?</code></td><td>Herhangi bir git URL'i — GitLab, Bitbucket, self-hosted</td></tr>
+          <tr><td><code>git-subdir</code></td><td><code>url</code>, <code>path</code>, <code>ref?</code>, <code>sha?</code></td><td>Monorepo içindeki alt dizin; sparse clone ile yalnızca o dizini indirir</td></tr>
+          <tr><td><code>npm</code></td><td><code>package</code>, <code>version?</code>, <code>registry?</code></td><td><code>npm install</code> ile kurulur; özel registry desteklenir</td></tr>
+          <tr><td><code>archive</code></td><td><code>url</code>, <code>sha256?</code></td><td>HTTPS üzerinden zip. Kullanıcının makinesinde git veya npm gerektirmez</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre><code><span class="c">// Sürüme sabitlenmiş GitHub kaynağı</span>
+{
+  <span class="k">"name"</span>: <span class="s">"github-plugin"</span>,
+  <span class="k">"source"</span>: {
+    <span class="k">"source"</span>: <span class="s">"github"</span>,
+    <span class="k">"repo"</span>: <span class="s">"owner/plugin-repo"</span>,
+    <span class="k">"ref"</span>: <span class="s">"v2.0.0"</span>,
+    <span class="k">"sha"</span>: <span class="s">"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"</span>
+  }
+}
+
+<span class="c">// Monorepo içinden tek plugin</span>
+{
+  <span class="k">"name"</span>: <span class="s">"my-plugin"</span>,
+  <span class="k">"source"</span>: {
+    <span class="k">"source"</span>: <span class="s">"git-subdir"</span>,
+    <span class="k">"url"</span>: <span class="s">"https://github.com/acme-corp/monorepo.git"</span>,
+    <span class="k">"path"</span>: <span class="s">"tools/claude-plugin"</span>
+  }
+}
+
+<span class="c">// Artifact sunucusundaki zip, digest ile sabitlenmiş</span>
+{
+  <span class="k">"name"</span>: <span class="s">"my-plugin"</span>,
+  <span class="k">"source"</span>: {
+    <span class="k">"source"</span>: <span class="s">"archive"</span>,
+    <span class="k">"url"</span>: <span class="s">"https://artifacts.example.com/my-plugin-2.1.0.zip"</span>,
+    <span class="k">"sha256"</span>: <span class="s">"6bfa50e3d2e00c052b46abe51fff89346ac803e45771f76dcf6df1ab74cca5e1"</span>
+  }
+}</code></pre>
+
+    <p>Git tabanlı kaynaklarda <code>ref</code> ve <code>sha</code> birlikte verilirse geçerli olan
+    <code>sha</code>'dır; Claude Code o commit'i doğrudan çeker. GitHub, GitLab ve Bitbucket'ta bu, <code>ref</code>
+    silinmiş olsa bile kurulumun çalışması demektir.</p>
+
+    <div class="note warn">
+      <span class="tag">URL marketplace + göreli yol = çalışmaz</span>
+      Marketplace'ini doğrudan bir <code>marketplace.json</code> URL'i olarak dağıtırsan Claude Code yalnızca o dosyayı
+      indirir; <code>"./plugins/x"</code> gibi göreli kaynaklar "path not found" verir. URL ile dağıtacaksan plugin
+      kaynaklarını <code>github</code>, <code>npm</code>, git URL veya <code>archive</code> yap — ya da marketplace'i
+      git repo'su olarak yayınla.
+    </div>
+  </section>
+
+  <section id="m11">
+    <h2><span class="num">11</span> version bir alan değil, güncelleme sinyali</h2>
+    <p>Claude Code plugin'in sürümünü cache anahtarı olarak kullanır. <code>/plugin update</code> veya otomatik
+    güncelleme çalıştığında, hesapladığı sürüm kuruluyla aynıysa güncellemeyi <strong>atlar</strong>. Sürüm şu
+    sıraya göre çözülür:</p>
+
+    <ul>
+      <li>Plugin'in <code>plugin.json</code>'ındaki <code>version</code></li>
+      <li>Marketplace girdisindeki <code>version</code></li>
+      <li>Kaynağın git commit SHA'sı — <code>github</code>, <code>url</code>, <code>git-subdir</code> ve git tabanlı marketplace içindeki göreli yollar için</li>
+      <li><code>archive</code> kaynaklarında <code>sha256</code> sabiti veya indirilen dosyanın digest'i (ilk 12 karaktere kısaltılır)</li>
+      <li><code>unknown</code> — npm kaynakları ve git repo'su içinde olmayan yerel dizinler için</li>
+    </ul>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yaklaşım</th><th>Nasıl</th><th>Güncelleme davranışı</th><th>Kime uygun</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Açık sürüm</strong></td>
+            <td><code>plugin.json</code>'a <code>"version": "2.1.0"</code></td>
+            <td>Kullanıcılar yalnızca bu alanı artırdığında güncelleme alır</td>
+            <td>Yayınlanmış, düzenli sürüm döngüsü olan plugin'ler</td>
+          </tr>
+          <tr>
+            <td><strong>Commit SHA</strong></td>
+            <td><code>version</code>'ı her iki yerden de çıkar</td>
+            <td>Kaynağın commit'i her değiştiğinde güncelleme gelir</td>
+            <td>Aktif geliştirilen iç/ekip plugin'leri</td>
+          </tr>
+          <tr>
+            <td><strong>Digest</strong></td>
+            <td><code>archive</code> kaynağı, <code>version</code> yok</td>
+            <td><code>sha256</code> sabiti varsa onu değiştirince, yoksa zip'in içeriği değişince</td>
+            <td>Statik sunucu / artifact repo'suna zip olarak yayınlananlar</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Sessiz güncellenmeme</span>
+      <code>"version": "1.0.0"</code> yazıp yeni commit'ler push edersen mevcut kullanıcılar cache'teki kopyayı
+      kullanmaya devam eder — Claude Code aynı sürümü gördüğü için <code>/plugin update</code>
+      "already at the latest version" der. Her yayında alanı artır ya da hiç yazma. Ayrıca <code>version</code>'ı hem
+      <code>plugin.json</code>'da hem marketplace girdisinde tanımlamaktan kaçın: Claude Code her zaman uyarı vermeden
+      <code>plugin.json</code>'dakini kullanır, dolayısıyla unutulmuş bir manifest sürümü katalogdakini maskeler.
+    </div>
+
+    <p>Açık sürüm kullanacaksan <strong>semantic versioning</strong> uygula: kırıcı değişiklikte MAJOR, yeni
+    özellikte MINOR, hata düzeltmede PATCH. Değişiklikleri <code>CHANGELOG.md</code>'ye yaz. Sürüm etiketi oluşturmak
+    için:</p>
+<pre><code>claude plugin tag              <span class="c"># bulunduğun dizindeki plugin'i etiketle</span>
+claude plugin tag --push       <span class="c"># etiketi remote'a gönder</span>
+claude plugin tag --dry-run    <span class="c"># ne yapacağını göster</span></code></pre>
+
+    <h3>Stable / latest kanalları</h3>
+    <p>İki ayrı marketplace kurup aynı repo'nun farklı <code>ref</code>'lerine bakmalarını sağlayarak sürüm kanalı
+    oluşturabilirsin; sonra yönetilen ayarlarla farklı kullanıcı gruplarına farklı marketplace atarsın. Şart: iki
+    kanal <strong>farklı sürüme çözülmeli</strong>. Açık sürüm kullanıyorsan her sabitlenmiş ref'te
+    <code>plugin.json</code> farklı bir <code>version</code> ilan etmeli.</p>
+  </section>
+
+  <section id="m12">
+    <h2><span class="num">12</span> Ekibe dağıtmak: kimse elle kurmasın</h2>
+    <p>Plugin'i kurmak bir kapsam (scope) seçmektir; kapsam, plugin'in hangi ayar dosyasına yazılacağını ve dolayısıyla
+    kimin kullanacağını belirler.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kapsam</th><th>Ayar dosyası</th><th>Kullanım</th></tr></thead>
+        <tbody>
+          <tr><td><code>user</code> (varsayılan)</td><td><code>~/.claude/settings.json</code></td><td>Tüm projelerde geçerli kişisel plugin'ler</td></tr>
+          <tr><td><code>project</code></td><td><code>.claude/settings.json</code></td><td>Sürüm kontrolüyle paylaşılan ekip plugin'leri</td></tr>
+          <tr><td><code>local</code></td><td><code>.claude/settings.local.json</code></td><td>Yalnızca bu repo'da, yalnızca sende</td></tr>
+          <tr><td><code>managed</code></td><td>Yönetilen ayarlar</td><td>Yönetici tarafından kurulan, salt okunur plugin'ler</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre><code>claude plugin install formatter@my-marketplace
+claude plugin install formatter@my-marketplace --scope project
+claude plugin uninstall formatter@my-marketplace --scope project --keep-data
+claude plugin list --json
+claude plugin details formatter</code></pre>
+
+    <h3>Repo'yu açan herkese teklif edilsin</h3>
+    <p>Projenin <code>.claude/settings.json</code> dosyasına marketplace'i yazarsan, ekip arkadaşların klasöre güven
+    verdiğinde Claude Code onlara kurulumu teklif eder:</p>
+<pre><code>{
+  <span class="k">"extraKnownMarketplaces"</span>: {
+    <span class="k">"company-tools"</span>: {
+      <span class="k">"source"</span>: { <span class="k">"source"</span>: <span class="s">"github"</span>, <span class="k">"repo"</span>: <span class="s">"your-org/claude-plugins"</span> }
+    }
+  },
+  <span class="k">"enabledPlugins"</span>: {
+    <span class="s">"code-formatter@company-tools"</span>: <span class="k">true</span>,
+    <span class="s">"deployment-tools@company-tools"</span>: <span class="k">true</span>
+  }
+}</code></pre>
+
+    <div class="note warn">
+      <span class="tag">"Etkin" kurulu demek değil</span>
+      Yalnızca projenin <code>.claude/settings.json</code>'ı tarafından etkinleştirilen ve GitHub/npm gibi dış bir
+      kaynaktan gelen bir plugin, ekip arkadaşın onu kurana kadar <strong>yüklenmez</strong>. Claude Code plugin'i
+      "kurulu değil" olarak raporlar ve çalıştırılacak <code>claude plugin install</code> komutunu gösterir.
+    </div>
+
+    <h3>Özel repo'lar</h3>
+    <p><code>/plugin marketplace add</code>, <code>/plugin install</code> ve elle çalıştırdığın güncellemeler senin git
+    kimlik yardımcılarını (credential helper) kullanır — <code>gh auth login</code>, macOS Keychain veya
+    <code>git-credential-store</code> terminalde nasıl çalışıyorsa öyle çalışır. Ama <strong>arka plandaki otomatik
+    güncelleme</strong> varsayılan olarak kimlik yardımcılarını devre dışı bırakır; HTTPS üzerinden özel repo'ya
+    kimlik doğrulayamaz (SSH remote'ları etkilenmez). İki ayar bu davranışı öngörülebilir kılar:</p>
+    <ul>
+      <li><code>CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1</code> — pull başarısız olunca klonu silip yeniden çekmek yerine mevcut kopyayı koru. Çevrimdışı/airgapped ortamlar için de doğru ayar budur.</li>
+      <li><code>gh auth setup-git</code> ile bir credential helper yapılandır ki yeniden klonlama kimlik doğrulayabilsin.</li>
+      <li>Büyük repo'larda 120 saniyelik git zaman aşımına takılıyorsan: <code>CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS=300000</code>.</li>
+    </ul>
+
+    <h3>Container ve CI: hiç klonlamadan başlat</h3>
+    <p>İmaj oluştururken plugin'leri bir tohum dizinine kurup çalışma zamanında oradan okutabilirsin:</p>
+<pre><code>CLAUDE_CODE_PLUGIN_CACHE_DIR=/opt/claude-seed claude plugin marketplace add your-org/plugins
+CLAUDE_CODE_PLUGIN_CACHE_DIR=/opt/claude-seed claude plugin install my-tool@your-plugins
+<span class="c"># Çalışma zamanında:</span>
+export CLAUDE_CODE_PLUGIN_SEED_DIR=/opt/claude-seed</code></pre>
+    <p>Tohum dizini salt okunurdur, otomatik güncelleme kapalıdır ve her açılışta kullanıcının yapılandırmasındaki
+    eşleşen kayıtların üstüne yazar. Bir tohum plugin'ini istemiyorsan marketplace'i kaldırmak yerine
+    <code>/plugin disable</code> kullan.</p>
+
+    <h3>Yöneticiler için: kaynak kısıtlama</h3>
+    <p>Yönetilen ayarlardaki <code>strictKnownMarketplaces</code> kullanıcıların hangi marketplace'leri
+    ekleyebileceğini sınırlar. Tanımsızsa kısıtlama yok; boş dizi (<code>[]</code>) resmî Anthropic marketplace'i
+    dahil her şeyi engeller; liste verilirse yalnızca birebir eşleşenler eklenebilir.</p>
+<pre><code>{
+  <span class="k">"strictKnownMarketplaces"</span>: [
+    { <span class="k">"source"</span>: <span class="s">"github"</span>, <span class="k">"repo"</span>: <span class="s">"acme-corp/approved-plugins"</span> },
+    { <span class="k">"source"</span>: <span class="s">"hostPattern"</span>, <span class="k">"hostPattern"</span>: <span class="s">"^github\\.example\\.com$"</span> }
+  ]
+}</code></pre>
+    <p>Eşleştirme URL'leri normalize <strong>etmez</strong>: sondaki eğik çizgi, <code>.git</code> uzantısı veya
+    <code>ssh://</code> ile <code>https://</code> farklı değerlerdir. Kurumun marketplace'i birden çok URL biçimiyle
+    klonlanabiliyorsa düz URL yerine <code>hostPattern</code> kullan. Ayrıca bu ayar marketplace'i
+    <strong>kaydetmez</strong>, sadece izin verir — otomatik kaydolması için aynı dosyada
+    <code>extraKnownMarketplaces</code>'e de ekle.</p>
+
+    <div class="note">
+      <span class="tag">Otomatik güncelleme</span>
+      Claude Code, oturum başladıktan sonra en fazla on dakikalık rastgele bir gecikmeyle marketplace ve plugin
+      güncellemelerini arka planda kontrol eder; çalışan oturum yüklediği sürümleri kullanmaya devam eder. Resmî
+      Anthropic marketplace'lerinde otomatik güncelleme açık, üçüncü taraf ve yerel geliştirme marketplace'lerinde
+      kapalı gelir. Claude Code'un kendi güncellemesini kapatıp plugin güncellemelerini açık tutmak için:
+      <code>DISABLE_AUTOUPDATER=1</code> ile birlikte <code>FORCE_AUTOUPDATE_PLUGINS=1</code>.
+    </div>
+  </section>
+
+  <section id="m13">
+    <h2><span class="num">13</span> Herkese açmak: host et, sonra submit et</h2>
+    <p>Plugin'in hazır olduğunda yayın süreci üç adımdır ve ilki teknik bile değildir.</p>
+
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Dokümante et.</strong> Kurulum ve kullanım anlatan bir <code>README.md</code> ekle.</li>
+        <li><strong>Sürümleme stratejini seç.</strong> Açık <code>version</code> mı, commit SHA'sı mı — bölüm 11.</li>
+        <li><strong>Marketplace'e koy.</strong> Kendi <code>marketplace.json</code>'ını bir git repo'suna push et; kullanıcılar <code>/plugin marketplace add owner/repo</code> ile ekler.</li>
+        <li><strong>Başkalarına test ettir.</strong> Geniş dağıtımdan önce ekipten birkaç kişi kursun.</li>
+      </ul>
+    </div>
+
+    <p>Ekip içinde kalmasını istiyorsan marketplace'i özel bir repo'da tut — akış tamamen aynıdır, yalnızca kimlik
+    doğrulama devreye girer (bölüm 12).</p>
+
+    <h3>Topluluk marketplace'ine başvuru</h3>
+    <p>Anthropic iki açık marketplace işletir:</p>
+    <ul>
+      <li><strong><code>claude-plugins-official</code></strong> — Anthropic'in derlediği küratörlü set. Claude Code'u ilk kez etkileşimli başlattığında kendiliğinden kaydolur. Kaydolmadıysa: <code>claude plugin marketplace add anthropics/claude-plugins-official</code>. Buraya başvuru süreci <strong>yoktur</strong>; içerik Anthropic'in takdirindedir.</li>
+      <li><strong><code>claude-community</code></strong> — inceleme ve otomatik güvenlik taramasından geçen üçüncü taraf plugin'lerin geldiği yer. Kullanıcılar <code>/plugin marketplace add anthropics/claude-plugins-community</code> ile ekler, <code>@claude-community</code> son ekiyle kurar.</li>
+    </ul>
+
+    <p>Topluluk marketplace'i için başvuru formları:
+    <a href="https://claude.ai/admin-settings/directory/submissions/plugins/new">claude.ai üzerinden</a> (Team veya
+    Enterprise organizasyonu ve directory yönetim yetkisi gerekir) veya
+    <a href="https://platform.claude.com/plugins/submit">Console üzerinden</a> (bireysel yazarlar için).</p>
+
+    <div class="note">
+      <span class="tag">Başvurmadan önce</span>
+      <code>claude plugin validate ./your-plugin</code> çalıştır — inceleme hattı her başvuruda aynı kontrolü yapar.
+      Onaylanan plugin'ler <code>anthropics/claude-plugins-community</code> kataloğunda belirli bir commit SHA'sına
+      sabitlenir ve sen yeni commit push ettikçe CI sabiti kendiliğinden günceller. Katalog gece senkronize olduğu
+      için onay ile plugin'in kurulabilir hale gelmesi arasında gecikme olabilir.
+    </div>
+  </section>
+
+  <section id="m14">
+    <h2><span class="num">14</span> Üç senaryo, üç plugin</h2>
+
+    <h3>Senaryo 1 — Ekibin commit akışını standartlaştırmak</h3>
+    <p><strong>Problem:</strong> Herkesin commit mesajı farklı biçimde; birkaç kişi <code>.claude/commands/commit.md</code>
+    dosyasını birbirine kopyalayıp duruyor ve kopyalar birbirinden ayrışmış durumda.</p>
+    <p><strong>Çözüm:</strong> Tek skill'lik bir plugin + repo'ya yazılmış proje kapsamı.</p>
+<pre><code>team-git/
+├── .claude-plugin/plugin.json
+└── skills/
+    ├── commit/SKILL.md
+    └── pr/SKILL.md</code></pre>
+<pre><code><span class="c">// .claude-plugin/plugin.json</span>
+{ <span class="k">"name"</span>: <span class="s">"team-git"</span>, <span class="k">"description"</span>: <span class="s">"Ekip commit ve PR akisi"</span> }</code></pre>
+    <p>Marketplace repo'suna koy, sonra projenin <code>.claude/settings.json</code>'ına
+    <code>extraKnownMarketplaces</code> + <code>enabledPlugins</code> yaz. Ekip repo'yu klonlayıp klasöre güven
+    verdiğinde kurulum teklif edilir; herkeste <code>/team-git:commit</code> aynı şeyi yapar.</p>
+    <p><strong>Sürümleme:</strong> <code>version</code> alanını hiç yazma. Marketplace git'te olduğu için her commit
+    yeni sürüm sayılır ve ekip düzeltmeleri otomatik alır.</p>
+
+    <h3>Senaryo 2 — Şirket içi API'ye bağlanan MCP plugin'i</h3>
+    <p><strong>Problem:</strong> Claude'un iç deployment API'nizi sorgulaması gerekiyor. Herkesin <code>.mcp.json</code>
+    yazması, üstüne bir de kendi token'ını doğru yere koyması gerekiyor.</p>
+    <p><strong>Çözüm:</strong> MCP server'ı paketleyen ve token'ı <code>userConfig</code> ile soran bir plugin.</p>
+<pre><code>{
+  <span class="k">"name"</span>: <span class="s">"deploy-api"</span>,
+  <span class="k">"version"</span>: <span class="s">"1.3.0"</span>,
+  <span class="k">"defaultEnabled"</span>: <span class="k">false</span>,
+  <span class="k">"userConfig"</span>: {
+    <span class="k">"api_endpoint"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>, <span class="k">"title"</span>: <span class="s">"API endpoint"</span>,
+      <span class="k">"description"</span>: <span class="s">"Deployment API base URL"</span>, <span class="k">"required"</span>: <span class="k">true</span>
+    },
+    <span class="k">"api_token"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>, <span class="k">"title"</span>: <span class="s">"API token"</span>,
+      <span class="k">"description"</span>: <span class="s">"Personal access token"</span>, <span class="k">"sensitive"</span>: <span class="k">true</span>
+    }
+  }
+}</code></pre>
+<pre><code><span class="c">// .mcp.json</span>
+{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"deploy"</span>: {
+      <span class="k">"command"</span>: <span class="s">"node"</span>,
+      <span class="k">"args"</span>: [<span class="s">"${CLAUDE_PLUGIN_ROOT}/server.js"</span>],
+      <span class="k">"env"</span>: {
+        <span class="k">"API_URL"</span>: <span class="s">"${user_config.api_endpoint}"</span>,
+        <span class="k">"API_TOKEN"</span>: <span class="s">"${user_config.api_token}"</span>,
+        <span class="k">"NODE_PATH"</span>: <span class="s">"${CLAUDE_PLUGIN_DATA}/node_modules"</span>
+      }
+    }
+  }
+}</code></pre>
+    <p>Bağımlılıkları güncellemeleri aşan dizine bir kez kur; <code>SessionStart</code> hook'u
+    <code>package.json</code> değiştiğinde yeniden kurar:</p>
+<pre><code>{
+  <span class="k">"hooks"</span>: {
+    <span class="k">"SessionStart"</span>: [{ <span class="k">"hooks"</span>: [{
+      <span class="k">"type"</span>: <span class="s">"command"</span>,
+      <span class="k">"command"</span>: <span class="s">"diff -q \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/package.json\" &gt;/dev/null 2&gt;&amp;1 || (cd \"${CLAUDE_PLUGIN_DATA}\" &amp;&amp; cp \"${CLAUDE_PLUGIN_ROOT}/package.json\" . &amp;&amp; npm install)"</span>
+    }] }]
+  }
+}</code></pre>
+    <p><strong>Neden <code>defaultEnabled: false</code>:</strong> plugin dış bir servise bağlanıyor ve token istiyor;
+    kullanıcı bilinçli olarak açsın. <strong>Neden açık <code>version</code>:</strong> API sözleşmesi değiştiğinde
+    kırıcı sürümü işaretlemen gerekiyor.</p>
+
+    <h3>Senaryo 3 — Kuralı rica etmeyi bırakmak</h3>
+    <p><strong>Problem:</strong> <code>CLAUDE.md</code>'de "migration dosyalarını elle düzenleme" yazıyor ama bu bir
+    rica; bazen uyuluyor bazen uyulmuyor.</p>
+    <p><strong>Çözüm:</strong> Kuralı zorlayan bir hook'u ve ihlali inceleyen bir agent'ı aynı pakette dağıt.</p>
+<pre><code>db-guard/
+├── .claude-plugin/plugin.json
+├── hooks/hooks.json
+├── agents/migration-reviewer.md
+└── scripts/block-migration-edit.sh</code></pre>
+<pre><code><span class="c">// hooks/hooks.json</span>
+{
+  <span class="k">"hooks"</span>: {
+    <span class="k">"PreToolUse"</span>: [{
+      <span class="k">"matcher"</span>: <span class="s">"Write|Edit"</span>,
+      <span class="k">"hooks"</span>: [{
+        <span class="k">"type"</span>: <span class="s">"command"</span>,
+        <span class="k">"command"</span>: <span class="s">"\"${CLAUDE_PLUGIN_ROOT}\"/scripts/block-migration-edit.sh"</span>
+      }]
+    }]
+  }
+}</code></pre>
+    <p>Script'i <code>chmod +x</code> yapmayı unutma — hook'un sessizce çalışmamasının bir numaralı sebebi budur.
+    Test ederken <code>claude --plugin-dir ./db-guard</code> ile aç, Claude'a bir migration dosyası düzenlet ve
+    engellendiğini gör. Dağıtımı <code>project</code> kapsamında yap: kural repo'ya ait, kişiye değil.</p>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Yayına almadan önce kontrol listesi</h3>
+      <ul style="margin-bottom:0;">
+        <li><code>.claude-plugin/</code> içinde <strong>yalnızca</strong> <code>plugin.json</code> var.</li>
+        <li><code>name</code> kebab-case, ASCII ve kalıcı olmasını kabul ettiğin bir ad.</li>
+        <li>Plugin'e ait tüm yollar <code>./</code> ile göreli veya <code>${CLAUDE_PLUGIN_ROOT}</code> ile mutlak; <code>../</code> yok.</li>
+        <li>Hook script'leri çalıştırılabilir ve shebang satırı doğru.</li>
+        <li><code>claude plugin validate ./plugin --strict</code> temiz geçiyor.</li>
+        <li>Temiz bir oturumda <code>--plugin-dir</code> ile denendi: skill'ler çağrıldı, agent'lar <code>/context</code>'te göründü, hook'lar gerçekten tetiklendi.</li>
+        <li>Sürüm stratejisi seçildi ve <code>version</code> iki yerde birden tanımlı değil.</li>
+        <li><code>claude plugin details</code> ile always-on token maliyetine bakıldı — her oturuma eklenen yükü biliyorsun.</li>
+        <li><code>README.md</code> ve (açık sürüm kullanıyorsan) <code>CHANGELOG.md</code> var.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    code.claude.com/docs/en/plugins ·
+    code.claude.com/docs/en/plugins-reference ·
+    code.claude.com/docs/en/plugin-marketplaces ·
+    code.claude.com/docs/en/discover-plugins
+  </footer>
+
+</div>
+</body>
+</html>

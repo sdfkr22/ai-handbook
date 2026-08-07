@@ -12,7 +12,7 @@
    sistem açık temadayken. Değiştirirken iki bloğu birlikte güncelle. */
 :root[data-theme="light"]{
   --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
-  --card:#f8efdb; --card-line:#ead8b9;
+  --card:#fbf5e9; --card-line:#ecdfc8;
   --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
   --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
 }
@@ -27,7 +27,7 @@
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
-    --card:#f8efdb; --card-line:#ead8b9;
+    --card:#fbf5e9; --card-line:#ecdfc8;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
     --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
   }
@@ -82,7 +82,7 @@ h1 em{font-style:italic;color:var(--accent);}
   flex:1;min-width:240px;position:relative;
 }
 .search input{
-  width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  width:100%;background:var(--card);border:1px solid var(--card-line);border-radius:10px;
   color:var(--ink);font-family:inherit;font-size:15px;padding:12px 16px 12px 40px;
   outline:none;transition:border-color .15s;
 }
@@ -94,7 +94,7 @@ h1 em{font-style:italic;color:var(--accent);}
 .filters{display:flex;flex-wrap:wrap;gap:8px;}
 .chip{
   font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.04em;
-  background:var(--panel);border:1px solid var(--line);border-radius:999px;
+  background:var(--card);border:1px solid var(--card-line);border-radius:999px;
   color:var(--ink-soft);padding:7px 14px;cursor:pointer;
   transition:all .15s;line-height:1.2;
 }
