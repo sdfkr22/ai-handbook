@@ -49,6 +49,15 @@ main / (root)** açıkken site `https://sdfkr22.github.io/ai-handbook/` adresind
 
 **Netlify / Cloudflare Pages:** repoyu bağla; build command boş, publish directory `.`
 
+## Katkı
+
+`main` korumalıdır — doğrudan push kapalı. Değişiklik için branch aç ve PR gönder; merge için
+`.github/CODEOWNERS` uyarınca **@sdfkr22'nin onayı** gerekir.
+
+Sayfa ekleyen/değiştiren PR'larda `node scripts/build.mjs` çıktısını da commit'e dahil et
+(`data/posts.js`, `data/posts.json` ve script'in dokunduğu `posts/*.html`) — aksi halde sayfa
+katalogda görünmez.
+
 ## Yapı
 
 | Yol | Ne işe yarar |
