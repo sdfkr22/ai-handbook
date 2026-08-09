@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bir şey mi ters? Önce /doctor</title>
-<!-- ===== Katalog meta bilgileri ===== -->
-<meta name="yazi:baslik" content="Bir şey mi ters? Önce /doctor">
-<meta name="yazi:aciklama" content="Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server'lar, yavaş hook'lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.">
+<title>Önce plan, sonra diff</title>
+<meta name="yazi:baslik" content="Önce plan, sonra diff">
+<meta name="yazi:aciklama" content="Plan mode bir rica değil, bir permission mode: Claude okur, araştırır, plan yazar ama sen onaylayana kadar diske dokunmaz. Tetikleme yolları, onay ekranı, senaryolar ve plan mode'a girmemen gereken durumlar.">
 <meta name="yazi:kategori" content="Claude Code">
-<meta name="yazi:etiketler" content="doctor, checkup, troubleshooting, kurulum, settings.json, auto-update, CLAUDE.md, hooks, MCP, context">
-<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/commands">
-<meta name="yazi:tarih" content="2026-08-07">
+<meta name="yazi:etiketler" content="plan mode, permission mode, Shift+Tab, /plan, --permission-mode, defaultMode, auto mode, acceptEdits, ExitPlanMode, workflow">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/permission-modes">
+<meta name="yazi:tarih" content="2026-08-09">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -81,7 +80,7 @@
 <script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
    gezinme bloğunu basar. */
-window.YAZI_VERI={"sure":8,"yeni":{"dosya":"plan-mode-guide.html","baslik":"Önce plan, sonra diff"},"eski":{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"},"ilgili":[{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"},{"dosya":"hooks-guide.html","baslik":"Talimat rica eder, hook zorlar"},{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"}]};</script>
+window.YAZI_VERI={"sure":9,"yeni":null,"eski":{"dosya":"doctor-command-guide.html","baslik":"Bir şey mi ters? Önce /doctor"},"ilgili":[]};</script>
 <!-- /yazi:veri -->
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
@@ -584,381 +583,303 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
 <div class="wrap">
 
   <header class="hero">
-    <p class="kicker">Claude Code · Teşhis ve bakım</p>
-    <h1>Bir şey mi ters?<br><em>Önce /doctor</em></h1>
-    <p class="lede">Kurulum sağlığı, parse edilemeyen settings dosyaları, bedavaya context yiyen skills ve MCP server'lar, yavaş hook'lar, şişmiş CLAUDE.md — hepsi tek komutun raporunda. Ve rapor sadece rapor değil: bulduğunu düzeltmeyi teklif ediyor.</p>
-    <p class="source">7 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/commands">code.claude.com/docs/en/commands</a></p>
+    <p class="kicker">Claude Code · Plan mode</p>
+    <h1>Önce plan,<br><em>sonra diff</em></h1>
+    <p class="lede">Plan mode, Claude'a "önce bir düşün" demenin kibar hali değil; harness seviyesinde uygulanan bir permission mode. Claude okur, araştırır, planı yazar — sen onaylayana kadar tek bir dosyaya dokunmaz. Bu sayfa modun ne yaptığını, nasıl açıldığını, onay ekranında ne seçtiğini ve ne zaman girmemen gerektiğini anlatıyor.</p>
+    <p class="source">Referans: <a href="https://code.claude.com/docs/en/permission-modes">code.claude.com/docs/en/permission-modes</a></p>
   </header>
 
   <nav class="toc" aria-label="İçindekiler">
     <ol>
-      <li><a href="#m1"><span class="n">01</span> Tek komutluk bir check-up</a></li>
-      <li><a href="#m2"><span class="n">02</span> Kaputun altında neye bakıyor?</a></li>
-      <li><a href="#m3"><span class="n">03</span> Önce rapor eder, sonra izin ister</a></li>
-      <li><a href="#m4"><span class="n">04</span> claude hiç açılmıyorsa: claude doctor</a></li>
-      <li><a href="#m5"><span class="n">05</span> CLAUDE.md'ni budamaya gelir</a></li>
-      <li><a href="#m6"><span class="n">06</span> Ne zaman çalıştırmalısın?</a></li>
+      <li><a href="#m1"><span class="n">01</span> Plan mode bir rica değil, bir mod</a></li>
+      <li><a href="#m2"><span class="n">02</span> Neden zahmete değer?</a></li>
+      <li><a href="#m3"><span class="n">03</span> Üç kapı: Shift+Tab, /plan, --permission-mode</a></li>
+      <li><a href="#m4"><span class="n">04</span> İçeride ne serbest, ne yasak?</a></li>
+      <li><a href="#m5"><span class="n">05</span> Plan hazır: onay ekranında ne seçiyorsun?</a></li>
+      <li><a href="#m6"><span class="n">06</span> Explore → Plan → Implement → Commit</a></li>
       <li><a href="#m7"><span class="n">07</span> Senaryo defteri</a></li>
-      <li><a href="#m8"><span class="n">08</span> /doctor'ın bakmadığı yerler</a></li>
-      <li><a href="#m9"><span class="n">09</span> Tuzaklar ve sürüm farkları</a></li>
+      <li><a href="#m8"><span class="n">08</span> Ne zaman plan mode'a girmemelisin?</a></li>
+      <li><a href="#m9"><span class="n">09</span> Ekibe ve otomasyona bağlamak</a></li>
+      <li><a href="#m10"><span class="n">10</span> Tuzaklar ve sürüm notları</a></li>
+      <li><a href="#m11"><span class="n">11</span> Hızlı referans</a></li>
     </ol>
   </nav>
 
-  <!-- ===================================================== -->
   <section id="m1">
-    <h2><span class="num">01</span> Tek komutluk bir check-up</h2>
-    <p><code>/doctor</code>, Claude Code'un kendi kurulumunu ve yapılandırmasını denetleyen <strong>bundled skill</strong>'idir. Adı doktor ama hastası sen değilsin: makinendeki kurulum, ayar dosyaların, yüklü uzantıların ve projenin CLAUDE.md dosyaları muayene ediliyor.</p>
-    <p>Oturum içinde yazman yeterli:</p>
-
-    <pre><code><span class="c"># Claude Code oturumunun içinde</span>
-/doctor
-
-<span class="c"># Aynı şey — takma adı</span>
-/checkup</code></pre>
-
-    <p>Kritik ayrım şu: <code>/doctor</code> pasif bir teşhis ekranı değil. Bulgularını listeler, sonra <strong>düzeltmeyi teklif eder</strong> ve sen onayladıktan sonra dosyalarına dokunur.</p>
-
-    <div class="note">
-      <span class="tag">Bu sayfa neyi kapsıyor</span>
-      <code>/doctor</code>'ın denetlediği başlıklar, oturum içi ve terminal modu arasındaki fark, hangi problemde hangi komuta gitmen gerektiği ve yedi somut senaryo. Kapsam dışı: genel performans sorunları, login/OAuth hataları ve MCP server yapılandırmasının detayları — bunlar ayrı sayfaların konusu, burada sadece yönlendirme var.
+    <h2><span class="num">01</span> Plan mode bir rica değil, bir mod</h2>
+    <p>CLAUDE.md'ye "önce plan yap, sonra kodla" yazabilirsin — model buna uyabilir de, heyecanlanıp üçüncü dosyayı düzenlerken bulabilirsin kendini. Plan mode farklı bir katmanda çalışır: <strong>permission mode</strong>'dur, yani izin sistemini Claude Code uygular, model değil.</p>
+    <p>Plan mode aktifken Claude dosyaları okur, keşif için komut çalıştırır ve bir uygulama planı yazar; ama kaynağını düzenlemez. Sen planı onaylayana kadar edit'ler bloklanır.</p>
+    <p>Claude Code'un permission mode listesi şöyle — plan bunlardan biri:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Mode</th><th>Sormadan ne yapabilir</th><th>Ne için</th></tr></thead>
+        <tbody>
+          <tr><td><code>default</code> <span style="color:var(--ink-mute)">(Manual)</span></td><td>Sadece okuma</td><td>Yeni başlarken, hassas iş</td></tr>
+          <tr><td><code>acceptEdits</code></td><td>Okuma + dosya düzenleme + <code>mkdir</code>, <code>mv</code>, <code>cp</code> gibi komutlar</td><td>Diff'i sonradan gözden geçireceğin iş</td></tr>
+          <tr><td><code>plan</code></td><td>Okuma; auto mode varsa classifier'ın onayladığı komutlar</td><td>Değiştirmeden önce keşif</td></tr>
+          <tr><td><code>auto</code></td><td>Her şey, arka planda classifier denetimiyle</td><td>Uzun görevler, prompt yorgunluğu</td></tr>
+          <tr><td><code>dontAsk</code></td><td>Sadece önceden allow'lanmış araçlar</td><td>Kilitli CI ve script'ler</td></tr>
+          <tr><td><code>bypassPermissions</code></td><td>Her şey</td><td>Yalnızca izole container/VM</td></tr>
+        </tbody>
+      </table>
     </div>
+    <div class="note">
+      <span class="tag">İsim karışıklığı</span>
+      Her aksiyonu tek tek onaylatan mod arayüzde <strong>Manual</strong> diye görünür, ama config değeri <code>default</code>'tur — hook'lar ve SDK bu değeri görür. CLI, yazdığın yerde <code>manual</code> takma adını da kabul eder (v2.1.200+).
+    </div>
+    <p>Mod bir <em>taban</em> belirler. Üstüne <code>permissions.allow</code> / <code>ask</code> / <code>deny</code> kuralları binebilir; deny ve açık ask kuralları her modda geçerlidir.</p>
   </section>
 
-  <!-- ===================================================== -->
   <section id="m2">
-    <h2><span class="num">02</span> Kaputun altında neye bakıyor?</h2>
-    <p>Tek bir "her şey yolunda mı" sorusu değil; birbirinden bağımsız birkaç denetim aynı anda koşuyor.</p>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Denetim</th><th>Yakaladığı şey</th></tr></thead>
-        <tbody>
-          <tr>
-            <td><strong>Installation health</strong></td>
-            <td>Birden fazla veya artık kalmış (leftover) kurulum, <code>PATH</code> problemleri, native installer'ın oluşturmadığı bir launcher</td>
-          </tr>
-          <tr>
-            <td><strong>Settings dosyaları</strong></td>
-            <td>Parse edilemeyen <code>settings.json</code>, şema hatası nedeniyle tümden reddedilmiş dosyalar</td>
-          </tr>
-          <tr>
-            <td><strong>Uzantı / context maliyeti</strong></td>
-            <td>Kullanılmayan skills, MCP server'lar ve plugin'ler — context'e ödettikleri bedele karşı</td>
-          </tr>
-          <tr>
-            <td><strong>Hooks</strong></td>
-            <td>Yavaş çalışan hook'ları işaretler</td>
-          </tr>
-          <tr>
-            <td><strong>Sürüm</strong></td>
-            <td>Bulunduğun release channel'da daha yeni bir sürüm var mı; son otomatik güncelleme denemesi ne oldu</td>
-          </tr>
-          <tr>
-            <td><strong>CLAUDE.md</strong></td>
-            <td>Yerel dosyaların repo'ya commit edilmiş olanlarla çakışması; koddan türetilebilecek içeriğin budanması</td>
-          </tr>
-          <tr>
-            <td><strong>Subagents</strong></td>
-            <td>Aynı dizinde çakışan (duplicate) subagent adları</td>
-          </tr>
-          <tr>
-            <td><strong>Permissions</strong></td>
-            <td>auto mode'u varsayılan yapma teklifi; sık sık reddettiğin read-only komutları önceden onaylama teklifi</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Yani <code>/doctor</code> hem "bozuk mu?" hem de "gereksiz yere pahalı mı?" sorusunu soruyor. İkinci kısım özellikle önemli: hiç kullanmadığın bir MCP server'ın tool tanımları her oturumda context window'undan yer yiyor.</p>
-
-    <div class="note">
-      <span class="tag">Skill listesi de dahil</span>
-      Skill açıklamaları bir context bütçesine sığdırılıyor; bütçe aşılırsa açıklamalar kırpılıyor. <code>/doctor</code> bu listenin context maliyetini ve en büyük katkıda bulunanları tahmin ederek raporlar.
-    </div>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m3">
-    <h2><span class="num">03</span> Önce rapor eder, sonra izin ister</h2>
-    <p>Akış her zaman aynı sırada ilerler:</p>
-
-    <div class="card">
-      <ul style="margin-bottom:0;">
-        <li><strong>1 · Tarama.</strong> Kurulum, ayarlar, uzantılar ve CLAUDE.md dosyaları okunur.</li>
-        <li><strong>2 · Bulgu raporu.</strong> Ne bulduğunu tek tek listeler — hiçbir şeye dokunmadan.</li>
-        <li><strong>3 · Teklif.</strong> Düzeltebileceği maddeler için önerdiği değişikliği gösterir.</li>
-        <li><strong>4 · Onay.</strong> Sen kabul etmeden hiçbir dosya değişmez.</li>
-      </ul>
-    </div>
-
-    <p>Bu davranış <strong>v2.1.205</strong> ile geldi. Daha eski sürümlerde <code>/doctor</code> salt okunur bir teşhis ekranı açıyordu ve raporu Claude'a düzeltmesi için göndermek istiyorsan <code>f</code> tuşuna basman gerekiyordu.</p>
-
-    <div class="note warn">
-      <span class="tag">Onay bir formalite değil</span>
-      Özellikle CLAUDE.md budama teklifini okumadan onaylama. Repo'ya commit edilmiş bir dosyadan bölüm siliyorsan bu değişiklik tüm ekibi etkiler — diff'i gözden geçir, gerekiyorsa maddeleri tek tek seç.
-    </div>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m4">
-    <h2><span class="num">04</span> claude hiç açılmıyorsa: claude doctor</h2>
-    <p>Slash command'lar ancak bir oturum başlatabildiğinde işine yarar. Claude Code hiç açılmıyorsa aynı teşhisin terminal versiyonu var:</p>
-
-    <pre><code><span class="c"># Oturum başlatmadan, doğrudan shell'den</span>
-claude doctor</code></pre>
-
-    <p>Bu komut <strong>salt okunur</strong> kurulum ve ayar teşhisi basar: kurulum sağlığı, settings dosyası doğrulama hataları ve önerilen düzeltmeleriyle birlikte uyarılar. Hiçbir şeyi kendiliğinden değiştirmez, bir oturum da başlatmaz.</p>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th></th><th><code>/doctor</code></th><th><code>claude doctor</code></th></tr></thead>
-        <tbody>
-          <tr><td>Nerede çalışır</td><td>Oturum içinde</td><td>Terminalde, oturum gerekmez</td></tr>
-          <tr><td>Düzeltme yapar mı</td><td>Evet — onayınla</td><td>Hayır, salt okunur</td></tr>
-          <tr><td>Kapsam</td><td>Kurulum + ayarlar + uzantılar + context + CLAUDE.md</td><td>Kurulum ve ayar teşhisi</td></tr>
-          <tr><td>Ne zaman</td><td>Claude Code çalışıyor ama bir şey ters</td><td><code>claude</code> hiç başlamıyor ya da <code>--version</code> dışında her şey bozuk</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Kurulum doğrulaması için basit sıralama: önce <code>claude --version</code> bir sürüm numarası basıyor mu diye bak, basıyorsa ama bir şeyler hâlâ yanlışsa <code>claude doctor</code>'a geç.</p>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m5">
-    <h2><span class="num">05</span> CLAUDE.md'ni budamaya gelir</h2>
-    <p><code>/doctor</code>'ın en az bilinen ama en çok işe yarayan denetimi bu. Üç iş birden yapıyor:</p>
-
+    <h2><span class="num">02</span> Neden zahmete değer?</h2>
+    <p>Plan mode'un değeri "daha iyi kod" değil, <strong>yanlış işi yapmadan önce durmak</strong>. Dört somut kazanç:</p>
     <ul>
-      <li><strong>Deduplikasyon:</strong> Yerel CLAUDE.md dosyalarını repo'ya commit edilmiş olanlarla karşılaştırır, tekrar edeni ayıklar.</li>
-      <li><strong>Budama:</strong> Commit edilmiş CLAUDE.md dosyalarından, Claude'un zaten koddan türetebileceği içeriği keser.</li>
-      <li><strong>Taşıma:</strong> Kalan ve sürekli yüklenen yönlendirmeyi, ihtiyaç anında yüklenen <strong>skills</strong>'e ve alt dizinlerdeki CLAUDE.md dosyalarına taşır.</li>
+      <li><strong>Yanlış problemi çözme riskini düşürür.</strong> Doğrudan kodlamaya geçen bir oturum, senin kastettiğinden farklı bir şeyi kusursuz biçimde uygulayabilir. Plan, o farkı 200 satır diff'ten önce yakalar.</li>
+      <li><strong>Gözden geçirme maliyetini öne çeker.</strong> Bir planı okumak 30 saniye; sekiz dosyaya yayılmış bir diff'i okumak 15 dakika. Yanlışsa planı düzeltmek de aynı oranda ucuz.</li>
+      <li><strong>Geri alma sorununu ortadan kaldırır.</strong> Hiç yazılmamış dosyayı geri almak gerekmez. <code>/rewind</code> ve checkpoint'ler işe yarar ama Bash ile yapılan değişiklikleri takip etmez; plan mode ise değişikliğin hiç başlamamasını sağlar.</li>
+      <li><strong>Yazılı bir sözleşme bırakır.</strong> Onayladığın plan, uygulama sırasında karşılaştırma noktasıdır: "diff'i plana göre denetle" diyebileceğin bir referans olur.</li>
     </ul>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Budanır</th><th>Korunur</th></tr></thead>
-        <tbody>
-          <tr><td>Dizin yapısı / klasör haritaları</td><td>Tuzaklar (pitfalls)</td></tr>
-          <tr><td>Bağımlılık listeleri</td><td>Bir kararın <em>neden</em> öyle alındığı</td></tr>
-          <tr><td>Mimari genel bakış yazıları</td><td>Aracın varsayılanından farklı olan convention'lar</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Mantık basit: dizin yapısını Claude zaten <code>ls</code> ile görebiliyor, o satırlar her oturumda boşuna token yakıyor. Ama "bu repo'da migration'ları elle yazmıyoruz" bilgisi hiçbir yerden türetilemez — o kalır.</p>
-
-    <div class="note warn">
-      <span class="tag">Sürüm şartı</span>
-      CLAUDE.md budama denetimi <strong>Claude Code v2.1.206 veya sonrasını</strong> gerektirir. Daha eski bir sürümdeysen <code>/doctor</code> çalışır ama bu kontrolü yapmaz.
+    <div class="note">
+      <span class="tag">Bir cümlelik test</span>
+      Resmî dokümantasyonun kendi ölçütü net: <strong>diff'i tek cümleyle tarif edebiliyorsan planı atla.</strong> Planlama asıl olarak yaklaşımdan emin olmadığında, değişiklik birden çok dosyaya dokunduğunda veya kodu tanımadığında işe yarar.
     </div>
   </section>
 
-  <!-- ===================================================== -->
-  <section id="m6">
-    <h2><span class="num">06</span> Ne zaman çalıştırmalısın?</h2>
-    <p><code>/doctor</code> her gün koşturulacak bir komut değil. Şu anlarda anlamlı:</p>
+  <section id="m3">
+    <h2><span class="num">03</span> Üç kapı: Shift+Tab, /plan, --permission-mode</h2>
+    <p>Modu <strong>sohbette rica ederek değiştiremezsin</strong> — "artık plan mode'a geç" demek modu değiştirmez. Üç yol var:</p>
+
+    <h3>1. Oturum ortasında: Shift+Tab</h3>
+    <p>Döngü <code>default</code> → <code>acceptEdits</code> → <code>plan</code> şeklinde ilerler. Plan mode açıkken durum çubuğunda <code>⏸ plan mode on</code> görünür. Tekrar <code>Shift+Tab</code>'a basmak <strong>planı onaylamadan</strong> moddan çıkarır.</p>
+    <p>Etkinleştirilmiş opsiyonel modlar <code>plan</code>'dan sonra sıraya girer: <code>bypassPermissions</code> önce, <code>auto</code> en sonda. <code>dontAsk</code> döngüde hiç görünmez, sadece bayrakla açılır.</p>
+
+    <h3>2. Tek bir prompt için: /plan</h3>
+    <p>Kalıcı olarak moda girmek istemiyorsan prompt'un başına <code>/plan</code> koy — o mesaj plan mode'da işlenir.</p>
+    <pre><code><span class="k">/plan</span> auth modülünü OAuth'a taşımak için ne değişmeli?</code></pre>
+
+    <h3>3. Baştan: --permission-mode</h3>
+    <pre><code><span class="c"># oturum plan mode'da başlar</span>
+claude --permission-mode plan
+
+<span class="c"># non-interactive çalıştırmada da aynı bayrak geçerli</span>
+claude --permission-mode plan -p <span class="s">"bu repoda cache katmanı nereye eklenir?"</span></code></pre>
+
+    <h3>Kalıcı varsayılan: defaultMode</h3>
+    <p>Bir projede her oturumun plan mode'da başlamasını istiyorsan <code>.claude/settings.json</code>:</p>
+    <pre><code>{
+  <span class="s">"permissions"</span>: {
+    <span class="s">"defaultMode"</span>: <span class="s">"plan"</span>
+  }
+}</code></pre>
 
     <div class="table-scroll">
       <table>
-        <thead><tr><th>An</th><th>Neden</th></tr></thead>
+        <thead><tr><th>Arayüz</th><th>Nasıl geçilir</th></tr></thead>
         <tbody>
-          <tr>
-            <td>Kurulumdan hemen sonra</td>
-            <td><code>claude --version</code>'dan daha derin bir doğrulama; PATH ve çakışan kurulum varsa ilk günde yakalarsın</td>
-          </tr>
-          <tr>
-            <td>Bir şey "sessizce" çalışmıyorken</td>
-            <td>Hook tetiklenmiyor, ayar uygulanmıyor, skill görünmüyor — hata mesajı yoksa ilk durak burası</td>
-          </tr>
-          <tr>
-            <td>Sürüm güncellemesi beklerken</td>
-            <td>Release channel'ında yeni sürüm var mı ve son güncelleme denemesi neden başarısız oldu</td>
-          </tr>
-          <tr>
-            <td>Oturumlar pahalı gelmeye başladığında</td>
-            <td>Kullanılmayan skills / MCP / plugin ve şişmiş CLAUDE.md temizliği</td>
-          </tr>
-          <tr>
-            <td>Yeni bir makineye ya da ekibe geçtiğinde</td>
-            <td>Devraldığın yapılandırmanın sağlam olup olmadığını görürsün</td>
-          </tr>
-          <tr>
-            <td>GitHub'a issue açmadan hemen önce</td>
-            <td>Sorunun kendi kurulumunda olmadığını elemenin en hızlı yolu</td>
-          </tr>
+          <tr><td>CLI</td><td><code>Shift+Tab</code> ile döngü, <code>/plan</code> öneki veya <code>--permission-mode plan</code></td></tr>
+          <tr><td>JetBrains</td><td>Eklenti Claude Code'u IDE terminalinde çalıştırır — CLI ile birebir aynı</td></tr>
+          <tr><td>VS Code</td><td>Prompt kutusunun altındaki mod göstergesi; varsayılan için <code>claudeCode.initialPermissionMode</code></td></tr>
+          <tr><td>Desktop</td><td>Code sekmesinde gönder düğmesinin yanındaki mod seçici</td></tr>
+          <tr><td>Web / mobil</td><td>Prompt kutusunun yanındaki mod dropdown'ı (cloud ve Remote Control oturumlarında Plan mevcut)</td></tr>
         </tbody>
       </table>
     </div>
+    <div class="note">
+      <span class="tag">Küçük bir istisna</span>
+      Desktop'ta seçtiğin mod klasör bazında hatırlanır ve <code>defaultMode</code>'un önüne geçer. <strong>Plan bunun istisnasıdır:</strong> seçtiğinde yalnızca o oturum için geçerli olur.
+    </div>
+  </section>
+
+  <section id="m4">
+    <h2><span class="num">04</span> İçeride ne serbest, ne yasak?</h2>
+    <p>Plan mode "her şey kapalı" demek değil — okuma serbesttir, keşif teşvik edilir. Kritik ayrım şu: <strong>dosya düzenlemeleri bloklanır, shell komutları ise duruma göre ele alınır.</strong></p>
+    <ul>
+      <li><strong>Okuma serbest.</strong> Dosya okuma, grep, glob — çalışma dizini içinde prompt çıkmaz.</li>
+      <li><strong>Edit yok.</strong> Sen planı onaylayana kadar kaynak dosyalar düzenlenmez.</li>
+      <li><strong>Shell komutları:</strong> auto mode hesabında mevcutsa ve <code>useAutoModeDuringPlan</code> ayarı açıksa (varsayılan açık) komutları sana sormak yerine classifier inceler; onayladıkları çalışır, reddettikleri bloklanır. Aksi halde built-in read-only komut kümesinin dışındaki her komut onay ister.</li>
+      <li><strong>Protected path'ler.</strong> <code>.git</code>, <code>.claude</code>, <code>.vscode</code>, <code>.bashrc</code>, <code>.mcp.json</code> gibi yollara yazma plan mode'da onay ister; planlama sırasında auto mode devredeyse classifier'a yönlenir.</li>
+    </ul>
+    <div class="note warn">
+      <span class="tag">En büyük yanlış anlama</span>
+      <strong>bypass permissions'ın açık olduğu oturumlarda plan mode'un blokları uygulanmaz.</strong> Claude yine "düzenleme yapmadan planla" talimatını alır, ama planlama sırasında denediği bir dosya düzenlemesi veya shell komutu prompt çıkmadan çalışır. Plan mode'u güvenlik sınırı olarak kullanacaksan oturumu <code>--dangerously-skip-permissions</code> ile başlatma.
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Aksiyon</th><th>Plan mode'da ne olur</th></tr></thead>
+        <tbody>
+          <tr><td>Dosya okuma, grep, glob</td><td>Serbest</td></tr>
+          <tr><td>Read-only Bash komutları</td><td>Serbest</td></tr>
+          <tr><td>Diğer Bash komutları</td><td>Classifier inceler (auto mevcutsa) — yoksa onay sorar</td></tr>
+          <tr><td>Dosya düzenleme / yazma</td><td>Plan onaylanana kadar bloklu</td></tr>
+          <tr><td>Protected path yazımı</td><td>Onay sorar; bypass mevcut oturumda serbest</td></tr>
+          <tr><td>Prompt önerileri</td><td>Plan mode'da üretilmez</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="m5">
+    <h2><span class="num">05</span> Plan hazır: onay ekranında ne seçiyorsun?</h2>
+    <p>Claude planı bitirince onu sunar ve nasıl devam edileceğini sorar. Bu ekran sadece "evet/hayır" değil — <strong>onayladığın anda oturumun hangi permission mode'a geçeceğini de seçiyorsun.</strong></p>
+    <ul>
+      <li><strong>Yes, and use auto mode</strong> — planı onaylar ve auto mode'da başlar. Auto mode kullanılamıyorsa bu seçenek <strong>Yes, auto-accept edits</strong> olarak görünür. Bypass permissions etkin başlatılmış oturumlarda ise <strong>Yes, and bypass permissions</strong> yazar.</li>
+      <li><strong>Yes, manually approve edits</strong> — planı onaylar, her düzenlemeyi tek tek gözden geçirirsin.</li>
+      <li><strong>No, keep planning</strong> — plan mode'da kalır, neyin değişmesi gerektiğini söylersin.</li>
+    </ul>
+    <div class="note">
+      <span class="tag">Planı elle düzeltmek</span>
+      <code>Ctrl+G</code> planı varsayılan metin editöründe açar; Claude devam etmeden önce doğrudan üzerinde oynayabilirsin. Küçük bir yanlış varsayımı düzeltmek için "hayır, şunu değiştir" turundan çok daha hızlı.
+    </div>
+    <p>İki küçük yan etki:</p>
+    <ul>
+      <li><code>showClearContextOnPlanAccept</code> ayarı açıkken listeye bir seçenek daha eklenir: planı onaylar <strong>ve planlama sırasında biriken context'i temizler</strong>. Uzun keşif turlarından sonra uygulamaya temiz bir context ile başlamak için birebir.</li>
+      <li>Plan kabul edildiğinde oturum, plan içeriğinden otomatik olarak isimlendirilir — daha önce <code>--name</code> veya <code>/rename</code> ile isim vermediysen.</li>
+    </ul>
+    <p>Planı onaylamak plan mode'dan çıkar. Tekrar planlamak istersen <code>Shift+Tab</code> ile geri dön ya da bir sonraki prompt'a <code>/plan</code> öneki koy.</p>
+  </section>
+
+  <section id="m6">
+    <h2><span class="num">06</span> Explore → Plan → Implement → Commit</h2>
+    <p>Dokümantasyonun önerdiği akış dört fazlı ve plan mode ilk ikisini kapsıyor. Önemli olan <strong>keşfi ayrı bir prompt yapmak</strong> — planı direkt istemek, Claude'un henüz okumadığı kod hakkında plan yazmasına yol açar.</p>
+
+    <h3>1. Explore — plan mode'da, sadece oku</h3>
+    <pre><code><span class="c"># Shift+Tab ile ⏸ plan mode on</span>
+/src/auth altını oku; session ve login akışını anla.
+secret'lar için environment variable'ları nasıl yönettiğimize de bak.</code></pre>
+
+    <h3>2. Plan — hâlâ plan mode'da</h3>
+    <pre><code>Google OAuth eklemek istiyorum. Hangi dosyalar değişmeli?
+Session akışı nasıl olacak? Bir plan çıkar.</code></pre>
+    <p>Plan geldiğinde <code>Ctrl+G</code> ile açıp düzelt, sonra onayla.</p>
+
+    <h3>3. Implement — moddan çıktın, plana karşı doğrula</h3>
+    <pre><code>planındaki OAuth akışını uygula. callback handler için test yaz,
+test suite'i çalıştır ve kırılanları düzelt.</code></pre>
+
+    <h3>4. Commit</h3>
+    <pre><code>açıklayıcı bir mesajla commit at ve PR aç</code></pre>
 
     <div class="note">
-      <span class="tag">Hangi sayfadayım bilmiyorum</span>
-      Sorunun hangi kategoriye girdiğinden emin değilsen resmi troubleshooting yönergesi de aynı şeyi söylüyor: önce <code>/doctor</code>, ardından MCP durumu için <code>/mcp</code>.
+      <span class="tag">Bir üst seviye</span>
+      Plan büyükse onaylamak yerine <strong>dosyaya yazdır</strong> (<code>PLAN.md</code> veya <code>SPEC.md</code>) ve uygulamayı temiz bir oturumda başlat. Sonrasında "diff'i <code>PLAN.md</code>'ye göre denetle, kapsam dışına çıkan bir şey var mı" diyebileceğin bir referansın olur.
     </div>
   </section>
 
-  <!-- ===================================================== -->
   <section id="m7">
     <h2><span class="num">07</span> Senaryo defteri</h2>
-    <p>Yedi somut durum. Her birinde belirti, <code>/doctor</code>'ın ne dediği ve sonraki adım.</p>
 
-    <h3>Senaryo 1 — "Yeni sürüm çıktı, bana gelmedi"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Ekipteki herkes yeni bir özelliği kullanıyor, sende yok. Auto-update açık görünüyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>claude doctor</code> — en son güncelleme denemesinin sonucunu basar.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> npm global kurulumun var ve npm'in global dizini yazılabilir değil. Bu durumda Claude Code başlangıçta bir kez uyarı gösterir, <code>claude doctor</code> ise mevcut çözümleri listeler. Alternatif neden: Homebrew, WinGet, apt/dnf/apk kurulumları <strong>varsayılan olarak otomatik güncellenmez</strong> — güncellemeyi elle yapman gerekir.</p>
-    </div>
+    <h3>Tanımadığın bir repoya ilk dokunuş</h3>
+    <p>Yeni katıldığın projede bir bug'ı düzeltmen isteniyor. Doğrudan "şunu düzelt" demek, kodun neden öyle yazıldığını bilmeyen bir yamaya yol açar.</p>
+    <pre><code>claude --permission-mode plan
 
-    <h3>Senaryo 2 — "claude eski sürümü açıyor"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Güncelleme başarılı diyor ama <code>claude --version</code> hâlâ eski numarayı basıyor. Ya da kaldırdığın hâlde <code>claude</code> çalışmaya devam ediyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>claude doctor</code>.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Birden fazla kurulum veya artık kalmış bir kurulum, eski bir installer'dan kalma bir shell alias'ı ya da <code>PATH</code> sıralaması. macOS/Linux'ta native installer <code>~/.local/bin/claude</code> launcher'ını yönetir; oraya kendi script'ini koyduysan <code>claude doctor</code> bunu "native installer'ın oluşturmadığı bir launcher" olarak raporlar. Yönetimi geri vermek için <code>~/.local/bin/claude</code>'u sil ve <code>claude update</code> çalıştır.</p>
-    </div>
+<span class="c"># plan mode'da:</span>
+login sonrası session timeout hatasını araştır. src/auth/ içinde,
+özellikle token refresh'e bak. neyin bozuk olduğunu ve düzeltmenin
+nereye dokunacağını anlat — henüz düzeltme.</code></pre>
 
-    <h3>Senaryo 3 — "Hook yazdım, hiç tetiklenmiyor"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> <code>settings.json</code>'a bir <code>PreToolUse</code> hook'u eklediniz, hiçbir şey olmuyor. Hata da yok.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>/doctor</code> → sonra <code>/hooks</code>.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> <code>matcher</code> alanına string yerine dizi yazılmış. Bu bir şema hatasıdır: Claude Code ayar hatası bildirimi gösterir ve <strong>tüm user/project/local settings dosyasını reddeder</strong> — yani o dosyadaki diğer hook'lar da ölür. <code>claude doctor</code> doğrulama hatasını raporlar, <code>/hooks</code> ise o dosyadan hiçbir hook listelemez.</p>
-    </div>
+    <h3>Çok dosyalı refactor</h3>
+    <p>"Tüm API endpoint'lerini yeni error handler'a taşı" gibi bir iş, 20 dosyada yarım kalırsa repo tutarsız kalır. Plan mode dokunulacak dosya listesini önden çıkarır; sen listeyi budayıp onaylarsın.</p>
 
-    <pre><code><span class="c">// YANLIŞ — dizi kullanımı tüm dosyayı geçersiz kılar</span>
-{
-  <span class="s">"hooks"</span>: {
-    <span class="s">"PreToolUse"</span>: [
-      { <span class="s">"matcher"</span>: [<span class="s">"Edit"</span>, <span class="s">"Write"</span>], <span class="s">"hooks"</span>: [ <span class="c">/* ... */</span> ] }
-    ]
-  }
-}
+    <h3>Migration ya da schema değişikliği</h3>
+    <p>Geri alması pahalı olan işler. Plan mode'da sırayı ve rollback stratejisini konuş, sonra uygula.</p>
 
-<span class="c">// DOĞRU — tek string, | ile ayrılmış</span>
-{
-  <span class="s">"hooks"</span>: {
-    <span class="s">"PreToolUse"</span>: [
-      { <span class="s">"matcher"</span>: <span class="s">"Edit|Write"</span>, <span class="s">"hooks"</span>: [ <span class="c">/* ... */</span> ] }
-    ]
-  }
-}</code></pre>
+    <h3>İki yaklaşım arasında kararsızsın</h3>
+    <pre><code><span class="k">/plan</span> rate limiting'i middleware olarak mı yoksa reverse proxy
+katmanında mı yapmalıyız? ikisinin de bu repodaki maliyetini çıkar.</code></pre>
+    <p>Tek prompt'luk <code>/plan</code>, moda kalıcı girmeden karar aldırır.</p>
 
-    <h3>Senaryo 4 — "Oturum daha ilk mesajda dolu başlıyor"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Hiçbir şey yapmadan context'in üçte biri gitmiş; auto-compact erken devreye giriyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> Önce <code>/context</code> ile dağılımı gör, sonra <code>/doctor</code> ile temizlik önerilerini al.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Aylar önce eklenip bir daha dokunulmamış MCP server'lar, kullanılmayan plugin'ler ve şişmiş bir CLAUDE.md. <code>/doctor</code> bunları context maliyetleriyle birlikte listeler ve kaldırmayı/budamayı teklif eder.</p>
-    </div>
+    <h3>Bir şeyi Claude'a değil kendine anlattıracaksan</h3>
+    <p>"Bu servis nasıl çalışıyor?" tarzı öğrenme oturumlarında plan mode, yanlışlıkla dosya düzenlenmesini tamamen ortadan kaldırır. Keşif oturumunu plan mode'da açmak ucuz bir güvenlik ağı.</p>
 
-    <h3>Senaryo 5 — "Her tool call'dan önce bir bekleme var"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Claude her dosya yazmadan önce bir-iki saniye takılıyor. Model yavaş değil, arada bir şey var.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>/doctor</code>.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Yavaş çalışan bir hook — <code>/doctor</code> bunları ayrıca işaretler. Suçlunun hook mu, plugin mi, MCP server mı olduğundan emin değilsen <code>claude --safe-mode</code> ile tüm özelleştirmeleri kapatıp farkı ölç.</p>
-    </div>
-
-    <h3>Senaryo 6 — "Ekibin CLAUDE.md'si 400 satır oldu"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Dosya zamanla büyüdü; içinde dizin ağacı, bağımlılık listesi ve mimari anlatımı var. Claude bazı kuralları artık gözden kaçırıyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>/doctor</code> (v2.1.206+).</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Türetilebilir bölümlerin listesi ve bunları kesme teklifi; kalan yönlendirmenin skills ile alt dizin CLAUDE.md dosyalarına taşınması. Kural sayısı azaldıkça kalanlara düşen dikkat artar — bu, uyum sorunlarının en yaygın çözümü.</p>
-    </div>
-
-    <h3>Senaryo 7 — "Sürekli tekrar login istiyor" (macOS)</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Her oturumdan sonra yeniden giriş yapman isteniyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>claude doctor</code> — Keychain erişimini kontrol eder.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Keychain kilitli ya da parolası hesap parolanla senkron değil; bu yüzden credentials kaydedilemiyor. Elle açmak için: <code>security unlock-keychain ~/Library/Keychains/login.keychain-db</code></p>
-    </div>
+    <h3>Ekipteki riskli dizin</h3>
+    <p>Projede <code>defaultMode: "plan"</code> ayarlıysa, repoyu yeni klonlayan kişi de ilk oturumunu okuyarak açar. Yeni gelenlerin "ne olduğunu anlamadan" değişiklik yapmasını engellemenin en ucuz yolu.</p>
   </section>
 
-  <!-- ===================================================== -->
   <section id="m8">
-    <h2><span class="num">08</span> /doctor'ın bakmadığı yerler</h2>
-    <p><code>/doctor</code> geniş ama derin değil. Belirli bir katmanı incelemek istediğinde doğru komut şu:</p>
-
+    <h2><span class="num">08</span> Ne zaman plan mode'a girmemelisin?</h2>
+    <p>Plan mode bedava değil: fazladan bir tur, fazladan token ve fazladan onay ekranı demek. Aşağıdaki durumlarda maliyeti faydasından büyük.</p>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Komut</th><th>Ne gösterir</th></tr></thead>
+        <thead><tr><th>Durum</th><th>Neden atla</th><th>Onun yerine</th></tr></thead>
         <tbody>
-          <tr><td><code>/context</code></td><td>Context window'u ne dolduruyor — kategori kategori döküm</td></tr>
-          <tr><td><code>/status</code></td><td>Aktif ayar kaynakları; managed settings devrede mi</td></tr>
-          <tr><td><code>/mcp</code></td><td>Bağlı MCP server'lar, bağlantı durumu ve proje onayı</td></tr>
-          <tr><td><code>/hooks</code></td><td>Bu oturumda kayıtlı hook'lar, event'e göre gruplanmış</td></tr>
-          <tr><td><code>/permissions</code></td><td>Yürürlükteki allow ve deny kurallarının çözülmüş hâli</td></tr>
-          <tr><td><code>/memory</code></td><td>Memory dosyalarının konumları ve auto-memory ayarları</td></tr>
-          <tr><td><code>/debug [sorun]</code></td><td>Oturum için debug log'u açar ve Claude'a log üzerinden teşhis yaptırır</td></tr>
-          <tr><td><code>/compact</code></td><td>Konuşmayı özetleyerek context açar</td></tr>
-          <tr><td><code>claude --safe-mode</code></td><td>Tüm özelleştirmeler kapalı bir oturum — sorunun kaynağını elemek için</td></tr>
-          <tr><td><code>/feedback</code></td><td>Sorunu doğrudan Anthropic'e bildirir</td></tr>
+          <tr><td>Typo, log satırı, değişken adı</td><td>Diff'i tek cümleyle tarif edebiliyorsun</td><td>Doğrudan iste</td></tr>
+          <tr><td>Tek dosyada, kapsamı net düzeltme</td><td>Plan, diff'ten uzun olur</td><td><code>acceptEdits</code></td></tr>
+          <tr><td>Keşifçi deneme ("şunu bir dene bakalım")</td><td>Plan, denemenin hızını öldürür</td><td>Dene, tutmazsa <code>/rewind</code></td></tr>
+          <tr><td>Uzun, gözetimsiz koşu</td><td>Plan mode oturumu durdurup onay bekler</td><td><code>auto</code> mode</td></tr>
+          <tr><td>CI / headless pipeline</td><td>Onaylayacak insan yok</td><td><code>dontAsk</code> + <code>allow</code> kuralları</td></tr>
+          <tr><td>Zaten yazılı bir spec'in var</td><td>Planı ikinci kez ürettiriyorsun</td><td>Spec'i ver, uygulat</td></tr>
+          <tr><td>Yalnızca soru soruyorsun</td><td>Zaten dosya yazılmayacak</td><td>Normal sohbet yeter</td></tr>
         </tbody>
       </table>
     </div>
-
-    <p>Pratik sıra: <code>/doctor</code> genel resmi verir, <code>/context</code> neyin yüklendiğini gösterir, ardından ilgili kategorinin kendi komutuna inersin. Hiçbiri cevap vermiyorsa <code>claude --safe-mode</code> ile ikiye bölerek arama yaparsın.</p>
+    <div class="note warn">
+      <span class="tag">İki yönlü hata</span>
+      Plan mode'u fazla kullanmanın bedeli yavaşlıktır; hiç kullanmamanın bedeli ise yanlış problemin kusursuz çözümüdür. İkincisi daha pahalı — ama "her prompt'tan önce plan" alışkanlığı da oturumu bir onay tıklama seansına çevirir. Ölçüt hep aynı: <strong>belirsizlik var mı?</strong>
+    </div>
   </section>
 
-  <!-- ===================================================== -->
   <section id="m9">
-    <h2><span class="num">09</span> Tuzaklar ve sürüm farkları</h2>
+    <h2><span class="num">09</span> Ekibe ve otomasyona bağlamak</h2>
 
-    <div class="note warn">
-      <span class="tag">Her şeyi görmez</span>
-      WSL'de dosya sistemleri arası okuma cezası yüzünden search beklenenden az sonuç döndürebilir — ama <code>claude doctor</code> bu durumda Search'ü <strong>OK</strong> olarak gösterir. "doctor temiz" demek "sorun yok" demek değil.
-    </div>
+    <h3>Projeye varsayılan yapmak</h3>
+    <p><code>.claude/settings.json</code> içindeki <code>permissions.defaultMode</code> repoya commit edilebilir; ekipteki herkes plan mode'da başlar. Riskli veya yeni bir kod tabanı için makul bir varsayılan.</p>
 
-    <p><strong>Kapatmak isterseniz.</strong> <code>disableBundledSkills</code> ayarı bütün bundled skill'leri kapatır ama <code>/doctor</code>'a dokunmaz — o yazılabilir kalır (v2.1.205+). Gerçekten gizlemek için:</p>
+    <h3>Hook'lardan modu görmek</h3>
+    <p>Hook'ların aldığı JSON'da <code>permission_mode</code> alanı bulunur ve değeri <code>"plan"</code> olabilir. Yani "planlama sırasında şu kontrolü çalıştırma" gibi mantıkları hook içinde kurabilirsin:</p>
+    <pre><code><span class="c"># hook script'i içinde (stdin'den gelen JSON)</span>
+mode=$(jq -r <span class="s">'.permission_mode'</span>)
+<span class="k">if</span> [ <span class="s">"$mode"</span> = <span class="s">"plan"</span> ]; <span class="k">then</span> exit 0; <span class="k">fi</span></code></pre>
+    <p>Manual mod bu alana <code>"default"</code> olarak gelir, <code>"manual"</code> olarak değil — eski script'ler çalışmaya devam eder.</p>
 
-    <pre><code><span class="c"># Ortam değişkeni ile</span>
-DISABLE_DOCTOR_COMMAND=<span class="s">1</span>
-
-<span class="c"># Ya da settings.json içinde skillOverrides ile</span>
-{
-  <span class="s">"skillOverrides"</span>: { <span class="s">"doctor"</span>: <span class="s">"off"</span> }
-}</code></pre>
-
-    <p><strong>Sürüm sürüm davranış.</strong> <code>/doctor</code> son aylarda epey değişti; bir yerde okuduğun davranış seninkiyle uyuşmuyorsa önce sürümüne bak.</p>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Sürüm</th><th>Değişiklik</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>v2.1.205 öncesi</td>
-            <td><code>/doctor</code> bundled skill değil, built-in command'dı; salt okunur bir teşhis ekranı açıyor ve raporu Claude'a göndermek için <code>f</code> tuşunu bekliyordu</td>
-          </tr>
-          <tr>
-            <td>v2.1.206 öncesi</td>
-            <td>CLAUDE.md budama denetimi yok</td>
-          </tr>
-          <tr>
-            <td>v2.1.206 öncesi</td>
-            <td>Sürüm kontrolü, Homebrew kurulumlarını yüklü cask'ın kanalı yerine <code>autoUpdatesChannel</code> ayarına göre karşılaştırıyordu</td>
-          </tr>
-          <tr>
-            <td>v2.1.214 öncesi</td>
-            <td><code>~/.zshrc</code>, <code>~/.bashrc</code> gibi bir shell config yolunda <strong>dizin</strong> varsa <code>claude doctor</code> hiç çıktı vermeden kilitleniyor, <code>/status</code>'un System diagnostics bölümü boş kalıyordu</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Son maddeye takılırsan: <code>claude update</code> ve <code>claude doctor</code>, eski bir <code>claude</code> alias'ı aramak için shell config dosyalarını tarar. Bu yollardan biri dizinse ve sürümün eskiyse komut asılı kalır. Şüpheleniyorsan hangi yolun dizin olduğunu bul — çıktıda <code>d</code> ile başlayan satır dizini işaretler:</p>
-
-    <pre><code>ls -ld ~/.zshrc ~/.bashrc ~/.bash_profile ~/.bash_login ~/.profile ~/.config/fish/config.fish</code></pre>
+    <h3>Modu değiştiren araçlar</h3>
+    <p>Claude'un elinde iki ilgili tool var: <code>EnterPlanMode</code> (plan mode'a geçer, izin gerektirmez) ve <code>ExitPlanMode</code> (planı onaya sunar ve moddan çıkar, <strong>izin gerektirir</strong>). Onay ekranını gördüğün an, <code>ExitPlanMode</code> çağrısının izin istediği andır.</p>
 
     <div class="note">
-      <span class="tag">Kalıcı alışkanlık</span>
-      Bir sorunu GitHub'a taşımadan önce sırayla: <code>claude --version</code> → <code>claude doctor</code> → <code>/doctor</code> → <code>/mcp</code>. Bu dört adım, "sorun bende mi, üründe mi" sorusunun büyük kısmını cevaplar.
+      <span class="tag">Subagent notu</span>
+      Auto mode devredeyken subagent'ların frontmatter'ındaki <code>permissionMode</code> alanı yok sayılır ve subagent'ın her aksiyonu ana oturumla aynı kurallardan geçer. Subagent tanımına <code>permissionMode: plan</code> yazıp bunun her koşulda uygulanacağını varsayma.
+    </div>
+  </section>
+
+  <section id="m10">
+    <h2><span class="num">10</span> Tuzaklar ve sürüm notları</h2>
+    <ul>
+      <li><strong>Sohbette mod değişmez.</strong> "Plan mode'a geç" yazmak modu değiştirmez; <code>Shift+Tab</code>, <code>/plan</code> veya bayrak gerekir.</li>
+      <li><strong>Shift+Tab ile çıkmak onay değildir.</strong> Moddan çıkarsın ama plan onaylanmış sayılmaz; Claude'un sonraki adımı plana bağlı kalmayabilir. Uygulamaya geçecekse onay ekranından çık.</li>
+      <li><strong>Planlama context yer.</strong> Keşif turu onlarca dosya okur. Uygulamaya geçerken <code>showClearContextOnPlanAccept</code> seçeneğini veya planı dosyaya yazıp temiz oturumda uygulamayı düşün.</li>
+      <li><strong>Cloud oturumlarında "Manual" yok.</strong> Claude Code on the web'de cloud oturumları moddan bağımsız olarak dosya düzenlemelerini ön onaylı sayar; dropdown Manual yerine Accept edits gösterir. Plan yine seçilebilir.</li>
+      <li><strong><code>defaultMode</code> her dosyadan okunmaz.</strong> <code>auto</code> değeri <code>.claude/settings.json</code> ve <code>.claude/settings.local.json</code> dosyalarından yok sayılır (v2.1.142+) — bir repo kendine auto mode veremesin diye. <code>plan</code> için böyle bir kısıt yok.</li>
+      <li><strong>Sürüm farkı:</strong> bypass permissions'ın olmadığı oturumlarda, v2.1.212 – v2.1.217 arasında read-only kümesi dışındaki komutlar her durumda onay soruyordu. Davranış sürüme göre değişebilir; kendi sürümünde <code>claude --version</code> ile teyit et.</li>
+    </ul>
+  </section>
+
+  <section id="m11">
+    <h2><span class="num">11</span> Hızlı referans</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Ne istiyorsun</th><th>Ne yapıyorsun</th></tr></thead>
+        <tbody>
+          <tr><td>Oturum ortasında plan mode'a geç</td><td><code>Shift+Tab</code> (döngü: default → acceptEdits → plan)</td></tr>
+          <tr><td>Sadece bu prompt planlansın</td><td>Prompt'un başına <code>/plan</code></td></tr>
+          <tr><td>Oturumu plan mode'da başlat</td><td><code>claude --permission-mode plan</code></td></tr>
+          <tr><td>Projede varsayılan yap</td><td><code>.claude/settings.json</code> → <code>"permissions": {"defaultMode": "plan"}</code></td></tr>
+          <tr><td>Aktif mi kontrol et</td><td>Durum çubuğunda <code>⏸ plan mode on</code></td></tr>
+          <tr><td>Planı editörde düzelt</td><td><code>Ctrl+G</code></td></tr>
+          <tr><td>Planı onayla, sen gözden geçir</td><td><strong>Yes, manually approve edits</strong></td></tr>
+          <tr><td>Planı onayla, kesintisiz koşsun</td><td><strong>Yes, and use auto mode</strong></td></tr>
+          <tr><td>Planı beğenmedin</td><td><strong>No, keep planning</strong> + ne değişmeli</td></tr>
+          <tr><td>Onaylamadan moddan çık</td><td><code>Shift+Tab</code></td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
   <footer>
-    Kaynaklar ·
-    <a href="https://code.claude.com/docs/en/commands">commands</a> ·
-    <a href="https://code.claude.com/docs/en/debug-your-config">debug-your-config</a> ·
-    <a href="https://code.claude.com/docs/en/troubleshooting">troubleshooting</a> ·
-    <a href="https://code.claude.com/docs/en/troubleshoot-install">troubleshoot-install</a> ·
-    <a href="https://code.claude.com/docs/en/setup">setup</a> ·
-    <a href="https://code.claude.com/docs/en/skills">skills</a>
+    Referanslar ·
+    <a href="https://code.claude.com/docs/en/permission-modes">permission-modes</a> ·
+    <a href="https://code.claude.com/docs/en/permissions">permissions</a> ·
+    <a href="https://code.claude.com/docs/en/best-practices">best-practices</a> ·
+    <a href="https://code.claude.com/docs/en/common-workflows">common-workflows</a> ·
+    <a href="https://code.claude.com/docs/en/hooks">hooks</a>
   </footer>
 
 </div>

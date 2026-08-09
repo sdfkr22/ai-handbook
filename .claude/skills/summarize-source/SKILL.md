@@ -106,7 +106,9 @@ Kullanıcıya yazılan dosya yolunu ve `index.html`'i tarayıcıda açabileceği
 
 5. **Aşırı biçimlendirmeden kaçın ama yapı kur.** İçindekiler menüsü, numaralı bölümler, kod blokları ve uyarı kutuları okunabilirliği artırır. Şablon bunları zaten içerir.
 
-6. **`data/` ve `index.html` dosyalarına elle dokunma.** Katalog tamamen `build.mjs` üzerinden güncellenir.
+6. **Şablonun CSS'ini değiştirme.** Yeni bir bileşene ihtiyaç duyarsan mevcutlardan (`.card`, `.note`, `table`) türet. **Hiçbir yerde gradient kullanma** — arka plan, kart, düğme hepsi düz renk (`var(--bg)`, `var(--panel)` gibi); `linear-gradient` / `radial-gradient` yazma.
+
+7. **`data/` ve `index.html` dosyalarına elle dokunma.** Katalog tamamen `build.mjs` üzerinden güncellenir.
 
 ## Şablon bileşenleri
 

@@ -1,6 +1,84 @@
 // OTOMATİK ÜRETİLDİ — elle düzenleme. Yenilemek için: node scripts/build.mjs
 window.YAZILAR = [
   {
+    "dosya": "posts/plan-mode-guide.html",
+    "baslik": "Önce plan, sonra diff",
+    "aciklama": "Plan mode bir rica değil, bir permission mode: Claude okur, araştırır, plan yazar ama sen onaylayana kadar diske dokunmaz. Tetikleme yolları, onay ekranı, senaryolar ve plan mode'a girmemen gereken durumlar.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "plan mode",
+      "permission mode",
+      "Shift+Tab",
+      "/plan",
+      "--permission-mode",
+      "defaultMode",
+      "auto mode",
+      "acceptEdits",
+      "ExitPlanMode",
+      "workflow"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/permission-modes",
+    "tarih": "2026-08-09",
+    "sure": 9,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Plan mode bir rica değil, bir mod"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Neden zahmete değer?"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Üç kapı: Shift+Tab, /plan, --permission-mode"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "İçeride ne serbest, ne yasak?"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Plan hazır: onay ekranında ne seçiyorsun?"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Explore → Plan → Implement → Commit"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Senaryo defteri"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Ne zaman plan mode'a girmemelisin?"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Ekibe ve otomasyona bağlamak"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Tuzaklar ve sürüm notları"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Hızlı referans"
+      }
+    ]
+  },
+  {
     "dosya": "posts/doctor-command-guide.html",
     "baslik": "Bir şey mi ters? Önce /doctor",
     "aciklama": "Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server'lar, yavaş hook'lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.",
@@ -637,4 +715,4 @@ window.YAZILAR = [
     ]
   }
 ];
-window.YAZILAR_GUNCELLEME = "2026-08-07";
+window.YAZILAR_GUNCELLEME = "2026-08-09";

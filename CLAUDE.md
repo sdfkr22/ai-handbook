@@ -21,9 +21,7 @@ build adımını kullanır — bu yüzden tüm sayfalar birebir aynı görünür
 
 - İçerik Türkçedir; teknik terimler ve bölüm başlıkları orijinal dilinde bırakılır.
 - **Dosya ve klasör adları İngilizcedir** — ASCII, kebab-case (`posts/hooks-guide.html` gibi).
-  Türkçe karakter veya Türkçe sözcük kullanılmaz; içerik Türkçe kalır, adlar İngilizce.
-- **Hiçbir yerde gradient kullanılmaz.** Arka planlar, kartlar, düğmeler — hepsi düz renk
-  (`var(--bg)`, `var(--panel)` gibi). `linear-gradient` / `radial-gradient` eklenmez.
+- **Gradient yok** — arka plan, kart, düğme hepsi düz renk (`var(--bg)`, `var(--panel)` gibi).
 - **Sayfayı "özet", "çeviri", "derleme rehber" diye etiketleme.** `<title>`, kicker ve footer'da
   "Türkçe Özet", "Bu sayfanın Türkçe özetidir" gibi ibareler kullanılmaz — sayfa kendi başına bir
   içerik olarak durur. Kaynak yalnızca `.source` satırında ve footer'da link olarak verilir.
@@ -31,26 +29,14 @@ build adımını kullanır — bu yüzden tüm sayfalar birebir aynı görünür
 ## Yapı
 
 ```
-index.html                        Katalog sayfası: kategori filtresi + arama. Elle düzenlenir.
-assets/site.css                   Katalog stili (sayfalarla aynı editoryal tema, koyu + açık).
-assets/site.js                    Tema düğmesi + filtre/arama mantığı. window.YAZILAR dizisini okur.
-posts/*.html                      Her sayfa ayrı, kendi kendine yeten tek dosya.
-archive/*.html                    Yayından çıkarılmış sayfalar. Build taramaz, katalogda görünmez.
-templates/page-template.html      Ortak HTML/CSS şablonu — iki skill de bunu kullanır.
-data/posts.js                     window.YAZILAR — OTOMATİK ÜRETİLİR, elle düzenleme.
-data/posts.json                   Aynı veri, JSON olarak. OTOMATİK ÜRETİLİR.
-scripts/build.mjs                 posts/ klasörünü tarar, data/ dosyalarını üretir.
-.claude/skills/summarize-source/  Kaynaktan Türkçe sayfa üretir.
-.claude/skills/topic-page/        Konu başlığından özgün sayfa üretir.
-.claude/agents/page-auditor.md    Mevcut sayfaları denetler ve düzeltir. Elle çağrılır.
+index.html                    Katalog: kategori filtresi + arama. Sayfa eklerken dokunulmaz.
+assets/                       Katalog stili (site.css) ve tema + filtre mantığı (site.js).
+posts/*.html                  Her sayfa ayrı, kendi kendine yeten tek dosya.
+archive/*.html                Yayından çıkarılmış sayfalar. Build taramaz, katalogda görünmez.
+templates/page-template.html  Ortak HTML/CSS şablonu — iki skill de bunu kullanır.
+data/posts.js|.json           Katalog verisi. OTOMATİK ÜRETİLİR, elle düzenleme.
+scripts/build.mjs             posts/ tarar, data/ üretir, sayfalara ortak kabuğu enjekte eder.
 ```
-
-## Denetim
-
-`page-auditor` subagent'i mevcut sayfaları doğrular: bilgi doğruluğu, katalog metaları, şablon/stil
-uyumu, TOC-bölüm tutarlılığı, kırık linkler, karakter sorunları. Bulduğunu düzeltir ve
-`build.mjs`'i çalıştırır. **Kendiliğinden çalışmaz** — "sayfaları kontrol et" gibi açık bir
-istekle tetiklenir. Yeni sayfa üretmez.
 
 ## Katalog nasıl besleniyor
 
@@ -65,21 +51,10 @@ Her sayfa kendi meta bilgisini `<head>` içinde taşır; ayrı bir kayıt defter
 <meta name="yazi:tarih"     content="YYYY-AA-GG">
 ```
 
-`node scripts/build.mjs` bu etiketleri toplayıp `data/posts.js` dosyasını yeniden yazar.
-Meta eksikse script `<title>`, `.lede` ve `.source` linkinden tahmin eder ve uyarı basar.
-Ayrıca her sayfaya ortak kabuğu enjekte eder (idempotent; blok değişmişse günceller):
-"← Tüm yazılar" geri linki, açık tema override'ları ve tema düğmesi.
+`yazi:kategori` için önce `data/posts.json` içindeki mevcut kategorilere bak, uyanı **birebir aynı
+yazımla** kullan. Kategori sayısını şişirme — konu başlığı seviyesinde tut.
 
 **Yeni bir sayfa ekledikten sonra `node scripts/build.mjs` çalıştırmak zorunludur** — aksi halde
-sayfa sitede görünmez.
-
-## Kategoriler
-
-Kategori listesi sabit değil; dosyalardaki `yazi:kategori` değerlerinden türetilir.
-Yeni sayfa eklerken önce `data/posts.json` içindeki mevcut kategorilere bak ve uyanı
-**birebir aynı yazımla** kullan. Kategori sayısını şişirme — konu başlığı seviyesinde tut.
-
-## Yerel önizleme
-
-`index.html` dosyasını doğrudan tarayıcıda açmak yeterlidir (veri `.js` olarak yüklendiği için
-`file://` üzerinde de çalışır, CORS sorunu yok). İstersen: `npx serve .` veya `python -m http.server`.
+sayfa sitede görünmez. Script ortak kabuğu da enjekte eder (idempotent): geri linki, tema düğmesi,
+açık tema override'ları, okuma süresi ve sayfa sonundaki önceki/sonraki + ilgili yazılar bloğu.
+Eksik meta için uyarı basar.

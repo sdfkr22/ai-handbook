@@ -122,7 +122,9 @@ Dosya yolunu söyle, `index.html`'i tarayıcıda açabileceğini belirt ve sayfa
    yanlış karaktere yol açar. `<meta charset="UTF-8">` mutlaka bulunsun. `build.mjs` bunu denetler.
 
 4. **Şablonun CSS'ini değiştirme.** Yeni bir bileşene ihtiyaç duyarsan mevcutlardan (`.card`,
-   `.note`, `table`) türet. Tema değişikliği isteniyorsa tüm sayfalarda birden yapılmalı — kullanıcıya sor.
+   `.note`, `table`) türet. **Hiçbir yerde gradient kullanma** — arka plan, kart, düğme hepsi düz
+   renk (`var(--bg)`, `var(--panel)` gibi); `linear-gradient` / `radial-gradient` yazma.
+   Tema değişikliği isteniyorsa tüm sayfalarda birden yapılmalı — kullanıcıya sor.
 
 5. **`data/` ve `index.html` dosyalarına elle dokunma.** Katalog yalnızca `build.mjs` ile güncellenir.
 
