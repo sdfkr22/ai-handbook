@@ -1,0 +1,4 @@
+# Repodaki her dosyanın sahibi @sdfkr22.
+# Ruleset'te "Require review from Code Owners" işaretliyken main'e giden her PR
+# merge edilebilmek için @sdfkr22'nin onayını gerektirir.
+* @sdfkr22
