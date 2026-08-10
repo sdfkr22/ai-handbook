@@ -7,18 +7,31 @@
  *
  * Ayrıca her sayfaya ortak kabuğu enjekte eder — "← Tüm yazılar" geri linki,
  * açık/koyu tema override'ları ve tema düğmesi (idempotent: blok zaten varsa ve
- * içeriği değiştiyse güncellenir, aynıysa dokunulmaz).
+ * içeriği değiştiyse güncellenir, aynıysa dokunulmaz). <head> tarafına da
+ * paylaşım metalarını (canonical, Open Graph, Twitter, favicon, feed) yazar ve
+ * kök dizine sitemap.xml, feed.xml, robots.txt üretir.
  *
  * Kullanım: node scripts/build.mjs
+ *   Başka bir adrese yayınlarken:  SITE_URL=https://ornek.com node scripts/build.mjs
  */
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const YAZI_DIR = path.join(ROOT, "posts");
 const DATA_DIR = path.join(ROOT, "data");
+
+/* ---------- site kimliği ----------
+ * Mutlak adres gerektiren her şey (canonical, og:url, sitemap, feed) buradan
+ * türer; sayfaların içine elle adres yazılmaz. Sondaki eğik çizgi garanti edilir.
+ */
+const SITE = (process.env.SITE_URL || "https://sdfkr22.github.io/ai-handbook/").replace(/\/*$/, "/");
+const SITE_AD = "AI Handbook";
+const SITE_ACIKLAMA =
+  "Claude Code ve yapay zekâ araçları üzerine teknik yazılar. Konu başlığına göre filtrelenebilir arşiv.";
 
 const uyarilar = [];
 
@@ -34,6 +47,12 @@ const decode = (s) =>
     .replace(/&nbsp;/g, " ");
 
 const metinle = (html) => decode(String(html).replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim();
+
+/** HTML attribute ve XML metni için ortak kaçış. */
+const esc = (s) =>
+  String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
 
 function meta(html, ad) {
   const re = new RegExp(`<meta\\s+name=["']${ad}["']\\s+content=["']([\\s\\S]*?)["']\\s*/?>`, "i");
@@ -98,6 +117,92 @@ function ilgiliBul(kayit, hepsi, adet = 3) {
     .map((x) => ({ dosya: path.basename(x.k.dosya), baslik: x.k.baslik }));
 }
 
+/* ---------- <head> paylaşım metaları ----------
+ * Link bir sohbete yapıştırıldığında başlık/açıklama görünsün diye Open Graph ve
+ * Twitter metaları; ayrıca canonical, favicon ve feed bağlantısı. Bunlar <body>
+ * içine konursa tarayıcı okur ama pek çok crawler görmez — bu yüzden ayrı bir
+ * yönetilen blok olarak </head> öncesine yazılır.
+ */
+const BAS_BASLA = "<!-- yazi:bas -->";
+const BAS_BITIR = "<!-- /yazi:bas -->";
+const MEVCUT_BAS = /<!-- yazi:bas -->[\s\S]*?<!-- \/yazi:bas -->\n/;
+
+/**
+ * @param kokYol   Sayfadan site köküne göreli önek ("" veya "../"). Göreli
+ *                 tutulur ki site file:// üzerinden de açılabilsin.
+ * @param aciklamaVar  Sayfa kendi <meta name="description"> etiketini taşıyorsa
+ *                 ikinci bir tane basılmaz.
+ */
+function basBlogu({ url, baslik, aciklama, tur, kokYol, tarih, etiketler = [], gorsel, aciklamaVar }) {
+  const s = [
+    `<link rel="stylesheet" href="${kokYol}assets/fonts.css">`,
+    `<link rel="canonical" href="${esc(url)}">`,
+    `<link rel="icon" type="image/svg+xml" href="${kokYol}assets/favicon.svg">`,
+    `<link rel="apple-touch-icon" href="${kokYol}assets/icon-192.png">`,
+    `<link rel="manifest" href="${kokYol}manifest.webmanifest">`,
+    `<link rel="alternate" type="application/rss+xml" title="${esc(SITE_AD)}" href="${kokYol}feed.xml">`,
+    `<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">`,
+    `<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">`,
+  ];
+  if (!aciklamaVar && aciklama) s.push(`<meta name="description" content="${esc(aciklama)}">`);
+  s.push(
+    `<meta property="og:type" content="${tur}">`,
+    `<meta property="og:site_name" content="${esc(SITE_AD)}">`,
+    `<meta property="og:locale" content="tr_TR">`,
+    `<meta property="og:title" content="${esc(baslik)}">`,
+    `<meta property="og:url" content="${esc(url)}">`
+  );
+  if (aciklama) s.push(`<meta property="og:description" content="${esc(aciklama)}">`);
+  if (gorsel) s.push(`<meta property="og:image" content="${esc(gorsel)}">`);
+  if (tur === "article") {
+    if (tarih) s.push(`<meta property="article:published_time" content="${esc(tarih)}">`);
+    for (const t of etiketler.slice(0, 6)) s.push(`<meta property="article:tag" content="${esc(t)}">`);
+  }
+  /* Görsel yoksa summary_large_image boş bir çerçeve çizdirir; küçük kart daha temiz. */
+  s.push(
+    `<meta name="twitter:card" content="${gorsel ? "summary_large_image" : "summary"}">`,
+    `<meta name="twitter:title" content="${esc(baslik)}">`
+  );
+  if (aciklama) s.push(`<meta name="twitter:description" content="${esc(aciklama)}">`);
+  /* Service worker kaydı. file:// üzerinden açmak desteklenen bir kullanım
+     (index.html'e çift tıklamak), orada kayıt denenmez bile. */
+  s.push(
+    `<script>(function(){` +
+      `if(!("serviceWorker" in navigator))return;` +
+      `if(location.protocol!=="http:"&&location.protocol!=="https:")return;` +
+      `window.addEventListener("load",function(){` +
+        `navigator.serviceWorker.register("${kokYol}sw.js",{scope:"${kokYol || "./"}"}).catch(function(){});` +
+      `});` +
+    `})();</script>`
+  );
+  return s.join("\n");
+}
+
+/** Yönetilen head bloğunu söküp yeniden yazar (idempotent). */
+function basEkle(html, blok, dosyaAdi) {
+  const temiz = html.replace(MEVCUT_BAS, "");
+  if (!/<\/head>/i.test(temiz)) {
+    uyarilar.push(`${dosyaAdi}: </head> bulunamadı, paylaşım metaları eklenmedi.`);
+    return temiz;
+  }
+  return temiz.replace(/<\/head>/i, `${BAS_BASLA}\n${blok}\n${BAS_BITIR}\n</head>`);
+}
+
+/**
+ * Google Fonts'a giden preconnect/stylesheet satırlarını söker. Fontlar artık
+ * assets/fonts/ altından geliyor (bkz. scripts/fetch-fonts.mjs); yönetilen blok
+ * yerel stylesheet'i zaten ekliyor. Eski sayfalarda kalan satırlar bir kez
+ * temizlenir, sonraki çalıştırmalarda eşleşme olmaz.
+ */
+function googleFontsuSok(html) {
+  return html.replace(/^[ \t]*<link\b[^>]*fonts\.(?:googleapis|gstatic)\.com[^>]*>[ \t]*\r?\n?/gim, "");
+}
+
+/** Sayfanın kendi (yönetilen blok dışındaki) description metası var mı? */
+function kendiAciklamasiVar(html) {
+  return /<meta\s+name=["']description["']/i.test(html.replace(MEVCUT_BAS, ""));
+}
+
 /* ---------- ortak kabuk enjeksiyonu (geri linki + tema) ---------- */
 
 const KABUK_BASLA = "<!-- yazi:kabuk -->";
@@ -112,6 +217,7 @@ const KABUK_BITIR = "<!-- /yazi:kabuk -->";
  */
 function isikKurallari(kok) {
   return `${kok}{
+    color-scheme:light;
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
     --card:#fbf5e9; --card-line:#ecdfc8;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
@@ -131,10 +237,20 @@ function isikKurallari(kok) {
 const KABUK = `${KABUK_BASLA}
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
    Aynı yerde .yazi-yazim sınıfı eklenir: başlık, daktilo animasyonu hazırlanana
-   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür. */
+   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür.
+
+   Bu sayfanın önceki okuma kaydı da burada, her şeyden önce anlık görüntülenir:
+   ilerleme çubuğu açılışta hemen yazmaya başlıyor ve kaydı ezmiş oluyor; "kaldığın
+   yere dön" satırının okuması gereken değer açılış anındaki değerdir. */
 (function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}
-document.documentElement.classList.add("yazi-yazim");})();</script>
+document.documentElement.classList.add("yazi-yazim");
+try{
+  var d=(location.pathname.split("/").pop()||"").toLowerCase();
+  window.YAZI_KALDIGI=d?(JSON.parse(localStorage.getItem("okuma")||"{}")||{})[d]||null:null;
+}catch(e){window.YAZI_KALDIGI=null;}})();</script>
 <style>
+  /* color-scheme kaydırma çubuğunu ve yerleşik denetimleri temaya uydurur. */
+  :root{color-scheme:dark;}
   ${isikKurallari(':root[data-theme="light"]')}
   @media (prefers-color-scheme: light){
   ${isikKurallari(":root:not([data-theme=\"dark\"])")}
@@ -173,7 +289,13 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
      pre'nin kendisi yatay kayabildiği için düğme, pre'yi saran ayrı bir
      kapsayıcıya konur; böylece kod sağa kaydırılınca düğme yerinde kalır. */
   .yazi-pre-sar{position:relative;}
-  .yazi-kopyala{position:absolute;top:10px;right:10px;z-index:2;
+  /* Dil etiketi ve kopyala düğmesi aynı satırda durur; düğme görünmezken de
+     yer kapladığı için etiket hover'da yerinden oynamaz. */
+  .yazi-pre-ust{position:absolute;top:10px;right:10px;z-index:2;
+    display:flex;align-items:center;gap:8px;}
+  .yazi-dil{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);opacity:.7;pointer-events:none;}
+  .yazi-kopyala{
     font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;line-height:1;
     color:var(--ink-mute);background:var(--panel);border:1px solid var(--line);border-radius:7px;
     padding:6px 10px;cursor:pointer;opacity:0;transition:opacity .15s,color .15s,border-color .15s;}
@@ -243,6 +365,16 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
   .yazi-ilgili a:hover{color:var(--accent);border-color:var(--accent);}
   .yazi-sure{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--ink-mute);margin:16px 0 0;}
+  /* --- Kaldığın yere dön ---
+     Yalnızca bu tarayıcıda yarım bırakılmış yazılarda ve sayfa doğrudan bir
+     bölüm bağlantısıyla açılmadıysa görünür. */
+  .yazi-devam{display:flex;align-items:center;gap:8px;margin:12px 0 0;}
+  .yazi-devam button{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:8px 14px;cursor:pointer;
+    transition:color .15s,border-color .15s;}
+  .yazi-devam button:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-devam .yazi-devam-kapat{padding:8px 11px;font-size:13px;color:var(--ink-mute);}
   @media (max-width:620px){
     .yazi-komsu{grid-template-columns:1fr;}
     .yazi-komsu-bag.sag{text-align:left;align-items:flex-start;}
@@ -266,7 +398,8 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       --line:#bbb; --accent:#7a3c00; --accent-2:#1d5c20; --danger:#a01c10;
       --code-bg:#f6f6f6; --code-ink:#111;
     }
-    .yazi-geri,.tema-btn,.yazi-ilerleme,.yazi-kopyala,.yazi-yukari,.yazi-gezinme,.yazi-toc-ac{display:none !important;}
+    .yazi-geri,.tema-btn,.yazi-ilerleme,.yazi-kopyala,.yazi-yukari,.yazi-gezinme,.yazi-toc-ac,
+    .yazi-devam{display:none !important;}
     /* Daktilo animasyonu sürerken yazdırılırsa başlık eksik basılırdı:
        harfler görünürlüğü kapalı halde bekliyor. Kâğıtta hepsi görünür. */
     .yazi-imlec{display:none !important;}
@@ -373,12 +506,46 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       if(el){baglar.push(a);hedefler.push(el);}
     });
 
+    /* Okuma ilerlemesi tarayıcıda saklanır; katalogdaki "okundu" rozeti ve
+       "kaldığın yere dön" satırı bunu okur. Hiçbir veri dışarı gitmez. */
+    var DOSYA=(location.pathname.split("/").pop()||"").toLowerCase();
+    var BASTA=window.YAZI_KALDIGI||null;
+    var sonBolum="",sonYazilan=-1,yazZaman=0,sonOran=0,kaydirildi=false;
+    /* Sayfayı açıp hiç kaydırmadan kapatmak kaydı silmemeli: aksi halde okunmuş
+       bir yazıya tekrar bakmak "okundu" işaretini düşürürdü. */
+    window.addEventListener("scroll",function(){kaydirildi=true;},{passive:true,once:true});
+    function kaydet(oran,zorla){
+      if(!DOSYA||!kaydirildi)return;
+      /* Okundu işareti geri alınmaz; yazı yeniden sonuna kadar okunursa tazelenir. */
+      if(BASTA&&BASTA.o>=0.92&&oran<0.92)return;
+      var t=Date.now();
+      /* Her karede yazmak anlamsız: %2'lik değişimde ya da yarım saniyede bir. */
+      if(!zorla&&Math.abs(oran-sonYazilan)<0.02&&t-yazZaman<500)return;
+      sonYazilan=oran;yazZaman=t;
+      try{
+        var h=JSON.parse(localStorage.getItem("okuma")||"{}")||{};
+        h[DOSYA]={o:Math.round(oran*1000)/1000,b:sonBolum,t:t};
+        /* Kayıt şişmesin; en eski girdiler atılır. */
+        var adlar=Object.keys(h);
+        if(adlar.length>60){
+          adlar.sort(function(a,b){return (h[a].t||0)-(h[b].t||0);});
+          for(var i=0;i<adlar.length-60;i++)delete h[adlar[i]];
+        }
+        localStorage.setItem("okuma",JSON.stringify(h));
+      }catch(e){}
+    }
+
     var bekliyor=false,sonAktif=-1;
     function guncelle(){
       bekliyor=false;
       var yol=document.documentElement.scrollHeight-window.innerHeight;
       var oran=yol>0?Math.min(1,Math.max(0,window.scrollY/yol)):0;
       cubuk.style.transform="scaleX("+oran+")";
+      /* Ekrandan kısa sayfada kaydırılacak yer yok: tamamı görülmüş sayılır —
+         kaydırma beklenemeyeceği için kayıt da hemen serbest bırakılır. */
+      if(yol<=0)kaydirildi=true;
+      sonOran=yol>0?oran:1;
+      kaydet(sonOran);
       if(!hedefler.length)return;
       /* Üst kenarın 120px altını geçmiş son bölüm aktif sayılır. */
       var s=0;
@@ -391,11 +558,18 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
         if(sonAktif>-1)baglar[sonAktif].classList.remove("aktif");
         baglar[s].classList.add("aktif");
         sonAktif=s;
+        sonBolum=hedefler[s].id||"";
       }
     }
     function tetikle(){if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}}
     window.addEventListener("scroll",tetikle,{passive:true});
     window.addEventListener("resize",tetikle);
+    /* Sekme kapanırken son konum kısıtsız yazılır; aksi halde eşik yüzünden
+       son birkaç yüzde kaybolurdu. */
+    window.addEventListener("pagehide",function(){kaydet(sonOran,true);});
+    document.addEventListener("visibilitychange",function(){
+      if(document.visibilityState==="hidden")kaydet(sonOran,true);
+    });
     guncelle();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
@@ -420,6 +594,44 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       ok?coz():red();
     });
   }
+  /* Dil etiketi. Öncelik <pre data-dil="…">; yoksa yalnızca tereddütsüz
+     sinyallerde çıkarım yapılır. Bu sitedeki blokların önemli bir kısmı düz
+     Türkçe istem metni veya slash command satırı — yanlış etiket, etiketsiz
+     bırakmaktan kötü olduğu için kural tutmazsa sessiz kalınır. */
+  function dilBul(pre){
+    var acik=pre.getAttribute("data-dil");
+    if(acik)return acik;
+
+    var ham=String((pre.querySelector("code")||pre).textContent).split(/\\r?\\n/)
+      .map(function(s){return s.trim();}).filter(Boolean);
+    if(!ham.length)return "";
+
+    /* Shebang ve markdown başlığı yorum satırı elenmeden önce bakılır: ikisi de
+       "#" ile başlıyor. Tek "#" bu sitede kabuk yorumu, "##" markdown başlığı. */
+    if(/^#!/.test(ham[0]))return "bash";
+    if(/^#{2,6}\\s/.test(ham[0]))return "markdown";
+
+    var satirlar=ham.filter(function(s){return !/^#($|\\s)/.test(s)&&s.indexOf("//")!==0;});
+    if(!satirlar.length)return "";
+    var ilk=satirlar[0],govde=satirlar.join("\\n");
+
+    /* "---" ile başlayan blok: kapanış çizgisinden sonra da içerik varsa bu bir
+       frontmatter'lı markdown dosyasıdır (SKILL.md, agent .md), saf YAML değil. */
+    if(ilk==="---"){
+      var kapanis=satirlar.indexOf("---",1);
+      if(kapanis>-1&&satirlar.length>kapanis+1)return "markdown";
+      return /^[A-Za-z_][\\w-]*\\s*:/m.test(govde)?"yaml":"";
+    }
+
+    if(/^[{["]/.test(ilk)&&/"\\s*:/.test(govde))return "json";
+    /* PowerShell, bash'ten önce: iki blok da "claude …" ile başlayabiliyor,
+       ayırt eden here-string ve cmdlet sözdizimi. */
+    if(/@'|\\$env:|(^|\\s)(New|Get|Set|Remove|Write)-[A-Z]/.test(govde))return "powershell";
+    if(/^\\$\\s/.test(ilk))return "bash";
+    if(/^(claude|npm|npx|node|git|cd|curl|mkdir|chmod|export|brew|pip|pipx|uv)\\s/.test(ilk))return "bash";
+    return "";
+  }
+
   function baslat(){
     Array.prototype.forEach.call(document.querySelectorAll("pre"),function(pre){
       if(pre.parentNode&&pre.parentNode.classList.contains("yazi-pre-sar"))return;
@@ -428,12 +640,25 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       pre.parentNode.insertBefore(sar,pre);
       sar.appendChild(pre);
 
+      var ust=document.createElement("div");
+      ust.className="yazi-pre-ust";
+      sar.appendChild(ust);
+
+      var dil=dilBul(pre);
+      if(dil){
+        var etiket=document.createElement("span");
+        etiket.className="yazi-dil";
+        etiket.textContent=dil;
+        etiket.setAttribute("aria-hidden","true");
+        ust.appendChild(etiket);
+      }
+
       var btn=document.createElement("button");
       btn.type="button";
       btn.className="yazi-kopyala";
       btn.textContent="kopyala";
       btn.setAttribute("aria-label","Kod bloğunu kopyala");
-      sar.appendChild(btn);
+      ust.appendChild(btn);
 
       var zaman;
       btn.addEventListener("click",function(){
@@ -505,6 +730,50 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
     nav.setAttribute("aria-label","Diğer yazılar");
     nav.innerHTML=html;
     footer.parentNode.insertBefore(nav,footer);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* "Kaldığın yere dön" satırı. Kaynak, ilerleme çubuğunun yazdığı localStorage
+   kaydı. Sayfa doğrudan bir bölüm bağlantısıyla açıldıysa (#mN) hiç gösterilmez:
+   okuyucu zaten nereye gideceğini söylemiş. Okuma süresi satırının hemen altına
+   girer, o yüzden bu blok YAZI_VERI script'inden sonra gelmeli. */
+(function(){
+  function baslat(){
+    if(location.hash.length>1)return;
+    /* Kayıt açılışta anlık görüntülendi (bkz. kabuğun ilk script'i); doğrudan
+       localStorage okunsaydı ilerleme çubuğunun yazdığı taze değer gelirdi. */
+    var d=window.YAZI_KALDIGI;
+    if(!d||typeof d.o!=="number"||d.o<0.08||d.o>=0.92)return;
+
+    var yer=document.querySelector(".yazi-sure")||document.querySelector("header.hero .lede");
+    if(!yer)return;
+
+    var kutu=document.createElement("p");
+    kutu.className="yazi-devam";
+    var git=document.createElement("button");
+    git.type="button";
+    git.textContent="↩ kaldığın yere dön · %"+Math.round(d.o*100);
+    var kapat=document.createElement("button");
+    kapat.type="button";
+    kapat.className="yazi-devam-kapat";
+    kapat.textContent="×";
+    kapat.setAttribute("aria-label","Bu satırı kapat");
+    kutu.appendChild(git);
+    kutu.appendChild(kapat);
+    yer.parentNode.insertBefore(kutu,yer.nextSibling);
+
+    git.addEventListener("click",function(){
+      /* Bölüm kimliği varsa oraya git: pencere boyu değişmişse yüzde kayar,
+         bölüm kaymaz. Yoksa orana göre yaklaşık konuma in. */
+      var hedef=d.b&&document.getElementById(d.b);
+      if(hedef)hedef.scrollIntoView({behavior:"smooth",block:"start"});
+      else window.scrollTo({top:(document.documentElement.scrollHeight-window.innerHeight)*d.o,behavior:"smooth"});
+      kutu.parentNode.removeChild(kutu);
+    });
+    kapat.addEventListener("click",function(){kutu.parentNode.removeChild(kutu);});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
   else baslat();
@@ -628,18 +897,19 @@ const MEVCUT_VERI = /<!-- yazi:veri -->[\s\S]*?<!-- \/yazi:veri -->/;
  * Yönetilen blokları önce tamamen söküp sonra yeniden yazar — bu yüzden
  * idempotent: içerik değişmediyse dosyaya dokunulmaz.
  */
-async function sayfayiGuncelle(dosyaYolu, html, veri) {
+async function sayfayiGuncelle(dosyaYolu, html, veri, basBlok) {
   let yeni = html;
   for (const eski of ESKI_BLOKLAR) yeni = yeni.replace(eski, "");
   yeni = yeni.replace(MEVCUT_VERI, "").replace(MEVCUT_BLOK, "");
   yeni = yeni.replace(/(<body[^>]*>)\s*\n/i, "$1\n");
 
   const blok = `${veriBlogu(veri)}\n${KABUK}`;
-  const eklenmis = yeni.replace(/(<body[^>]*>)/i, `$1\n${blok}\n`);
+  let eklenmis = yeni.replace(/(<body[^>]*>)/i, `$1\n${blok}\n`);
   if (eklenmis === yeni) {
     uyarilar.push(`${path.basename(dosyaYolu)}: <body> etiketi bulunamadı, ortak kabuk eklenmedi.`);
     return html;
   }
+  eklenmis = basEkle(googleFontsuSok(eklenmis), basBlok, path.basename(dosyaYolu));
 
   if (eklenmis !== html) {
     await writeFile(dosyaYolu, eklenmis, "utf8");
@@ -698,12 +968,22 @@ async function cozumle(dosyaAdi) {
     uyarilar.push(`${dosyaAdi}: HTML entity tespit edildi — Türkçe karakterler düz UTF-8 olmalı.`);
   }
 
+  // Paylaşım görseli (isteğe bağlı). Göreli verilirse site köküne göre çözülür.
+  const gorselMeta = meta(html, "yazi:gorsel");
+  const gorsel = gorselMeta
+    ? /^https?:\/\//i.test(gorselMeta)
+      ? gorselMeta
+      : SITE + gorselMeta.replace(/^\.?\//, "")
+    : "";
+
   const { kelime, sure } = okumaSuresi(html);
 
   return {
     tamYol,
     html,
     kelime,
+    gorsel,
+    aciklamaVar: kendiAciklamasiVar(html),
     kayit: {
       dosya: `posts/${dosyaAdi}`,
       baslik,
@@ -740,14 +1020,54 @@ const kayitlar = cozumlenen.map((c) => c.kayit);
 // 2. geçiş: her sayfaya kendi verisini ve ortak kabuğu yaz.
 // Sıra yeniden-eskiye olduğu için "önceki" listede sonraki (daha eski) yazıdır.
 for (let i = 0; i < cozumlenen.length; i++) {
-  const { tamYol, html, kayit } = cozumlenen[i];
+  const { tamYol, html, kayit, gorsel, aciklamaVar } = cozumlenen[i];
   const komsu = (k) => (k ? { dosya: path.basename(k.dosya), baslik: k.baslik } : null);
-  await sayfayiGuncelle(tamYol, html, {
-    sure: kayit.sure,
-    yeni: komsu(kayitlar[i - 1]),
-    eski: komsu(kayitlar[i + 1]),
-    ilgili: ilgiliBul(kayit, kayitlar),
-  });
+  await sayfayiGuncelle(
+    tamYol,
+    html,
+    {
+      sure: kayit.sure,
+      yeni: komsu(kayitlar[i - 1]),
+      eski: komsu(kayitlar[i + 1]),
+      ilgili: ilgiliBul(kayit, kayitlar),
+    },
+    basBlogu({
+      url: SITE + kayit.dosya,
+      baslik: kayit.baslik,
+      aciklama: kayit.aciklama,
+      tur: "article",
+      kokYol: "../",
+      tarih: kayit.tarih,
+      etiketler: kayit.etiketler,
+      gorsel,
+      aciklamaVar,
+    })
+  );
+}
+
+/* ---------- katalog sayfası ----------
+ * index.html elle yazılır ama paylaşım metaları tek yerden yönetilsin diye
+ * yönetilen blok buraya da enjekte edilir.
+ */
+{
+  const yol = path.join(ROOT, "index.html");
+  const html = await readFile(yol, "utf8");
+  const yeni = basEkle(
+    googleFontsuSok(html),
+    basBlogu({
+      url: SITE,
+      baslik: SITE_AD,
+      aciklama: SITE_ACIKLAMA,
+      tur: "website",
+      kokYol: "",
+      aciklamaVar: kendiAciklamasiVar(html),
+    }),
+    "index.html"
+  );
+  if (yeni !== html) {
+    await writeFile(yol, yeni, "utf8");
+    console.log("  + güncellendi: index.html");
+  }
 }
 
 const guncelleme = new Date().toISOString().slice(0, 10);
@@ -762,10 +1082,243 @@ await writeFile(
 );
 await writeFile(path.join(DATA_DIR, "posts.json"), json + "\n", "utf8");
 
+/* ---------- sitemap / feed / robots ----------
+ * Üçü de kök dizine yazılır ve mutlak adres kullanır (SITE). archive/ yayından
+ * çıkmış sayfaları tuttuğu için hiçbirine girmez.
+ */
+
+// RSS 2.0 pubDate RFC-822 ister; tarih meta'sı gün hassasiyetinde, öğlen UTC alınır.
+const rfc822 = (iso) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return isNaN(d) ? new Date().toUTCString() : d.toUTCString();
+};
+
+const sitemap =
+  `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+  `  <url>\n    <loc>${esc(SITE)}</loc>\n` +
+  `    <lastmod>${esc(kayitlar[0]?.tarih || guncelleme)}</lastmod>\n` +
+  `    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n` +
+  kayitlar
+    .map(
+      (k) =>
+        `  <url>\n    <loc>${esc(SITE + k.dosya)}</loc>\n` +
+        `    <lastmod>${esc(k.tarih)}</lastmod>\n` +
+        `    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`
+    )
+    .join("") +
+  `</urlset>\n`;
+
+const feed =
+  `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  `<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n<channel>\n` +
+  `  <title>${esc(SITE_AD)}</title>\n` +
+  `  <link>${esc(SITE)}</link>\n` +
+  `  <description>${esc(SITE_ACIKLAMA)}</description>\n` +
+  `  <language>tr</language>\n` +
+  `  <lastBuildDate>${rfc822(guncelleme)}</lastBuildDate>\n` +
+  `  <atom:link href="${esc(SITE + "feed.xml")}" rel="self" type="application/rss+xml"/>\n` +
+  kayitlar
+    .map((k) => {
+      const url = SITE + k.dosya;
+      return (
+        `  <item>\n` +
+        `    <title>${esc(k.baslik)}</title>\n` +
+        `    <link>${esc(url)}</link>\n` +
+        `    <guid isPermaLink="true">${esc(url)}</guid>\n` +
+        `    <pubDate>${rfc822(k.tarih)}</pubDate>\n` +
+        `    <description>${esc(k.aciklama)}</description>\n` +
+        k.etiketler.map((t) => `    <category>${esc(t)}</category>\n`).join("") +
+        `  </item>\n`
+      );
+    })
+    .join("") +
+  `</channel>\n</rss>\n`;
+
+const robots =
+  `User-agent: *\nAllow: /\nDisallow: /archive/\n\nSitemap: ${SITE}sitemap.xml\n`;
+
+await writeFile(path.join(ROOT, "sitemap.xml"), sitemap, "utf8");
+await writeFile(path.join(ROOT, "feed.xml"), feed, "utf8");
+await writeFile(path.join(ROOT, "robots.txt"), robots, "utf8");
+
+/* ---------- PWA: manifest + service worker ----------
+ * Amaç çevrimdışı okuma. Adresler sw.js'e göre göreli tutulur, böylece site
+ * alt dizinde (GitHub Pages proje sitesi) de kök dizinde de çalışır.
+ */
+
+const manifest = {
+  name: SITE_AD,
+  short_name: SITE_AD,
+  description: SITE_ACIKLAMA,
+  lang: "tr",
+  dir: "ltr",
+  start_url: "./",
+  scope: "./",
+  display: "standalone",
+  background_color: "#0e0d0b",
+  theme_color: "#0e0d0b",
+  icons: [
+    { src: "assets/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+    { src: "assets/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+    { src: "assets/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+  ],
+};
+await writeFile(path.join(ROOT, "manifest.webmanifest"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
+
+/* Çevrimdışıyken önbellekte olmayan bir adrese gidilirse gösterilir (ör. son
+   ziyaretten sonra yayınlanmış bir yazı). Kendi kendine yeter: dış CSS/font
+   yok — bilinmeyen bir yolda servis edildiği için göreli varlık adresleri
+   kayardı. Katalog bağlantısını da aynı sebeple service worker'ın scope'undan
+   alır; sabit "./" yanlış dizine giderdi. */
+const offlineHtml = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çevrimdışısın — ${esc(SITE_AD)}</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{color-scheme:dark light;}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#0e0d0b;color:#ece7da;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.65;padding:32px;}
+  .kutu{max-width:44ch;}
+  .isaret{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#e8a33d;margin:0 0 18px;}
+  h1{font-size:28px;line-height:1.2;margin:0 0 14px;font-weight:600;}
+  p{color:#b3ab98;margin:0 0 22px;}
+  a{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;color:#ece7da;text-decoration:none;background:#16140f;
+    border:1px solid #2c281e;border-radius:999px;padding:10px 18px;}
+  a:hover{color:#e8a33d;border-color:#e8a33d;}
+  @media (prefers-color-scheme: light){
+    body{background:#fdf7ec;color:#1c1710;}
+    .isaret,a:hover{color:#b8480a;}
+    p{color:#4b4234;}
+    a{background:#fbf5e9;border-color:#ecdfc8;color:#1c1710;}
+    a:hover{border-color:#b8480a;}
+  }
+</style>
+</head>
+<body>
+  <div class="kutu">
+    <p class="isaret">❯ bağlantı yok</p>
+    <h1>Bu sayfa çevrimdışı elinde değil</h1>
+    <p>Daha önce açtığın ve arşivde önbelleğe alınmış yazılar çevrimdışı da okunur;
+       bu adres onlardan biri değil. Bağlantı gelince tekrar dene.</p>
+    <a id="geri" href="/">← Tüm yazılar</a>
+  </div>
+<script>
+/* Site bir alt dizinde olabilir; doğru kök, service worker'ın scope'u. */
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.getRegistration().then(function (r) {
+    if (r && r.scope) document.getElementById("geri").href = r.scope;
+  }).catch(function () {});
+}
+</script>
+</body>
+</html>
+`;
+await writeFile(path.join(ROOT, "offline.html"), offlineHtml, "utf8");
+
+/* Tüm arşiv önceden önbelleğe alınır (~1,3 MB açık hâliyle, sıkıştırılmış çok
+   daha az): bu bir okuma sitesi, çevrimdışı değerin tamamı yazıların kendisinde.
+   Sayfa sayısı ciddi biçimde artarsa burayı ziyaret edilene göre önbelleklemeye
+   çevirmek gerekir. */
+const fontDosyalari = (await readdir(path.join(ROOT, "assets", "fonts")))
+  .filter((f) => f.endsWith(".woff2"))
+  .sort()
+  .map((f) => `assets/fonts/${f}`);
+
+const onbellek = [
+  "./",
+  "index.html",
+  "offline.html",
+  "manifest.webmanifest",
+  "assets/site.css",
+  "assets/site.js",
+  "assets/fonts.css",
+  "assets/favicon.svg",
+  "assets/icon-192.png",
+  "assets/icon-512.png",
+  "assets/icon-512-maskable.png",
+  "data/posts.js",
+  ...fontDosyalari,
+  ...kayitlar.map((k) => k.dosya).sort(),
+];
+
+/* Sürüm damgası, önbelleğe alınan dosyaların içeriğinden gelir: içerik
+   değişmediyse sw.js de bayt bayt aynı kalır (build idempotent), değiştiyse
+   tarayıcı yeni service worker'ı görüp eski önbelleği atar. */
+const ozet = createHash("sha256");
+for (const yol of onbellek) {
+  if (yol === "./") continue;
+  ozet.update(yol).update(await readFile(path.join(ROOT, yol)));
+}
+const surum = ozet.digest("hex").slice(0, 12);
+
+const sw = `/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
+   Çevrimdışı okuma için service worker. Sürüm damgası önbellekteki dosyaların
+   içeriğinden türer; içerik değiştiğinde eski önbellek atılır. */
+const SURUM = ${JSON.stringify(surum)};
+const AD = "ai-handbook-" + SURUM;
+const ONBELLEK = ${JSON.stringify(onbellek, null, 2)};
+
+self.addEventListener("install", (e) => {
+  e.waitUntil(caches.open(AD).then((c) => c.addAll(ONBELLEK)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((adlar) => Promise.all(
+        adlar.filter((n) => n.startsWith("ai-handbook-") && n !== AD).map((n) => caches.delete(n))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+function sakla(istek, yanit) {
+  if (!yanit || !yanit.ok || yanit.type !== "basic") return yanit;
+  const kopya = yanit.clone();
+  caches.open(AD).then((c) => c.put(istek, kopya));
+  return yanit;
+}
+
+self.addEventListener("fetch", (e) => {
+  const istek = e.request;
+  if (istek.method !== "GET") return;
+  if (new URL(istek.url).origin !== location.origin) return;
+
+  /* Sayfalar: önce ağ. Yayına yeni çıkmış bir yazı, eski önbellek yüzünden
+     gizlenmemeli; çevrimdışıyken önbellek devreye girer. */
+  if (istek.mode === "navigate") {
+    e.respondWith(
+      fetch(istek)
+        .then((y) => sakla(istek, y))
+        .catch(() => caches.match(istek).then((c) => c || caches.match("offline.html")))
+    );
+    return;
+  }
+
+  /* Varlıklar: önce önbellek (anında açılsın), arka planda tazele. */
+  e.respondWith(
+    caches.match(istek).then((c) => {
+      const ag = fetch(istek).then((y) => sakla(istek, y)).catch(() => c);
+      return c || ag;
+    })
+  );
+});
+`;
+await writeFile(path.join(ROOT, "sw.js"), sw, "utf8");
+
 const kategoriler = [...new Set(kayitlar.map((k) => k.kategori))].sort((a, b) => a.localeCompare(b, "tr"));
 const etiketler = [...new Set(kayitlar.flatMap((k) => k.etiketler))];
 const bolumSayisi = kayitlar.reduce((n, k) => n + k.bolumler.length, 0);
 console.log(`\n✓ data/posts.js ve data/posts.json güncellendi.`);
+console.log(`✓ sitemap.xml, feed.xml ve robots.txt üretildi — adres: ${SITE}`);
+console.log(`✓ manifest.webmanifest ve sw.js üretildi — ${onbellek.length} dosya önbellekte (${surum}).`);
 console.log(`  ${kayitlar.length} sayfa · ${bolumSayisi} bölüm · ${etiketler.length} etiket`);
 console.log(`  ${kategoriler.length} kategori: ${kategoriler.join(", ")}`);
 

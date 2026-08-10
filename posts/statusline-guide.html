@@ -11,9 +11,6 @@
 <meta name="yazi:etiketler" content="statusline, settings.json, jq, ANSI, context window, rate limits, subagentStatusLine, PowerShell, OSC 8">
 <meta name="yazi:kaynak" content="https://code.claude.com/docs/en/statusline">
 <meta name="yazi:tarih" content="2026-08-05">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
      scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
@@ -75,6 +72,34 @@
   footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
   @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
 </style>
+<!-- yazi:bas -->
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/statusline-guide.html">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="apple-touch-icon" href="../assets/icon-192.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
+<meta name="description" content="Ekranın dibindeki satırı çalıştıran şey senin yazdığın script. /statusline ile kurulumdan stdin&#39;e gelen JSON alanlarına, renkli context barına, Windows tuzağına ve satır boş kaldığında ne olduğuna kadar.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Handbook">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="Statusline&#39;ı sen yaz">
+<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/statusline-guide.html">
+<meta property="og:description" content="Ekranın dibindeki satırı çalıştıran şey senin yazdığın script. /statusline ile kurulumdan stdin&#39;e gelen JSON alanlarına, renkli context barına, Windows tuzağına ve satır boş kaldığında ne olduğuna kadar.">
+<meta property="article:published_time" content="2026-08-05">
+<meta property="article:tag" content="statusline">
+<meta property="article:tag" content="settings.json">
+<meta property="article:tag" content="jq">
+<meta property="article:tag" content="ANSI">
+<meta property="article:tag" content="context window">
+<meta property="article:tag" content="rate limits">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Statusline&#39;ı sen yaz">
+<meta name="twitter:description" content="Ekranın dibindeki satırı çalıştıran şey senin yazdığın script. /statusline ile kurulumdan stdin&#39;e gelen JSON alanlarına, renkli context barına, Windows tuzağına ve satır boş kaldığında ne olduğuna kadar.">
+<script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
+<!-- /yazi:bas -->
 </head>
 <body>
 <!-- yazi:veri -->
@@ -86,11 +111,22 @@ window.YAZI_VERI={"sure":19,"yeni":{"dosya":"context-management-guide.html","bas
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
    Aynı yerde .yazi-yazim sınıfı eklenir: başlık, daktilo animasyonu hazırlanana
-   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür. */
+   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür.
+
+   Bu sayfanın önceki okuma kaydı da burada, her şeyden önce anlık görüntülenir:
+   ilerleme çubuğu açılışta hemen yazmaya başlıyor ve kaydı ezmiş oluyor; "kaldığın
+   yere dön" satırının okuması gereken değer açılış anındaki değerdir. */
 (function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}
-document.documentElement.classList.add("yazi-yazim");})();</script>
+document.documentElement.classList.add("yazi-yazim");
+try{
+  var d=(location.pathname.split("/").pop()||"").toLowerCase();
+  window.YAZI_KALDIGI=d?(JSON.parse(localStorage.getItem("okuma")||"{}")||{})[d]||null:null;
+}catch(e){window.YAZI_KALDIGI=null;}})();</script>
 <style>
+  /* color-scheme kaydırma çubuğunu ve yerleşik denetimleri temaya uydurur. */
+  :root{color-scheme:dark;}
   :root[data-theme="light"]{
+    color-scheme:light;
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
     --card:#fbf5e9; --card-line:#ecdfc8;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
@@ -107,6 +143,7 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
   :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
   @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
+    color-scheme:light;
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
     --card:#fbf5e9; --card-line:#ecdfc8;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
@@ -156,7 +193,13 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
      pre'nin kendisi yatay kayabildiği için düğme, pre'yi saran ayrı bir
      kapsayıcıya konur; böylece kod sağa kaydırılınca düğme yerinde kalır. */
   .yazi-pre-sar{position:relative;}
-  .yazi-kopyala{position:absolute;top:10px;right:10px;z-index:2;
+  /* Dil etiketi ve kopyala düğmesi aynı satırda durur; düğme görünmezken de
+     yer kapladığı için etiket hover'da yerinden oynamaz. */
+  .yazi-pre-ust{position:absolute;top:10px;right:10px;z-index:2;
+    display:flex;align-items:center;gap:8px;}
+  .yazi-dil{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);opacity:.7;pointer-events:none;}
+  .yazi-kopyala{
     font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;line-height:1;
     color:var(--ink-mute);background:var(--panel);border:1px solid var(--line);border-radius:7px;
     padding:6px 10px;cursor:pointer;opacity:0;transition:opacity .15s,color .15s,border-color .15s;}
@@ -226,6 +269,16 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
   .yazi-ilgili a:hover{color:var(--accent);border-color:var(--accent);}
   .yazi-sure{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--ink-mute);margin:16px 0 0;}
+  /* --- Kaldığın yere dön ---
+     Yalnızca bu tarayıcıda yarım bırakılmış yazılarda ve sayfa doğrudan bir
+     bölüm bağlantısıyla açılmadıysa görünür. */
+  .yazi-devam{display:flex;align-items:center;gap:8px;margin:12px 0 0;}
+  .yazi-devam button{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:8px 14px;cursor:pointer;
+    transition:color .15s,border-color .15s;}
+  .yazi-devam button:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-devam .yazi-devam-kapat{padding:8px 11px;font-size:13px;color:var(--ink-mute);}
   @media (max-width:620px){
     .yazi-komsu{grid-template-columns:1fr;}
     .yazi-komsu-bag.sag{text-align:left;align-items:flex-start;}
@@ -249,7 +302,8 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       --line:#bbb; --accent:#7a3c00; --accent-2:#1d5c20; --danger:#a01c10;
       --code-bg:#f6f6f6; --code-ink:#111;
     }
-    .yazi-geri,.tema-btn,.yazi-ilerleme,.yazi-kopyala,.yazi-yukari,.yazi-gezinme,.yazi-toc-ac{display:none !important;}
+    .yazi-geri,.tema-btn,.yazi-ilerleme,.yazi-kopyala,.yazi-yukari,.yazi-gezinme,.yazi-toc-ac,
+    .yazi-devam{display:none !important;}
     /* Daktilo animasyonu sürerken yazdırılırsa başlık eksik basılırdı:
        harfler görünürlüğü kapalı halde bekliyor. Kâğıtta hepsi görünür. */
     .yazi-imlec{display:none !important;}
@@ -356,12 +410,46 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       if(el){baglar.push(a);hedefler.push(el);}
     });
 
+    /* Okuma ilerlemesi tarayıcıda saklanır; katalogdaki "okundu" rozeti ve
+       "kaldığın yere dön" satırı bunu okur. Hiçbir veri dışarı gitmez. */
+    var DOSYA=(location.pathname.split("/").pop()||"").toLowerCase();
+    var BASTA=window.YAZI_KALDIGI||null;
+    var sonBolum="",sonYazilan=-1,yazZaman=0,sonOran=0,kaydirildi=false;
+    /* Sayfayı açıp hiç kaydırmadan kapatmak kaydı silmemeli: aksi halde okunmuş
+       bir yazıya tekrar bakmak "okundu" işaretini düşürürdü. */
+    window.addEventListener("scroll",function(){kaydirildi=true;},{passive:true,once:true});
+    function kaydet(oran,zorla){
+      if(!DOSYA||!kaydirildi)return;
+      /* Okundu işareti geri alınmaz; yazı yeniden sonuna kadar okunursa tazelenir. */
+      if(BASTA&&BASTA.o>=0.92&&oran<0.92)return;
+      var t=Date.now();
+      /* Her karede yazmak anlamsız: %2'lik değişimde ya da yarım saniyede bir. */
+      if(!zorla&&Math.abs(oran-sonYazilan)<0.02&&t-yazZaman<500)return;
+      sonYazilan=oran;yazZaman=t;
+      try{
+        var h=JSON.parse(localStorage.getItem("okuma")||"{}")||{};
+        h[DOSYA]={o:Math.round(oran*1000)/1000,b:sonBolum,t:t};
+        /* Kayıt şişmesin; en eski girdiler atılır. */
+        var adlar=Object.keys(h);
+        if(adlar.length>60){
+          adlar.sort(function(a,b){return (h[a].t||0)-(h[b].t||0);});
+          for(var i=0;i<adlar.length-60;i++)delete h[adlar[i]];
+        }
+        localStorage.setItem("okuma",JSON.stringify(h));
+      }catch(e){}
+    }
+
     var bekliyor=false,sonAktif=-1;
     function guncelle(){
       bekliyor=false;
       var yol=document.documentElement.scrollHeight-window.innerHeight;
       var oran=yol>0?Math.min(1,Math.max(0,window.scrollY/yol)):0;
       cubuk.style.transform="scaleX("+oran+")";
+      /* Ekrandan kısa sayfada kaydırılacak yer yok: tamamı görülmüş sayılır —
+         kaydırma beklenemeyeceği için kayıt da hemen serbest bırakılır. */
+      if(yol<=0)kaydirildi=true;
+      sonOran=yol>0?oran:1;
+      kaydet(sonOran);
       if(!hedefler.length)return;
       /* Üst kenarın 120px altını geçmiş son bölüm aktif sayılır. */
       var s=0;
@@ -374,11 +462,18 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
         if(sonAktif>-1)baglar[sonAktif].classList.remove("aktif");
         baglar[s].classList.add("aktif");
         sonAktif=s;
+        sonBolum=hedefler[s].id||"";
       }
     }
     function tetikle(){if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}}
     window.addEventListener("scroll",tetikle,{passive:true});
     window.addEventListener("resize",tetikle);
+    /* Sekme kapanırken son konum kısıtsız yazılır; aksi halde eşik yüzünden
+       son birkaç yüzde kaybolurdu. */
+    window.addEventListener("pagehide",function(){kaydet(sonOran,true);});
+    document.addEventListener("visibilitychange",function(){
+      if(document.visibilityState==="hidden")kaydet(sonOran,true);
+    });
     guncelle();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
@@ -403,6 +498,44 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       ok?coz():red();
     });
   }
+  /* Dil etiketi. Öncelik <pre data-dil="…">; yoksa yalnızca tereddütsüz
+     sinyallerde çıkarım yapılır. Bu sitedeki blokların önemli bir kısmı düz
+     Türkçe istem metni veya slash command satırı — yanlış etiket, etiketsiz
+     bırakmaktan kötü olduğu için kural tutmazsa sessiz kalınır. */
+  function dilBul(pre){
+    var acik=pre.getAttribute("data-dil");
+    if(acik)return acik;
+
+    var ham=String((pre.querySelector("code")||pre).textContent).split(/\r?\n/)
+      .map(function(s){return s.trim();}).filter(Boolean);
+    if(!ham.length)return "";
+
+    /* Shebang ve markdown başlığı yorum satırı elenmeden önce bakılır: ikisi de
+       "#" ile başlıyor. Tek "#" bu sitede kabuk yorumu, "##" markdown başlığı. */
+    if(/^#!/.test(ham[0]))return "bash";
+    if(/^#{2,6}\s/.test(ham[0]))return "markdown";
+
+    var satirlar=ham.filter(function(s){return !/^#($|\s)/.test(s)&&s.indexOf("//")!==0;});
+    if(!satirlar.length)return "";
+    var ilk=satirlar[0],govde=satirlar.join("\n");
+
+    /* "---" ile başlayan blok: kapanış çizgisinden sonra da içerik varsa bu bir
+       frontmatter'lı markdown dosyasıdır (SKILL.md, agent .md), saf YAML değil. */
+    if(ilk==="---"){
+      var kapanis=satirlar.indexOf("---",1);
+      if(kapanis>-1&&satirlar.length>kapanis+1)return "markdown";
+      return /^[A-Za-z_][\w-]*\s*:/m.test(govde)?"yaml":"";
+    }
+
+    if(/^[{["]/.test(ilk)&&/"\s*:/.test(govde))return "json";
+    /* PowerShell, bash'ten önce: iki blok da "claude …" ile başlayabiliyor,
+       ayırt eden here-string ve cmdlet sözdizimi. */
+    if(/@'|\$env:|(^|\s)(New|Get|Set|Remove|Write)-[A-Z]/.test(govde))return "powershell";
+    if(/^\$\s/.test(ilk))return "bash";
+    if(/^(claude|npm|npx|node|git|cd|curl|mkdir|chmod|export|brew|pip|pipx|uv)\s/.test(ilk))return "bash";
+    return "";
+  }
+
   function baslat(){
     Array.prototype.forEach.call(document.querySelectorAll("pre"),function(pre){
       if(pre.parentNode&&pre.parentNode.classList.contains("yazi-pre-sar"))return;
@@ -411,12 +544,25 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
       pre.parentNode.insertBefore(sar,pre);
       sar.appendChild(pre);
 
+      var ust=document.createElement("div");
+      ust.className="yazi-pre-ust";
+      sar.appendChild(ust);
+
+      var dil=dilBul(pre);
+      if(dil){
+        var etiket=document.createElement("span");
+        etiket.className="yazi-dil";
+        etiket.textContent=dil;
+        etiket.setAttribute("aria-hidden","true");
+        ust.appendChild(etiket);
+      }
+
       var btn=document.createElement("button");
       btn.type="button";
       btn.className="yazi-kopyala";
       btn.textContent="kopyala";
       btn.setAttribute("aria-label","Kod bloğunu kopyala");
-      sar.appendChild(btn);
+      ust.appendChild(btn);
 
       var zaman;
       btn.addEventListener("click",function(){
@@ -488,6 +634,50 @@ document.documentElement.classList.add("yazi-yazim");})();</script>
     nav.setAttribute("aria-label","Diğer yazılar");
     nav.innerHTML=html;
     footer.parentNode.insertBefore(nav,footer);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* "Kaldığın yere dön" satırı. Kaynak, ilerleme çubuğunun yazdığı localStorage
+   kaydı. Sayfa doğrudan bir bölüm bağlantısıyla açıldıysa (#mN) hiç gösterilmez:
+   okuyucu zaten nereye gideceğini söylemiş. Okuma süresi satırının hemen altına
+   girer, o yüzden bu blok YAZI_VERI script'inden sonra gelmeli. */
+(function(){
+  function baslat(){
+    if(location.hash.length>1)return;
+    /* Kayıt açılışta anlık görüntülendi (bkz. kabuğun ilk script'i); doğrudan
+       localStorage okunsaydı ilerleme çubuğunun yazdığı taze değer gelirdi. */
+    var d=window.YAZI_KALDIGI;
+    if(!d||typeof d.o!=="number"||d.o<0.08||d.o>=0.92)return;
+
+    var yer=document.querySelector(".yazi-sure")||document.querySelector("header.hero .lede");
+    if(!yer)return;
+
+    var kutu=document.createElement("p");
+    kutu.className="yazi-devam";
+    var git=document.createElement("button");
+    git.type="button";
+    git.textContent="↩ kaldığın yere dön · %"+Math.round(d.o*100);
+    var kapat=document.createElement("button");
+    kapat.type="button";
+    kapat.className="yazi-devam-kapat";
+    kapat.textContent="×";
+    kapat.setAttribute("aria-label","Bu satırı kapat");
+    kutu.appendChild(git);
+    kutu.appendChild(kapat);
+    yer.parentNode.insertBefore(kutu,yer.nextSibling);
+
+    git.addEventListener("click",function(){
+      /* Bölüm kimliği varsa oraya git: pencere boyu değişmişse yüzde kayar,
+         bölüm kaymaz. Yoksa orana göre yaklaşık konuma in. */
+      var hedef=d.b&&document.getElementById(d.b);
+      if(hedef)hedef.scrollIntoView({behavior:"smooth",block:"start"});
+      else window.scrollTo({top:(document.documentElement.scrollHeight-window.innerHeight)*d.o,behavior:"smooth"});
+      kutu.parentNode.removeChild(kutu);
+    });
+    kapat.addEventListener("click",function(){kutu.parentNode.removeChild(kutu);});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
   else baslat();

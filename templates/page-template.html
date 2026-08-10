@@ -13,9 +13,12 @@
 <meta name="yazi:tarih" content="2026-01-01">
 <!-- Tek bir kaynak yoksa yazi:kaynak boş bırakılabilir; birden çok kaynak varsa ana
      kaynağı yaz, tamamını sayfanın footer'ında listele. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- İsteğe bağlı paylaşım görseli; yoksa küçük kart kullanılır, uydurma görsel ekleme:
+     <meta name="yazi:gorsel" content="assets/og/ornek.png"> -->
+<!-- canonical, Open Graph, Twitter, favicon ve feed bağlantıları </head> öncesine
+     build.mjs tarafından yönetilen bir blok olarak eklenir — buraya elle yazma. -->
+<!-- Yazı tipleri assets/fonts/ altından gelir; stylesheet bağlantısını build.mjs ekler.
+     Buraya Google Fonts link'i koyma — build zaten söküyor. -->
 <style>
   /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
      scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
@@ -122,8 +125,11 @@
       <li><strong>Vurgu:</strong> madde açıklaması.</li>
     </ul>
 
-    <!-- Kod bloğu: .k=anahtar kelime, .s=string, .c=yorum -->
-    <pre><code><span class="c"># yorum satırı</span>
+    <!-- Kod bloğu: .k=anahtar kelime, .s=string, .c=yorum
+         Sağ üstteki dil etiketini build.mjs basar; json/yaml/markdown/bash gibi
+         kesin durumları kendi çıkarır. Çıkaramadığında sessiz kalır — etiket
+         şartsa data-dil ile açıkça ver: <pre data-dil="python"> -->
+    <pre data-dil="python"><code><span class="c"># yorum satırı</span>
 <span class="k">response</span> = client.messages.create(
     model=<span class="s">"claude-opus-4-8"</span>,
 )</code></pre>
