@@ -1,5 +1,83 @@
 [
   {
+    "dosya": "posts/output-styles-guide.html",
+    "baslik": "Ne bildiğini değil, nasıl davrandığını değiştir",
+    "aciklama": "Output styles system prompt'u değiştirir: rol, ton ve varsayılan yanıt biçimi. Yerleşik stiller, keep-coding-instructions kararı, /config ile ayarlama, senaryolar ve stil tutmadığında bakılacak yerler.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "output styles",
+      "outputStyle",
+      "/config",
+      "keep-coding-instructions",
+      "Explanatory",
+      "Learning",
+      "Proactive",
+      "system prompt",
+      "settings.local.json",
+      "force-for-plugin"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/output-styles",
+    "tarih": "2026-08-10",
+    "sure": 9,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Her turda aynı şeyi rica ediyorsan"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Rolü değiştirir, bildiğini değil"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Yerleşik üç stil, bir de Default"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Nereden ayarlanır: /config, sonra /clear"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "keep-coding-instructions: tek satırlık büyük karar"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Kendi stilini yazmak"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Hangi durumda hangi değeri seçersin?"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Senaryo defteri"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Bu iş gerçekten output style'ın işi mi?"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Stil tutmadığında bakılacak yerler"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Hızlı referans"
+      }
+    ]
+  },
+  {
     "dosya": "posts/plan-mode-guide.html",
     "baslik": "Önce plan, sonra diff",
     "aciklama": "Plan mode bir rica değil, bir permission mode: Claude okur, araştırır, plan yazar ama sen onaylayana kadar diske dokunmaz. Tetikleme yolları, onay ekranı, senaryolar ve plan mode'a girmemen gereken durumlar.",
