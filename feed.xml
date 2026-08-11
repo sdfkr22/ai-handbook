@@ -8,6 +8,27 @@
   <lastBuildDate>Tue, 11 Aug 2026 12:00:00 GMT</lastBuildDate>
   <atom:link href="https://sdfkr22.github.io/ai-handbook/feed.xml" rel="self" type="application/rss+xml"/>
   <item>
+    <title>Telefondan commit, laptop kapalı</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/claude-code-web-mobile-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/claude-code-web-mobile-guide.html</guid>
+    <pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+    <description>claude.ai/code ve Claude mobil uygulamasından iş başlatmak: GitHub&#39;ı bağlamak, repo ve branch seçmek, Claude&#39;un branch&#39;i push etmesi, diff&#39;e satır yorumu bırakmak, Create PR ve Auto-fix. Bir de --cloud, --teleport ve Remote Control.</description>
+    <category>claude.ai/code</category>
+    <category>cloud session</category>
+    <category>mobil</category>
+    <category>Code tab</category>
+    <category>GitHub App</category>
+    <category>/web-setup</category>
+    <category>cloud environment</category>
+    <category>network access</category>
+    <category>Create PR</category>
+    <category>Auto-fix</category>
+    <category>Remote Control</category>
+    <category>--cloud</category>
+    <category>--teleport</category>
+    <category>push notification</category>
+  </item>
+  <item>
     <title>MCP: aracını Claude&#39;a devret</title>
     <link>https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html</link>
     <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html</guid>

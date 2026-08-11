@@ -1,6 +1,93 @@
 // OTOMATİK ÜRETİLDİ — elle düzenleme. Yenilemek için: node scripts/build.mjs
 window.YAZILAR = [
   {
+    "dosya": "posts/claude-code-web-mobile-guide.html",
+    "baslik": "Telefondan commit, laptop kapalı",
+    "aciklama": "claude.ai/code ve Claude mobil uygulamasından iş başlatmak: GitHub'ı bağlamak, repo ve branch seçmek, Claude'un branch'i push etmesi, diff'e satır yorumu bırakmak, Create PR ve Auto-fix. Bir de --cloud, --teleport ve Remote Control.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "claude.ai/code",
+      "cloud session",
+      "mobil",
+      "Code tab",
+      "GitHub App",
+      "/web-setup",
+      "cloud environment",
+      "network access",
+      "Create PR",
+      "Auto-fix",
+      "Remote Control",
+      "--cloud",
+      "--teleport",
+      "push notification"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/claude-code-on-the-web",
+    "tarih": "2026-08-11",
+    "sure": 17,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Kodun nerede çalışıyor?"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "GitHub'ı bağlamanın iki yolu"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Kutuyu bir kez ayarla: cloud environment"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "İlk görev: repo, branch, mod"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Commit'i Claude atıyor, proxy kolluyor"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Diff'te satıra dokun, lafını orada söyle"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Create PR — ve iş orada bitmiyor"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "CI kırıldığında Claude uyansın"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Code sekmesi cebinde"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Makinen açık kalacaksa: Remote Control"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Terminal ile bulut arasında gidip gelmek"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Tıkandığın anlar"
+      }
+    ]
+  },
+  {
     "dosya": "posts/mcp-servers-guide.html",
     "baslik": "MCP: aracını Claude'a devret",
     "aciklama": "Sentry'den, Jira'dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json'ı repoya koymak, OAuth, izin kuralları ve context faturası.",
