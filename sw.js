@@ -1,7 +1,7 @@
 /* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Çevrimdışı okuma için service worker. Sürüm damgası önbellekteki dosyaların
    içeriğinden türer; içerik değiştiğinde eski önbellek atılır. */
-const SURUM = "72a34cbbc7e9";
+const SURUM = "7bfd8ce07ad1";
 const AD = "ai-handbook-" + SURUM;
 const ONBELLEK = [
   "./",
@@ -29,6 +29,7 @@ const ONBELLEK = [
   "assets/fonts/jetbrains-mono-500-latin-ext.woff2",
   "assets/fonts/jetbrains-mono-500-latin.woff2",
   "posts/claude-code-steering-handbook.html",
+  "posts/claude-code-web-mobile-guide.html",
   "posts/context-management-guide.html",
   "posts/creating-subagents-guide.html",
   "posts/doctor-command-guide.html",
