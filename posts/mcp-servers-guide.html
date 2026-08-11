@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP: aracını Claude'a devret</title>
+<meta name="yazi:baslik" content="MCP: aracını Claude'a devret">
+<meta name="yazi:aciklama" content="Sentry'den, Jira'dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json'ı repoya koymak, OAuth, izin kuralları ve context faturası.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="MCP, claude mcp add, .mcp.json, scope, stdio, http, OAuth, /mcp, tool search, alwaysLoad, izin kuralları, connector">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/mcp">
+<meta name="yazi:tarih" content="2026-08-11">
+<style>
+  /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
+     scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+<!-- yazi:bas -->
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="apple-touch-icon" href="../assets/icon-192.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
+<meta name="description" content="Sentry&#39;den, Jira&#39;dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json&#39;ı repoya koymak, OAuth, izin kuralları ve context faturası.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Handbook">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="MCP: aracını Claude&#39;a devret">
+<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html">
+<meta property="og:description" content="Sentry&#39;den, Jira&#39;dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json&#39;ı repoya koymak, OAuth, izin kuralları ve context faturası.">
+<meta property="article:published_time" content="2026-08-11">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="claude mcp add">
+<meta property="article:tag" content=".mcp.json">
+<meta property="article:tag" content="scope">
+<meta property="article:tag" content="stdio">
+<meta property="article:tag" content="http">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MCP: aracını Claude&#39;a devret">
+<meta name="twitter:description" content="Sentry&#39;den, Jira&#39;dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json&#39;ı repoya koymak, OAuth, izin kuralları ve context faturası.">
+<script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
+<!-- /yazi:bas -->
+</head>
+<body>
+<!-- yazi:veri -->
+<script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
+   Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
+   gezinme bloğunu basar. */
+window.YAZI_VERI={"sure":15,"yeni":null,"eski":{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"},"ilgili":[{"dosya":"doctor-command-guide.html","baslik":"Bir şey mi ters? Önce /doctor"},{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"}]};</script>
+<!-- /yazi:veri -->
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
+   Aynı yerde .yazi-yazim sınıfı eklenir: başlık, daktilo animasyonu hazırlanana
+   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür.
+
+   Bu sayfanın önceki okuma kaydı da burada, her şeyden önce anlık görüntülenir:
+   ilerleme çubuğu açılışta hemen yazmaya başlıyor ve kaydı ezmiş oluyor; "kaldığın
+   yere dön" satırının okuması gereken değer açılış anındaki değerdir. */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}
+document.documentElement.classList.add("yazi-yazim");
+try{
+  var d=(location.pathname.split("/").pop()||"").toLowerCase();
+  window.YAZI_KALDIGI=d?(JSON.parse(localStorage.getItem("okuma")||"{}")||{})[d]||null:null;
+}catch(e){window.YAZI_KALDIGI=null;}})();</script>
+<style>
+  /* color-scheme kaydırma çubuğunu ve yerleşik denetimleri temaya uydurur. */
+  :root{color-scheme:dark;}
+  :root[data-theme="light"]{
+    color-scheme:light;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root[data-theme="light"] .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root:not([data-theme="dark"]) .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  /* --- Başlık: komut satırı görünümü --- */
+  .yazi-yazim header.hero h1{visibility:hidden;}
+  header.hero h1{
+    font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-weight:500;font-size:clamp(21px,5.2vw,46px);line-height:1.32;letter-spacing:-.02em;}
+  header.hero h1 em{font-style:normal;}
+  /* Karakter düz yazılır: "\276F " biçiminde yazılırsa sondaki boşluk hex
+     kaçışın sonlandırıcısı sayılır ve içeriğe boşluk olarak geçmez. */
+  header.hero h1::before{content:"❯ ";color:var(--accent);opacity:.5;}
+  .yazi-imlec{display:inline-block;width:0;height:1em;vertical-align:-.12em;position:relative;}
+  .yazi-imlec::after{content:"";position:absolute;left:.04em;bottom:0;width:.52em;height:1em;
+    background:var(--accent);animation:yazi-imlec-yanip 1.05s steps(1) infinite;}
+  @keyframes yazi-imlec-yanip{0%,50%{opacity:1;}50.01%,100%{opacity:0;}}
+  @media (prefers-reduced-motion: reduce){.yazi-imlec::after{animation:none;}}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+  /* --- Okuma ilerleme çubuğu --- */
+  .yazi-ilerleme{position:fixed;top:0;left:0;z-index:100;height:2px;width:100%;
+    background:var(--accent);transform:scaleX(0);transform-origin:0 50%;will-change:transform;}
+  /* --- Kod bloğu kopyala düğmesi ---
+     pre'nin kendisi yatay kayabildiği için düğme, pre'yi saran ayrı bir
+     kapsayıcıya konur; böylece kod sağa kaydırılınca düğme yerinde kalır. */
+  .yazi-pre-sar{position:relative;}
+  /* Dil etiketi ve kopyala düğmesi aynı satırda durur; düğme görünmezken de
+     yer kapladığı için etiket hover'da yerinden oynamaz. */
+  .yazi-pre-ust{position:absolute;top:10px;right:10px;z-index:2;
+    display:flex;align-items:center;gap:8px;}
+  .yazi-dil{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);opacity:.7;pointer-events:none;}
+  .yazi-kopyala{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;line-height:1;
+    color:var(--ink-mute);background:var(--panel);border:1px solid var(--line);border-radius:7px;
+    padding:6px 10px;cursor:pointer;opacity:0;transition:opacity .15s,color .15s,border-color .15s;}
+  .yazi-pre-sar:hover .yazi-kopyala,.yazi-kopyala:focus-visible{opacity:1;}
+  .yazi-kopyala:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-kopyala.ok{opacity:1;color:var(--accent-2);border-color:var(--accent-2);}
+  @media (hover:none){.yazi-kopyala{opacity:.7;}}
+  /* --- İçindekiler: okunan bölümün vurgulanması ---
+     Geniş ekranda liste sol boşluğa sabitlenir ve okurken yerinde kalır;
+     dar ekranda normal akıştaki kutu görünümünü korur. */
+  .toc a{transition:color .18s,border-color .18s;}
+  .toc a.aktif{color:var(--accent);}
+  @media (min-width:1400px){
+    .toc{position:fixed;top:92px;left:calc(50vw - 676px);width:212px;
+      margin:0;padding:0;background:none;border:none;
+      max-height:calc(100vh - 150px);overflow-y:auto;}
+    .toc ol{columns:1;}
+    .toc li{margin-bottom:0;}
+    .toc a{font-size:13px;line-height:1.45;padding:5px 0 5px 12px;border-left:1px solid var(--line);}
+    .toc a.aktif{border-left-color:var(--accent);}
+  }
+  /* Dar ekranda içindekiler katlanır ve kapalı başlar; 12 maddelik liste
+     yoksa içeriği ekran boyu aşağı itiyor. Etiket bölüm sayısını verir. */
+  .yazi-toc-ac{display:none;}
+  @media (max-width:900px){
+    .yazi-toc-ac{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;
+      font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--ink-mute);background:none;border:none;padding:0;cursor:pointer;}
+    .yazi-toc-ac .ok{transition:transform .2s;font-size:14px;}
+    .toc[data-kapali="1"] ol{display:none;}
+    .toc:not([data-kapali="1"]) .yazi-toc-ac{margin-bottom:16px;}
+    .toc:not([data-kapali="1"]) .yazi-toc-ac .ok{transform:rotate(180deg);}
+  }
+  /* --- Bölüm başlığı anchor'ı --- */
+  h2 .yazi-anchor{font-family:"JetBrains Mono",monospace;font-size:.46em;flex:none;
+    color:var(--ink-mute);text-decoration:none;opacity:0;transition:opacity .15s,color .15s;}
+  h2:hover .yazi-anchor,.yazi-anchor:focus-visible{opacity:1;}
+  .yazi-anchor:hover{color:var(--accent);}
+  section.yazi-parla{animation:yazi-parla 1.3s ease-out;}
+  @keyframes yazi-parla{from{background:rgba(232,163,61,.13);}to{background:transparent;}}
+  @media (prefers-reduced-motion: reduce){section.yazi-parla{animation:none;}}
+  /* --- Yukarı dön --- */
+  .yazi-yukari{position:fixed;right:18px;bottom:18px;z-index:99;width:38px;height:38px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);opacity:0;pointer-events:none;transform:translateY(6px);
+    transition:opacity .2s,transform .2s,color .15s,border-color .15s;}
+  .yazi-yukari.gorunur{opacity:1;pointer-events:auto;transform:none;}
+  .yazi-yukari:hover{color:var(--accent);border-color:var(--accent);}
+  /* --- Sayfa sonu gezinme --- */
+  .yazi-gezinme{margin-top:72px;padding-top:28px;border-top:1px solid var(--line);}
+  .yazi-komsu{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .yazi-komsu-bag{display:flex;flex-direction:column;gap:6px;text-decoration:none;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    transition:border-color .15s,transform .15s;}
+  .yazi-komsu-bag:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .yazi-komsu-bag .yon{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);}
+  .yazi-komsu-bag .ad{color:var(--ink);font-weight:600;font-size:15px;line-height:1.35;}
+  .yazi-komsu-bag.sag{text-align:right;align-items:flex-end;}
+  .yazi-ilgili{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .yazi-ilgili-baslik{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 4px 0 0;}
+  .yazi-ilgili a{font-size:13.5px;color:var(--ink-soft);text-decoration:none;
+    border:1px solid var(--line);border-radius:999px;padding:6px 14px;
+    transition:color .15s,border-color .15s;}
+  .yazi-ilgili a:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-sure{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-mute);margin:16px 0 0;}
+  /* --- Kaldığın yere dön ---
+     Yalnızca bu tarayıcıda yarım bırakılmış yazılarda ve sayfa doğrudan bir
+     bölüm bağlantısıyla açılmadıysa görünür. */
+  .yazi-devam{display:flex;align-items:center;gap:8px;margin:12px 0 0;}
+  .yazi-devam button{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:8px 14px;cursor:pointer;
+    transition:color .15s,border-color .15s;}
+  .yazi-devam button:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-devam .yazi-devam-kapat{padding:8px 11px;font-size:13px;color:var(--ink-mute);}
+  @media (max-width:620px){
+    .yazi-komsu{grid-template-columns:1fr;}
+    .yazi-komsu-bag.sag{text-align:left;align-items:flex-start;}
+  }
+  /* --- Tema geçişi ---
+     Sınıf yalnızca düğmeye basıldığı anda eklenir; sürekli açık kalsa
+     sıradan hover'lar da yavaşlardı. */
+  :root.yazi-tema-gecis,:root.yazi-tema-gecis *{
+    transition:background-color .22s,border-color .22s,color .22s !important;}
+  @media (prefers-reduced-motion: reduce){
+    :root.yazi-tema-gecis,:root.yazi-tema-gecis *{transition:none !important;}
+  }
+  /* --- Yazdırma ---
+     :root[data-theme] seçicisi tema override'larıyla aynı özgüllükte ve
+     daha sonra geldiği için kazanır; yoksa koyu tema kâğıda basılırdı. */
+  @media print{
+    :root,:root[data-theme]{
+      --bg:#fff; --panel:#fff; --panel-2:#f2f2f2; --table-bg:#fff;
+      --card:#fff; --card-line:#bbb;
+      --ink:#000; --ink-soft:#1c1c1c; --ink-mute:#555;
+      --line:#bbb; --accent:#7a3c00; --accent-2:#1d5c20; --danger:#a01c10;
+      --code-bg:#f6f6f6; --code-ink:#111;
+    }
+    .yazi-geri,.tema-btn,.yazi-ilerleme,.yazi-kopyala,.yazi-yukari,.yazi-gezinme,.yazi-toc-ac,
+    .yazi-devam{display:none !important;}
+    /* Daktilo animasyonu sürerken yazdırılırsa başlık eksik basılırdı:
+       harfler görünürlüğü kapalı halde bekliyor. Kâğıtta hepsi görünür. */
+    .yazi-imlec{display:none !important;}
+    .yazi-yazim header.hero h1,header.hero h1 span{visibility:visible !important;}
+    body{background:#fff !important;color:#000;font-size:10.5pt;}
+    .wrap{max-width:none;padding:0;}
+    .toc{position:static !important;left:auto !important;top:auto !important;width:auto !important;
+      max-height:none !important;overflow:visible !important;
+      border:1px solid #bbb !important;padding:16px 20px !important;margin-bottom:28px !important;}
+    /* Kâğıt dar olsa da içindekiler açık basılır: katlama yalnızca ekran içindir. */
+    .toc[data-kapali="1"] ol{display:block !important;}
+    .toc ol{columns:2 !important;}
+    .toc a{border-left:none !important;padding-left:0 !important;}
+    h2,h3{break-after:avoid;}
+    pre,.card,.note,.table-scroll,figure{break-inside:avoid;}
+    a[href^="http"]::after{content:" (" attr(href) ")";font-size:8.5pt;color:#555;word-break:break-all;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  var gecisZaman;
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    /* Renkler anlık sıçramasın; sınıf kısa süre kalır (bkz. .yazi-tema-gecis). */
+    kok.classList.add("yazi-tema-gecis");
+    clearTimeout(gecisZaman);
+    gecisZaman=setTimeout(function(){kok.classList.remove("yazi-tema-gecis");},280);
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<script>
+/* Başlığı komut satırında yazılıyormuş gibi harf harf gösterir.
+   Harfler en baştan yer kaplar (görünürlük kapatılır, kaldırılmaz), böylece
+   animasyon boyunca satır sarması ve sayfa düzeni hiç oynamaz.
+   JS kapalıysa veya reduced-motion açıksa başlık olduğu gibi görünür. */
+(function(){
+  var kok=document.documentElement;
+  function ac(){kok.classList.remove("yazi-yazim");}
+  function baslat(){
+    try{
+      var h1=document.querySelector("header.hero h1");
+      if(!h1){ac();return;}
+      if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){ac();return;}
+      /* Etiketi innerText'ten alma: başlık o an gizli olduğu için boş dönebilir.
+         <br> yerine boşluk koyup metni doğrudan çıkar. */
+      var gecici=document.createElement("div");
+      gecici.innerHTML=h1.innerHTML.replace(/<br\s*\/?>/gi," ");
+      h1.setAttribute("aria-label",(gecici.textContent||"").replace(/\s+/g," ").trim());
+      var gez=document.createTreeWalker(h1,NodeFilter.SHOW_TEXT),dugumler=[],d;
+      while(d=gez.nextNode())dugumler.push(d);
+      var harfler=[];
+      dugumler.forEach(function(tn){
+        var parca=document.createDocumentFragment();
+        tn.nodeValue.split("").forEach(function(h){
+          var s=document.createElement("span");
+          s.textContent=h;s.style.visibility="hidden";s.setAttribute("aria-hidden","true");
+          parca.appendChild(s);harfler.push(s);
+        });
+        tn.parentNode.replaceChild(parca,tn);
+      });
+      if(!harfler.length){ac();return;}
+      var imlec=document.createElement("span");
+      imlec.className="yazi-imlec";imlec.setAttribute("aria-hidden","true");
+      ac();
+      var i=0;
+      (function tik(){
+        if(i>=harfler.length){
+          setTimeout(function(){if(imlec.parentNode)imlec.parentNode.removeChild(imlec);},2600);
+          return;
+        }
+        var s=harfler[i++];
+        s.style.visibility="visible";
+        s.parentNode.insertBefore(imlec,s.nextSibling);
+        setTimeout(tik,/[,.:?!]/.test(s.textContent)?190:38);
+      })();
+    }catch(e){ac();}
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Üstteki ilerleme çubuğu + içindekilerde o an okunan bölümün vurgulanması.
+   İkisi de aynı scroll dinleyicisinden beslenir, rAF ile tek karede güncellenir. */
+(function(){
+  function baslat(){
+    var cubuk=document.createElement("div");
+    cubuk.className="yazi-ilerleme";
+    cubuk.setAttribute("aria-hidden","true");
+    document.body.appendChild(cubuk);
+
+    var baglar=[],hedefler=[];
+    Array.prototype.forEach.call(document.querySelectorAll(".toc a[href^='#']"),function(a){
+      var el=document.getElementById(a.getAttribute("href").slice(1));
+      if(el){baglar.push(a);hedefler.push(el);}
+    });
+
+    /* Okuma ilerlemesi tarayıcıda saklanır; katalogdaki "okundu" rozeti ve
+       "kaldığın yere dön" satırı bunu okur. Hiçbir veri dışarı gitmez. */
+    var DOSYA=(location.pathname.split("/").pop()||"").toLowerCase();
+    var BASTA=window.YAZI_KALDIGI||null;
+    var sonBolum="",sonYazilan=-1,yazZaman=0,sonOran=0,kaydirildi=false;
+    /* Sayfayı açıp hiç kaydırmadan kapatmak kaydı silmemeli: aksi halde okunmuş
+       bir yazıya tekrar bakmak "okundu" işaretini düşürürdü. */
+    window.addEventListener("scroll",function(){kaydirildi=true;},{passive:true,once:true});
+    function kaydet(oran,zorla){
+      if(!DOSYA||!kaydirildi)return;
+      /* Okundu işareti geri alınmaz; yazı yeniden sonuna kadar okunursa tazelenir. */
+      if(BASTA&&BASTA.o>=0.92&&oran<0.92)return;
+      var t=Date.now();
+      /* Her karede yazmak anlamsız: %2'lik değişimde ya da yarım saniyede bir. */
+      if(!zorla&&Math.abs(oran-sonYazilan)<0.02&&t-yazZaman<500)return;
+      sonYazilan=oran;yazZaman=t;
+      try{
+        var h=JSON.parse(localStorage.getItem("okuma")||"{}")||{};
+        h[DOSYA]={o:Math.round(oran*1000)/1000,b:sonBolum,t:t};
+        /* Kayıt şişmesin; en eski girdiler atılır. */
+        var adlar=Object.keys(h);
+        if(adlar.length>60){
+          adlar.sort(function(a,b){return (h[a].t||0)-(h[b].t||0);});
+          for(var i=0;i<adlar.length-60;i++)delete h[adlar[i]];
+        }
+        localStorage.setItem("okuma",JSON.stringify(h));
+      }catch(e){}
+    }
+
+    var bekliyor=false,sonAktif=-1;
+    function guncelle(){
+      bekliyor=false;
+      var yol=document.documentElement.scrollHeight-window.innerHeight;
+      var oran=yol>0?Math.min(1,Math.max(0,window.scrollY/yol)):0;
+      cubuk.style.transform="scaleX("+oran+")";
+      /* Ekrandan kısa sayfada kaydırılacak yer yok: tamamı görülmüş sayılır —
+         kaydırma beklenemeyeceği için kayıt da hemen serbest bırakılır. */
+      if(yol<=0)kaydirildi=true;
+      sonOran=yol>0?oran:1;
+      kaydet(sonOran);
+      if(!hedefler.length)return;
+      /* Üst kenarın 120px altını geçmiş son bölüm aktif sayılır. */
+      var s=0;
+      for(var i=0;i<hedefler.length;i++){
+        if(hedefler[i].getBoundingClientRect().top<=120)s=i;
+      }
+      /* Son bölüm kısaysa dibe inince hiç aktifleşmeyebilir; en altta onu seç. */
+      if(yol>0&&window.scrollY>=yol-4)s=hedefler.length-1;
+      if(s!==sonAktif){
+        if(sonAktif>-1)baglar[sonAktif].classList.remove("aktif");
+        baglar[s].classList.add("aktif");
+        sonAktif=s;
+        sonBolum=hedefler[s].id||"";
+      }
+    }
+    function tetikle(){if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}}
+    window.addEventListener("scroll",tetikle,{passive:true});
+    window.addEventListener("resize",tetikle);
+    /* Sekme kapanırken son konum kısıtsız yazılır; aksi halde eşik yüzünden
+       son birkaç yüzde kaybolurdu. */
+    window.addEventListener("pagehide",function(){kaydet(sonOran,true);});
+    document.addEventListener("visibilitychange",function(){
+      if(document.visibilityState==="hidden")kaydet(sonOran,true);
+    });
+    guncelle();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Her kod bloğuna kopyala düğmesi. Sözdizimi renklendirmesi <span>'lerle
+   yapıldığı için textContent düz metni doğru verir. clipboard API yoksa
+   (veya izin vermezse) execCommand ile geri düşülür. */
+(function(){
+  function kopyala(metin){
+    if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(metin);
+    return new Promise(function(coz,red){
+      var a=document.createElement("textarea");
+      a.value=metin;a.setAttribute("readonly","");
+      a.style.position="fixed";a.style.top="-1000px";
+      document.body.appendChild(a);a.select();
+      var ok=false;
+      try{ok=document.execCommand("copy");}catch(e){ok=false;}
+      document.body.removeChild(a);
+      ok?coz():red();
+    });
+  }
+  /* Dil etiketi. Öncelik <pre data-dil="…">; yoksa yalnızca tereddütsüz
+     sinyallerde çıkarım yapılır. Bu sitedeki blokların önemli bir kısmı düz
+     Türkçe istem metni veya slash command satırı — yanlış etiket, etiketsiz
+     bırakmaktan kötü olduğu için kural tutmazsa sessiz kalınır. */
+  function dilBul(pre){
+    var acik=pre.getAttribute("data-dil");
+    if(acik)return acik;
+
+    var ham=String((pre.querySelector("code")||pre).textContent).split(/\r?\n/)
+      .map(function(s){return s.trim();}).filter(Boolean);
+    if(!ham.length)return "";
+
+    /* Shebang ve markdown başlığı yorum satırı elenmeden önce bakılır: ikisi de
+       "#" ile başlıyor. Tek "#" bu sitede kabuk yorumu, "##" markdown başlığı. */
+    if(/^#!/.test(ham[0]))return "bash";
+    if(/^#{2,6}\s/.test(ham[0]))return "markdown";
+
+    var satirlar=ham.filter(function(s){return !/^#($|\s)/.test(s)&&s.indexOf("//")!==0;});
+    if(!satirlar.length)return "";
+    var ilk=satirlar[0],govde=satirlar.join("\n");
+
+    /* "---" ile başlayan blok: kapanış çizgisinden sonra da içerik varsa bu bir
+       frontmatter'lı markdown dosyasıdır (SKILL.md, agent .md), saf YAML değil. */
+    if(ilk==="---"){
+      var kapanis=satirlar.indexOf("---",1);
+      if(kapanis>-1&&satirlar.length>kapanis+1)return "markdown";
+      return /^[A-Za-z_][\w-]*\s*:/m.test(govde)?"yaml":"";
+    }
+
+    if(/^[{["]/.test(ilk)&&/"\s*:/.test(govde))return "json";
+    /* PowerShell, bash'ten önce: iki blok da "claude …" ile başlayabiliyor,
+       ayırt eden here-string ve cmdlet sözdizimi. */
+    if(/@'|\$env:|(^|\s)(New|Get|Set|Remove|Write)-[A-Z]/.test(govde))return "powershell";
+    if(/^\$\s/.test(ilk))return "bash";
+    if(/^(claude|npm|npx|node|git|cd|curl|mkdir|chmod|export|brew|pip|pipx|uv)\s/.test(ilk))return "bash";
+    return "";
+  }
+
+  function baslat(){
+    Array.prototype.forEach.call(document.querySelectorAll("pre"),function(pre){
+      if(pre.parentNode&&pre.parentNode.classList.contains("yazi-pre-sar"))return;
+      var sar=document.createElement("div");
+      sar.className="yazi-pre-sar";
+      pre.parentNode.insertBefore(sar,pre);
+      sar.appendChild(pre);
+
+      var ust=document.createElement("div");
+      ust.className="yazi-pre-ust";
+      sar.appendChild(ust);
+
+      var dil=dilBul(pre);
+      if(dil){
+        var etiket=document.createElement("span");
+        etiket.className="yazi-dil";
+        etiket.textContent=dil;
+        etiket.setAttribute("aria-hidden","true");
+        ust.appendChild(etiket);
+      }
+
+      var btn=document.createElement("button");
+      btn.type="button";
+      btn.className="yazi-kopyala";
+      btn.textContent="kopyala";
+      btn.setAttribute("aria-label","Kod bloğunu kopyala");
+      ust.appendChild(btn);
+
+      var zaman;
+      btn.addEventListener("click",function(){
+        var kod=pre.querySelector("code")||pre;
+        /* Kaynak dosyalar CRLF olabiliyor; panoya LF gitsin ki kod
+           doğrudan terminale yapıştırılabilsin. */
+        var metin=String(kod.textContent).replace(/\r\n?/g,"\n").replace(/\s+$/,"");
+        kopyala(metin).then(function(){
+          btn.textContent="kopyalandı ✓";btn.classList.add("ok");
+        },function(){
+          btn.textContent="kopyalanamadı";btn.classList.remove("ok");
+        });
+        clearTimeout(zaman);
+        zaman=setTimeout(function(){btn.textContent="kopyala";btn.classList.remove("ok");},1800);
+      });
+    });
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Sayfaya özel veriden (window.YAZI_VERI, build.mjs üretir) beslenen parçalar:
+   okuma süresi ve sayfa sonundaki gezinme bloğu. Veri yoksa hiçbiri basılmaz. */
+(function(){
+  function esc(s){
+    return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function komsuBag(k,yon,sinif){
+    return '<a class="yazi-komsu-bag '+sinif+'" href="'+esc(k.dosya)+'">'+
+      '<span class="yon">'+esc(yon)+'</span><span class="ad">'+esc(k.baslik)+'</span></a>';
+  }
+  function baslat(){
+    var v=window.YAZI_VERI||{};
+
+    var lede=document.querySelector("header.hero .lede");
+    if(v.sure&&lede&&!document.querySelector(".yazi-sure")){
+      var s=document.createElement("p");
+      s.className="yazi-sure";
+      s.textContent="~"+v.sure+" dakikalık okuma";
+      lede.parentNode.insertBefore(s,lede.nextSibling);
+    }
+
+    var footer=document.querySelector(".wrap > footer");
+    if(!footer||document.querySelector(".yazi-gezinme"))return;
+    var ilgili=v.ilgili||[];
+    if(!v.yeni&&!v.eski&&!ilgili.length)return;
+
+    var html="";
+    if(v.yeni||v.eski){
+      /* Sıralama yeniden eskiye; komşuları tarih diliyle adlandırmak
+         "önceki/sonraki"den daha az kafa karıştırıyor. */
+      html+='<div class="yazi-komsu">'+
+        (v.yeni?komsuBag(v.yeni,"← Daha yeni",""):"<span></span>")+
+        (v.eski?komsuBag(v.eski,"Daha eski →","sag"):"<span></span>")+
+      "</div>";
+    }
+    if(ilgili.length){
+      html+='<div class="yazi-ilgili"><p class="yazi-ilgili-baslik">İlgili</p>'+
+        ilgili.map(function(k){
+          return '<a href="'+esc(k.dosya)+'">'+esc(k.baslik)+"</a>";
+        }).join("")+"</div>";
+    }
+
+    var nav=document.createElement("nav");
+    nav.className="yazi-gezinme";
+    nav.setAttribute("aria-label","Diğer yazılar");
+    nav.innerHTML=html;
+    footer.parentNode.insertBefore(nav,footer);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* "Kaldığın yere dön" satırı. Kaynak, ilerleme çubuğunun yazdığı localStorage
+   kaydı. Sayfa doğrudan bir bölüm bağlantısıyla açıldıysa (#mN) hiç gösterilmez:
+   okuyucu zaten nereye gideceğini söylemiş. Okuma süresi satırının hemen altına
+   girer, o yüzden bu blok YAZI_VERI script'inden sonra gelmeli. */
+(function(){
+  function baslat(){
+    if(location.hash.length>1)return;
+    /* Kayıt açılışta anlık görüntülendi (bkz. kabuğun ilk script'i); doğrudan
+       localStorage okunsaydı ilerleme çubuğunun yazdığı taze değer gelirdi. */
+    var d=window.YAZI_KALDIGI;
+    if(!d||typeof d.o!=="number"||d.o<0.08||d.o>=0.92)return;
+
+    var yer=document.querySelector(".yazi-sure")||document.querySelector("header.hero .lede");
+    if(!yer)return;
+
+    var kutu=document.createElement("p");
+    kutu.className="yazi-devam";
+    var git=document.createElement("button");
+    git.type="button";
+    git.textContent="↩ kaldığın yere dön · %"+Math.round(d.o*100);
+    var kapat=document.createElement("button");
+    kapat.type="button";
+    kapat.className="yazi-devam-kapat";
+    kapat.textContent="×";
+    kapat.setAttribute("aria-label","Bu satırı kapat");
+    kutu.appendChild(git);
+    kutu.appendChild(kapat);
+    yer.parentNode.insertBefore(kutu,yer.nextSibling);
+
+    git.addEventListener("click",function(){
+      /* Bölüm kimliği varsa oraya git: pencere boyu değişmişse yüzde kayar,
+         bölüm kaymaz. Yoksa orana göre yaklaşık konuma in. */
+      var hedef=d.b&&document.getElementById(d.b);
+      if(hedef)hedef.scrollIntoView({behavior:"smooth",block:"start"});
+      else window.scrollTo({top:(document.documentElement.scrollHeight-window.innerHeight)*d.o,behavior:"smooth"});
+      kutu.parentNode.removeChild(kutu);
+    });
+    kapat.addEventListener("click",function(){kutu.parentNode.removeChild(kutu);});
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Bölüm başlığı anchor'ları, yukarı dön düğmesi ve dar ekranda katlanan
+   içindekiler. Üçü de sayfa içeriğinden bağımsız, tamamen DOM üstünde çalışır. */
+(function(){
+  function parlat(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.classList.remove("yazi-parla");
+    void el.offsetWidth;           /* animasyonu yeniden tetiklemek için */
+    el.classList.add("yazi-parla");
+  }
+
+  function anchorlar(){
+    Array.prototype.forEach.call(document.querySelectorAll("section[id] > h2"),function(h2){
+      if(h2.querySelector(".yazi-anchor"))return;
+      var id=h2.parentNode.id;
+      var a=document.createElement("a");
+      a.className="yazi-anchor";
+      a.href="#"+id;
+      a.textContent="#";
+      a.setAttribute("aria-label","Bu bölüme bağlantı");
+      h2.appendChild(a);
+      a.addEventListener("click",function(){setTimeout(function(){parlat(id);},380);});
+    });
+  }
+
+  function yukariDugmesi(){
+    var btn=document.createElement("button");
+    btn.type="button";
+    btn.className="yazi-yukari";
+    btn.textContent="↑";
+    btn.setAttribute("aria-label","Sayfanın başına dön");
+    document.body.appendChild(btn);
+    btn.addEventListener("click",function(){
+      window.scrollTo({top:0,behavior:"smooth"});
+      var h1=document.querySelector("header.hero h1");
+      if(h1){h1.setAttribute("tabindex","-1");h1.focus({preventScroll:true});}
+    });
+    var bekliyor=false;
+    function guncelle(){
+      bekliyor=false;
+      btn.classList.toggle("gorunur",window.scrollY>600);
+    }
+    window.addEventListener("scroll",function(){
+      if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}
+    },{passive:true});
+    guncelle();
+  }
+
+  function katlanabilirToc(){
+    var toc=document.querySelector(".toc");
+    var ol=toc&&toc.querySelector("ol");
+    if(!toc||!ol||toc.querySelector(".yazi-toc-ac"))return;
+    var adet=ol.querySelectorAll("li").length;
+    var btn=document.createElement("button");
+    btn.type="button";
+    btn.className="yazi-toc-ac";
+    btn.innerHTML='<span>'+adet+' bölüm</span><span class="ok" aria-hidden="true">▾</span>';
+    btn.setAttribute("aria-expanded","false");
+    toc.insertBefore(btn,ol);
+    toc.dataset.kapali="1";
+    btn.addEventListener("click",function(){
+      var kapali=toc.dataset.kapali==="1";
+      if(kapali)delete toc.dataset.kapali; else toc.dataset.kapali="1";
+      btn.setAttribute("aria-expanded",String(kapali));
+    });
+    /* Bir bölüme gidilince liste yine kapansın, içerik hemen görünsün. */
+    ol.addEventListener("click",function(e){
+      if(e.target.closest("a")&&window.matchMedia("(max-width:900px)").matches){
+        toc.dataset.kapali="1";
+        btn.setAttribute("aria-expanded","false");
+      }
+    });
+  }
+
+  function baslat(){
+    anchorlar();
+    yukariDugmesi();
+    katlanabilirToc();
+    /* Sayfa doğrudan #mN ile açıldıysa hedef bölüm bir an vurgulansın. */
+    if(location.hash.length>1)setTimeout(function(){parlat(location.hash.slice(1));},300);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · MCP</p>
+    <h1>MCP:<br><em>aracını Claude'a devret</em></h1>
+    <p class="lede">Bir hata kaydını, bir Jira issue'sunu ya da bir SQL çıktısını panoya kopyalayıp sohbete yapıştırıyorsan, orada bağlanmayı bekleyen bir MCP server var. Bu sayfa sunucuyu eklemekten izin kuralı yazmaya ve context faturasını ödemeye kadar tüm yolu anlatıyor.</p>
+    <p class="source">11 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/mcp">code.claude.com/docs/en/mcp</a></p>
+  </header>
+
+  <nav class="toc" aria-label="İçindekiler">
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Panoya kopyalıyorsan, orada bir server var</a></li>
+      <li><a href="#m2"><span class="n">02</span> Hangi transport? Neredeyse her zaman http</a></li>
+      <li><a href="#m3"><span class="n">03</span> İlk sunucu: tek satır, bir de <code>--</code> kuralı</a></li>
+      <li><a href="#m4"><span class="n">04</span> local, project, user: sunucu nerede yaşasın?</a></li>
+      <li><a href="#m5"><span class="n">05</span> .mcp.json'ı commit'lemek: ekibin tamamı aynı araçlarla</a></li>
+      <li><a href="#m6"><span class="n">06</span> OAuth'lu sunucular ve /mcp ekranı</a></li>
+      <li><a href="#m7"><span class="n">07</span> Bağlanmadı: durum satırını oku</a></li>
+      <li><a href="#m8"><span class="n">08</span> mcp__server__tool: kuralların dayandığı ad</a></li>
+      <li><a href="#m9"><span class="n">09</span> Context faturasını kim ödüyor?</a></li>
+      <li><a href="#m10"><span class="n">10</span> Kapat ama silme</a></li>
+      <li><a href="#m11"><span class="n">11</span> @ ile resource, / ile prompt</a></li>
+      <li><a href="#m12"><span class="n">12</span> Hızlı referans</a></li>
+    </ol>
+  </nav>
+
+  <!-- 01 -->
+  <section id="m1">
+    <h2><span class="num">01</span> Panoya kopyalıyorsan, orada bir server var</h2>
+    <p>MCP (Model Context Protocol), Claude Code'u dış sistemlere bağlayan açık kaynaklı bir standart.
+    Bir MCP server bağladığında Claude o sistemin verisini <em>senin yapıştırdığın kadarıyla</em> değil,
+    doğrudan okuyup üzerinde işlem yaparak kullanır.</p>
+
+    <p>Karar kuralı basit: <strong>başka bir aracın ekranından sohbete veri taşıyorsan</strong> — issue
+    tracker, monitoring dashboard, veritabanı, tasarım dosyası — o araç için bir MCP server aramaya değer.
+    Tipik kullanımlar:</p>
+
+    <ul>
+      <li><strong>Issue'dan koda:</strong> "ENG-4521'de anlatılan özelliği yaz ve GitHub'da PR aç."</li>
+      <li><strong>Üretim hatası:</strong> "Son 24 saatte en sık görülen hatalar neler?"</li>
+      <li><strong>Veritabanı:</strong> "orders tablosunun şemasını göster."</li>
+      <li><strong>Olaya tepki:</strong> bir MCP server aynı zamanda <em>channel</em> olarak da davranıp
+      oturuma mesaj itebilir; böylece sen başındayken değilken bile Claude gelen olaya tepki verir.</li>
+    </ul>
+
+    <p>Bağlanacak sunucuyu <a href="https://claude.ai/directory">Anthropic Directory</a>'de arayabilirsin;
+    oradaki bağlantılar Claude Code ile aynı altyapıyı kullandığı için hepsi <code>claude mcp add</code>
+    ile eklenir. Kendin yazacaksan resmi <code>mcp-server-dev</code> plugin'i iskeleti kurar:</p>
+
+<pre><code>/plugin install mcp-server-dev@claude-plugins-official
+/mcp-server-dev:build-mcp-server</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Önce güven, sonra bağla</span>
+      Bir MCP server, Claude'un context'ine dışarıdan içerik taşır. Dış içerik getiren her sunucu
+      <strong>prompt injection</strong> yüzeyidir: bir issue açıklamasının içine gömülü talimat, Claude'a
+      yönelik bir komut gibi davranabilir. Kaynağına güvenmediğin sunucuyu bağlama; bağladıklarına da
+      08. bölümdeki izin kurallarıyla sınır çiz.
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="m2">
+    <h2><span class="num">02</span> Hangi transport? Neredeyse her zaman http</h2>
+    <p>Sunucu ya makinende bir süreç olarak çalışır (<code>stdio</code>) ya da uzakta bir uç noktadır
+    (<code>http</code>, <code>sse</code>, <code>ws</code>). Seçim çoğu zaman senin değil, sunucunun kararıdır —
+    dokümantasyonunda hangi adres veriliyorsa onu kullanırsın.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Transport</th><th>Ne zaman</th><th>Nasıl eklenir</th><th>Not</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>http</code></td>
+            <td>Bulut tabanlı servisler. Uzak sunucular için <strong>önerilen</strong> seçenek.</td>
+            <td><code>--transport http</code></td>
+            <td>OAuth destekler. JSON içinde <code>type</code> alanı <code>streamable-http</code> takma adını da kabul eder.</td>
+          </tr>
+          <tr>
+            <td><code>stdio</code></td>
+            <td>Yerel süreç: sistem erişimi gereken araçlar, kendi yazdığın script'ler.</td>
+            <td><code>--transport stdio -- &lt;komut&gt;</code></td>
+            <td>Kopan bağlantı otomatik yeniden kurulmaz (07. bölüm).</td>
+          </tr>
+          <tr>
+            <td><code>sse</code></td>
+            <td>Yalnızca SSE uç noktası sunan servisler.</td>
+            <td><code>--transport sse</code></td>
+            <td><strong>Deprecated.</strong> Mümkünse http kullan.</td>
+          </tr>
+          <tr>
+            <td><code>ws</code></td>
+            <td>Claude'a habersiz olay iten sunucular; kalıcı çift yönlü bağlantı.</td>
+            <td>Sadece <code>claude mcp add-json</code> veya <code>.mcp.json</code></td>
+            <td><code>--transport</code> bayrağı <code>ws</code> kabul etmez, OAuth desteklemez — kimlik doğrulama yalnızca header ile.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre><code><span class="c"># Uzak HTTP sunucusu</span>
+claude mcp add --transport http notion https://mcp.notion.com/mcp
+
+<span class="c"># Bearer token ile</span>
+claude mcp add --transport http secure-api https://api.example.com/mcp \
+  --header <span class="s">"Authorization: Bearer your-token"</span>
+
+<span class="c"># WebSocket: yalnızca JSON ile</span>
+claude mcp add-json events-server \
+  <span class="s">'{"type":"ws","url":"wss://mcp.example.com/socket","headers":{"Authorization":"Bearer YOUR_TOKEN"}}'</span></code></pre>
+
+    <div class="note warn">
+      <span class="tag">Sessiz atlanan sunucu</span>
+      JSON içinde <code>url</code> yazıp <code>type</code> yazmamak bir yapılandırma hatasıdır: Claude Code
+      <code>type</code>'ı olmayan girdiyi stdio sunucusu sanar. O sunucuyu atlar ve
+      <code>MCP server "&lt;ad&gt;" has a "url" but no "type"</code> uyarısını basar. v2.1.202 öncesinde bu
+      durum <code>command: expected string, received undefined</code> olarak raporlanıyordu.
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="m3">
+    <h2><span class="num">03</span> İlk sunucu: tek satır, bir de <code>--</code> kuralı</h2>
+    <p>Uzak sunucu için ad ve URL yeter. Yerel bir sunucu içinse komut satırının <strong>nerede bittiğini</strong>
+    Claude Code'a söylemen gerekir:</p>
+
+<pre><code><span class="c"># Genel sözdizimi</span>
+claude mcp add [options] &lt;name&gt; -- &lt;command&gt; [args...]
+
+<span class="c"># Gerçek örnek: Airtable</span>
+claude mcp add --env AIRTABLE_API_KEY=YOUR_KEY --transport stdio airtable \
+  -- npx -y airtable-mcp-server
+
+<span class="c"># Gerçek örnek: PostgreSQL — salt okunur kullanıcıyla</span>
+claude mcp add --transport stdio db -- npx -y @bytebase/dbhub \
+  --dsn <span class="s">"postgresql://readonly:pass@prod.db.com:5432/analytics"</span></code></pre>
+
+    <div class="note">
+      <span class="tag">İki tire ne işe yarıyor</span>
+      <code>--</code>, Claude'un kendi seçeneklerini (<code>--transport</code>, <code>--env</code>,
+      <code>--scope</code>) sunucuyu çalıştıran komuttan ayırır. Sonrasındaki her şey sunucuya olduğu gibi
+      geçer. Onu yazmazsan Claude Code, sunucunun <code>--port</code> gibi bayraklarını kendi seçeneği
+      sanıp hata verir.
+    </div>
+
+    <p>İki küçük tuzak daha:</p>
+    <ul>
+      <li><strong><code>--env</code> ile sunucu adı yan yana gelmesin.</strong> <code>--env</code> birden çok
+      <code>KEY=value</code> kabul ettiği için, hemen ardından gelen sunucu adını da bir çift sanır ve reddeder.
+      Yukarıdaki örneklerde olduğu gibi aralarına en az bir başka seçenek koy.</li>
+      <li><strong>Ad kısıtı:</strong> <code>claude mcp</code> komutlarıyla eklenen sunucu adları yalnızca harf,
+      rakam, tire ve alt çizgi içerebilir.</li>
+      <li><strong>Rezerve adlar:</strong> <code>workspace</code>, <code>claude-in-chrome</code>,
+      <code>computer-use</code>, <code>Claude Preview</code> ve <code>Claude Browser</code> yerleşik sunuculara
+      ait. <code>claude mcp add</code> bu adları hatayla reddeder; yapılandırma dosyasına elle yazılmışsa
+      sunucu yükleme sırasında atlanır.</li>
+    </ul>
+
+    <h3>Elinde hazır JSON varsa</h3>
+<pre><code>claude mcp add-json weather-api <span class="s">'{"type":"http","url":"https://api.weather.com/mcp","headers":{"Authorization":"Bearer token"}}'</span>
+
+<span class="c"># Claude Desktop'taki sunucuları içe aktar (macOS ve WSL)</span>
+claude mcp add-from-claude-desktop
+
+<span class="c"># Claude Code'un kendisini bir MCP server olarak çalıştır</span>
+claude mcp serve</code></pre>
+
+    <p><code>claude mcp serve</code> başlarken hiçbir şey yazdırmaz. Bir stdio sunucusu stdin/stdout üzerinden
+    konuştuğu için <strong>sessiz ve bloklanmış bir terminal</strong>, sunucunun çalıştığı ve istemci beklediği
+    anlamına gelir.</p>
+  </section>
+
+  <!-- 04 -->
+  <section id="m4">
+    <h2><span class="num">04</span> local, project, user: sunucu nerede yaşasın?</h2>
+    <p><code>-s</code> / <code>--scope</code> bayrağı sunucunun hangi projelerde yükleneceğini ve ekiple
+    paylaşılıp paylaşılmayacağını belirler. Varsayılan <code>local</code>'dır.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Scope</th><th>Yüklendiği yer</th><th>Ekiple paylaşılır mı</th><th>Nerede saklanır</th></tr></thead>
+        <tbody>
+          <tr><td><code>local</code> (varsayılan)</td><td>Yalnızca eklediğin proje</td><td>Hayır</td><td><code>~/.claude.json</code>, o projenin yolu altında</td></tr>
+          <tr><td><code>project</code></td><td>Yalnızca o proje</td><td><strong>Evet</strong>, sürüm kontrolü ile</td><td>Proje kökünde <code>.mcp.json</code></td></tr>
+          <tr><td><code>user</code></td><td>Makinendeki tüm projeler</td><td>Hayır</td><td><code>~/.claude.json</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre><code><span class="c"># local (varsayılan): kişisel, deneysel, kimlik bilgisi taşıyan sunucular</span>
+claude mcp add --transport http stripe https://mcp.stripe.com
+
+<span class="c"># user: her projede yanında olsun istediğin kişisel araçlar</span>
+claude mcp add --transport http hubspot --scope user https://mcp.hubspot.com/anthropic
+
+<span class="c"># project: ekibin tamamının aynı araçlara sahip olması için</span>
+claude mcp add --transport http shared-server --scope project https://example.com/mcp</code></pre>
+
+    <div class="note">
+      <span class="tag">Adlar karışmasın</span>
+      MCP'deki "local scope" ile genel <em>local settings</em> aynı şey değil. MCP local sunucuları
+      <code>~/.claude.json</code> içinde (ev dizininde) durur; genel yerel ayarlar ise proje içindeki
+      <code>.claude/settings.local.json</code> dosyasındadır.
+    </div>
+
+    <h3>Aynı sunucu iki yerde tanımlıysa</h3>
+    <p>Claude Code sunucuya <strong>bir kez</strong> bağlanır ve en yüksek öncelikli kaynaktaki tanımı kullanır.
+    Alanlar birleştirilmez — kazanan kaynağın girdisi olduğu gibi geçerlidir:</p>
+
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li>1. Local scope</li>
+        <li>2. Project scope</li>
+        <li>3. User scope</li>
+        <li>4. Plugin'lerin sağladığı sunucular</li>
+        <li>5. claude.ai connector'ları</li>
+      </ul>
+    </div>
+
+    <p>Üç scope birbirini <strong>ada</strong> göre eşler. Plugin'ler ve connector'lar ise <strong>uç noktaya</strong>
+    göre eşleşir: yukarıdaki bir sunucuyla aynı URL'i ya da aynı komutu gösteren bir plugin sunucusu kopya sayılır.
+    Kendi eklediğin bir sunucu aynı URL'li bir claude.ai connector'ını gölgelediğinde <code>/mcp</code> connector'ı
+    "hidden" olarak listeler ve kopyayı nasıl kaldıracağını gösterir.</p>
+  </section>
+
+  <!-- 05 -->
+  <section id="m5">
+    <h2><span class="num">05</span> .mcp.json'ı commit'lemek: ekibin tamamı aynı araçlarla</h2>
+    <p><code>--scope project</code> ile eklediğin sunucu proje kökündeki <code>.mcp.json</code> dosyasına yazılır.
+    Bu dosyayı sürüm kontrolüne al: ekibe katılan herkes aynı MCP araçlarıyla başlar.</p>
+
+<pre><code>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"shared-server"</span>: {
+      <span class="k">"type"</span>: <span class="s">"http"</span>,
+      <span class="k">"url"</span>: <span class="s">"https://example.com/mcp"</span>
+    }
+  }
+}</code></pre>
+
+    <h3>Sırları dosyaya yazma: değişken genişletme</h3>
+    <p>Makineye özgü yollar ve API anahtarları için <code>.mcp.json</code> ortam değişkeni genişletmesini destekler:
+    <code>${VAR}</code> ve varsayılanlı hâli <code>${VAR:-default}</code>. Genişletme
+    <code>command</code>, <code>args</code>, <code>env</code>, <code>url</code> ve <code>headers</code> alanlarında çalışır.</p>
+
+<pre><code>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"api-server"</span>: {
+      <span class="k">"type"</span>: <span class="s">"http"</span>,
+      <span class="k">"url"</span>: <span class="s">"${API_BASE_URL:-https://api.example.com}/mcp"</span>,
+      <span class="k">"headers"</span>: {
+        <span class="k">"Authorization"</span>: <span class="s">"Bearer ${API_KEY}"</span>
+      }
+    }
+  }
+}</code></pre>
+
+    <p>Bir değişken tanımlı değilse ve varsayılanı da yoksa yapılandırma yine yüklenir: Claude Code
+    <code>claude mcp list</code> çıktısında o sunucu için eksik değişken uyarısı basar ve
+    <code>${VAR}</code> metnini <strong>genişletmeden olduğu gibi</strong> kullanır. Yani bağlantı hatası
+    beklediğin yerde sessiz bir yanlış değer görürsün — uyarı satırını okumayı alışkanlık edin.</p>
+
+    <h3>Onay akışı: proje sunucuları kendiliğinden çalışmaz</h3>
+    <p>Güvenlik gerekçesiyle Claude Code, <code>.mcp.json</code>'daki proje sunucularını kullanmadan önce
+    etkileşimli oturumda onay ister. Verdiğin kararları sıfırlamak için:</p>
+
+<pre><code>claude mcp reset-project-choices</code></pre>
+
+    <p>Onayı ayarlardan da yönetebilirsin:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Ayar</th><th>Etkisi</th></tr></thead>
+        <tbody>
+          <tr><td><code>enableAllProjectMcpServers</code></td><td><code>.mcp.json</code>'daki tüm sunucuları otomatik onaylar.</td></tr>
+          <tr><td><code>enabledMcpjsonServers</code></td><td>Yalnızca adını saydığın sunucuları onaylar: <code>["memory", "github"]</code></td></tr>
+          <tr><td><code>disabledMcpjsonServers</code></td><td>Adını saydığın sunucuları reddeder — her modda geçerlidir.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Klonlanan repo kendi sunucusunu onaylayamaz</span>
+      v2.1.196'dan itibaren <code>claude mcp list</code> ve <code>claude mcp get</code>, workspace'e güvenene
+      kadar <code>.mcp.json</code> onaylarını yalnızca <strong>repoya commit'lenmemiş</strong> ayar dosyalarından
+      okur. Projenin <code>.claude/settings.json</code>'ına yazılmış <code>enableAllProjectMcpServers</code>
+      güvenilmeyen bir klasörde yok sayılır; sunucu <code>⏸ Pending approval</code> olarak bekler. Klasörde
+      <code>claude</code> çalıştırıp güven onayını verdiğinde devreye girer. Kullanıcı ayarların
+      (<code>~/.claude/settings.json</code>), managed ayarlar ve <code>--settings</code> ile geçilenler bu
+      durumdan etkilenmez.
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Etkileşimsiz çalıştırmada onay ekranı yoktur</span>
+      <code>claude -p</code> koşuları, Agent SDK oturumları ve bulut oturumları o soruyu soramaz: proje
+      sunucularını <strong>sormadan yükler</strong>. Bir sunucuyu oralarda da dışarıda tutmak istiyorsan
+      <code>disabledMcpjsonServers</code>'a ekle ya da proje ayarlarını tümden devre dışı bırak
+      (<code>--setting-sources</code>, SDK'da <code>settingSources</code>).
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="m6">
+    <h2><span class="num">06</span> OAuth'lu sunucular ve /mcp ekranı</h2>
+    <p>Bulut sunucularının çoğu kimlik doğrulaması ister ve Claude Code bunun için OAuth 2.0 destekler.
+    Sunucuyu eklerken kimlik bilgisi vermezsin; girişi sonradan yaparsın:</p>
+
+<pre><code>claude mcp add --transport http sentry https://mcp.sentry.dev/mcp</code></pre>
+
+<pre><code>/mcp</code></pre>
+
+    <p>Tarayıcıda giriş adımlarını tamamladığında sunucu <code>/mcp</code> menüsünde <code>connected</code>
+    görünür. v2.1.186'dan itibaren aynı akışı oturum açmadan, doğrudan kabuktan da çalıştırabilirsin:</p>
+
+<pre><code>claude mcp login sentry
+claude mcp logout sentry
+
+<span class="c"># SSH oturumu veya ekran sunucusuz Linux: URL'i bas, geri dönüş adresini yapıştır</span>
+claude mcp login sentry --no-browser</code></pre>
+
+    <p>Komut yerel tarayıcı olmadığını kendi de algılar ve yetkilendirme URL'ini basar; yapıştırma adımı için
+    etkileşimli terminal gerektiğinden <code>ssh -t</code> ile bağlan.</p>
+
+    <h3>Sunucu dinamik kayıt desteklemiyorsa</h3>
+    <p>"Incompatible auth server: does not support dynamic client registration" hatasını görüyorsan sunucunun
+    geliştirici portalından bir OAuth uygulaması kaydetmen gerekir. Kayıt sırasında istenen redirect URI
+    <code>http://localhost:PORT/callback</code> biçimindedir; aynı portu <code>--callback-port</code> ile ver:</p>
+
+<pre><code>claude mcp add --transport http \
+  --client-id your-client-id --client-secret --callback-port 8080 \
+  my-server https://mcp.example.com/mcp
+
+<span class="c"># CI'da etkileşimli soruyu atlamak için</span>
+MCP_CLIENT_SECRET=your-secret claude mcp add --transport http \
+  --client-id your-client-id --client-secret --callback-port 8080 \
+  my-server https://mcp.example.com/mcp</code></pre>
+
+    <ul>
+      <li><code>--client-secret</code> değeri komut satırında almaz; maskeli girdi olarak sorar.</li>
+      <li>Sır yapılandırmaya değil, sistem anahtarlığına (macOS) veya bir kimlik dosyasına yazılır.</li>
+      <li><code>--callback-port</code> tek başına da kullanılabilir — dinamik kayıtla birlikte portu sabitler.</li>
+      <li>Bu bayraklar yalnızca HTTP ve SSE için anlamlıdır; stdio sunucularında etkisizdir.</li>
+      <li>Erişimi geri almak için <code>/mcp</code> menüsündeki "Clear authentication".</li>
+    </ul>
+
+    <h3>Kapsamı daraltmak: <code>oauth.scopes</code></h3>
+    <p>Yetkilendirme sunucusu senin vermek istediğinden fazla scope reklam ediyorsa, istenen kümeyi
+    <code>.mcp.json</code> içinde sabitle. Değer, RFC 6749'daki gibi boşlukla ayrılmış <strong>tek bir metindir</strong>
+    ve hem <code>authServerMetadataUrl</code>'yi hem de sunucunun keşfettiği scope'ları ezer:</p>
+
+<pre><code>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"slack"</span>: {
+      <span class="k">"type"</span>: <span class="s">"http"</span>,
+      <span class="k">"url"</span>: <span class="s">"https://mcp.slack.com/mcp"</span>,
+      <span class="k">"oauth"</span>: {
+        <span class="k">"scopes"</span>: <span class="s">"channels:read chat:write search:read"</span>
+      }
+    }
+  }
+}</code></pre>
+
+    <p>Sunucu bir tool çağrısına 403 <code>insufficient_scope</code> dönerse Claude Code aynı sabit scope'larla
+    yeniden yetkilendirir — yani ihtiyacın olan tool sabit kümenin dışındaysa listeyi sen genişletmelisin.</p>
+
+    <h3>OAuth değil, kurum içi kimlik doğrulama</h3>
+    <p>Kerberos, kısa ömürlü token veya iç SSO kullanıyorsan <code>headersHelper</code> ile bağlantı anında
+    header üretebilirsin:</p>
+
+<pre><code>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"internal-api"</span>: {
+      <span class="k">"type"</span>: <span class="s">"http"</span>,
+      <span class="k">"url"</span>: <span class="s">"https://mcp.internal.example.com"</span>,
+      <span class="k">"headersHelper"</span>: <span class="s">"/opt/bin/get-mcp-auth-headers.sh"</span>
+    }
+  }
+}</code></pre>
+
+    <ul>
+      <li>Komut stdout'a <strong>string'lerden oluşan bir JSON nesnesi</strong> yazmalı.</li>
+      <li>Kabukta, oturumun çalışma dizininde ve <strong>10 saniyelik zaman aşımıyla</strong> koşar — mutlak yol kullan.</li>
+      <li>Her bağlantıda yeniden çalışır, <strong>önbellek yoktur</strong>; token'ı tekrar kullanmak script'inin işidir.</li>
+      <li>Dinamik header'lar aynı adlı statik <code>headers</code> değerlerini ezer.</li>
+      <li>v2.1.193'ten itibaren bir tool çağrısı 401/403 dönerse helper yeniden koşturulur, bağlantı tazelenir ve
+      çağrı bir kez tekrarlanır.</li>
+      <li><code>headersHelper</code> keyfi kabuk komutu çalıştırır: project veya local scope'ta tanımlıysa yalnızca
+      workspace güven onayını verdikten sonra koşar.</li>
+    </ul>
+
+    <div class="note warn">
+      <span class="tag">Header koyduysan OAuth'a düşmez</span>
+      Sunucu için <code>headers.Authorization</code> tanımladıysan ve sunucu bu header'ı reddederse Claude Code
+      bağlantıyı <strong>başarısız</strong> sayar; OAuth akışına geri dönmez. Token'ın o MCP uç noktası için
+      geçerli olduğundan emin ol ya da header'ı kaldırıp OAuth'u kullan.
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="m7">
+    <h2><span class="num">07</span> Bağlanmadı: durum satırını oku</h2>
+    <p><code>claude mcp add</code> ekrana <code>Added ...</code> yazdığında yalnızca <em>yapılandırmanın
+    yazıldığını</em> söyler — kimlik bilgilerini doğrulamaz. Gerçeği durum satırı söyler:</p>
+
+<pre><code>claude mcp list           <span class="c"># hepsi + sağlık durumu</span>
+claude mcp get notion     <span class="c"># tek sunucunun ayrıntısı</span>
+claude mcp remove notion</code></pre>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Durum</th><th>Anlamı ve yapılacak</th></tr></thead>
+        <tbody>
+          <tr><td><code>✔ Connected</code></td><td>Bağlantı kuruldu.</td></tr>
+          <tr><td><code>! Needs authentication</code></td><td>Sunucu 401 veya 403 döndü. <code>/mcp</code> ya da <code>claude mcp login</code>.</td></tr>
+          <tr><td><code>✘ Failed to connect</code></td><td>Bağlantı kurulamadı. <code>claude mcp list</code> hata detayını satır sonuna, <code>claude mcp get</code> ise <code>Issue:</code> satırına ekler: HTTP durum kodu ve sunucunun döndürdüğü metin. Kimlik bilgisi benzeri metinler ve genişletilmiş URL bu detaya <strong>hiç</strong> yazılmaz.</td></tr>
+          <tr><td><code>⏸ Pending approval</code></td><td><code>.mcp.json</code>'dan gelen proje sunucusu onay bekliyor. Klasörde <code>claude</code> çalıştır.</td></tr>
+          <tr><td><code>✘ Rejected</code></td><td>Ayarlardaki <code>disabledMcpjsonServers</code> listesinde.</td></tr>
+          <tr><td><code>cached 2h ago · connects on first use</code></td><td>Uzak sunucunun tool listesi önceki oturumdan okundu; ilk tool çağrısında bağlanır. Yapman gereken bir şey yok. Her sunucunun açılışta bağlanmasını istiyorsan <code>MCP_DISCOVERY_CACHE=0</code>. (v2.1.221+)</td></tr>
+          <tr><td><code>not configured</code></td><td>Uzak sunucunun <code>url</code>'i boş — Claude Code bağlanmayı denemez. Genellikle bir plugin'in sonradan yapılandırılacak connector'ı için koyduğu yer tutucudur.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Birkaç ayrıntı hata avında zaman kazandırır:</p>
+    <ul>
+      <li><strong>Kopyala-yapıştır boşluğu:</strong> Claude Code <code>command</code>, <code>url</code>, her
+      <code>args</code> girdisi ile <code>env</code> ve <code>headers</code> altındaki değer ve anahtar adlarında
+      gizli baştaki/sondaki boşluğu uyarır — örneğin
+      <code>Leading or trailing whitespace in: headers.Authorization</code>. Değeri <strong>kırpmaz</strong>,
+      yazıldığı gibi kullanır; düzeltmek sana kalmış.</li>
+      <li><strong>Yeniden bağlanma:</strong> HTTP/SSE sunucusu oturum ortasında koparsa üstel geri çekilmeyle
+      beş deneme yapılır (1 saniyeden başlayıp katlanarak). Beşi de başarısız olursa sunucu <em>failed</em>
+      işaretlenir, <code>/mcp</code>'den elle yeniden denersin. <strong>Stdio sunucuları yerel süreç olduğu için
+      otomatik yeniden bağlanmaz.</strong></li>
+      <li><strong>WebSocket sunucuları <code>claude mcp list</code> çıktısında görünmez.</strong>
+      <code>claude mcp get &lt;ad&gt;</code> ya da <code>/mcp</code> paneline bak.</li>
+      <li><strong>Aynı ad, aynı scope:</strong> <code>claude mcp add</code>'i tekrar çalıştırmak
+      <code>MCP server sentry already exists in local config</code> hatasıyla biter.</li>
+    </ul>
+
+    <h3>Zaman aşımları</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Değişken / alan</th><th>Neyi sınırlar</th><th>Varsayılan</th></tr></thead>
+        <tbody>
+          <tr><td><code>MCP_TIMEOUT</code></td><td>Sunucu başlatma süresi</td><td><code>MCP_TIMEOUT=10000 claude</code> → 10 saniye</td></tr>
+          <tr><td>Sunucu girdisindeki <code>timeout</code> (ms)</td><td>O sunucu için tool çağrısı duvar saati sınırı; <code>MCP_TOOL_TIMEOUT</code>'u ezer</td><td>1000'in altındaki değerler yok sayılır</td></tr>
+          <tr><td><code>MCP_TOOL_TIMEOUT</code></td><td>Genel tool çağrısı sınırı</td><td>Ayarsızken yaklaşık 28 saat</td></tr>
+          <tr><td><code>CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT</code></td><td>Cevap ve ilerleme bildirimi gelmeden geçen boşta süre</td><td>Uzak sunucularda 5 dakika, stdio'da 30 dakika; <code>0</code> kapatır</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Bu sınırlar çağrının ne kadar <em>süreceğini</em> bağlar, oturumu ne kadar <em>bloklayacağını</em> değil:
+    v2.1.212'den itibaren ana konuşmadaki bir MCP çağrısı iki dakikayı aşarsa arka plan görevine taşınır.
+    Claude görev kimliğini hemen alır ve çalışmaya devam eder, sonuç bildirimle döner. Görevi
+    <code>/tasks</code> altında görür, oradan durdurabilirsin. Eşiği
+    <code>CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS</code> ile değiştirir, <code>0</code> ile kapatırsın.</p>
+  </section>
+
+  <!-- 08 -->
+  <section id="m8">
+    <h2><span class="num">08</span> mcp__server__tool: kuralların dayandığı ad</h2>
+    <p>Bir MCP tool'unun çağrılabilir adı <code>mcp__&lt;server&gt;__&lt;tool&gt;</code> biçimindedir. Bu ad
+    yalnızca ekranda görünen bir etiket değil; izin kuralları, hook matcher'ları ve subagent'ların
+    <code>tools</code> listesi bu ada göre eşleşir. Kuralların değerlendirilme sırası ve hangi ayar dosyasına
+    yazılacağı <a href="permissions-settings-guide.html" style="color:var(--ink-soft);">settings.json: deny her zaman kazanır</a>
+    sayfasında.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kural</th><th>Ne eşler</th></tr></thead>
+        <tbody>
+          <tr><td><code>mcp__puppeteer</code></td><td><code>puppeteer</code> sunucusunun sağladığı her tool</td></tr>
+          <tr><td><code>mcp__puppeteer__*</code></td><td>Aynısı, joker sözdizimiyle</td></tr>
+          <tr><td><code>mcp__puppeteer__puppeteer_navigate</code></td><td>Yalnızca o tek tool</td></tr>
+          <tr><td><code>mcp__github__get_*</code></td><td><code>github</code> sunucusunun <code>get_</code> ile başlayan tool'ları</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre><code>{
+  <span class="k">"permissions"</span>: {
+    <span class="k">"allow"</span>: [<span class="s">"mcp__sentry__*"</span>, <span class="s">"mcp__github__get_*"</span>],
+    <span class="k">"deny"</span>: [<span class="s">"mcp__*"</span>]
+  }
+}</code></pre>
+
+    <div class="note warn">
+      <span class="tag">allow kurallarında sunucu adı sabit olmalı</span>
+      Allow kuralları joker'i yalnızca <strong>düz yazılmış bir <code>mcp__&lt;server&gt;__</code> önekinden
+      sonra</strong> kabul eder; sunucu bölümü joker içeremez. <code>"*"</code>, <code>"B*"</code> veya
+      <code>"mcp__*"</code> gibi bir allow kuralı uyarıyla atlanır ve hiçbir şeyi otomatik onaylamaz.
+      Aynı desen <code>deny</code> tarafında sorunsuz çalışır — bütün MCP tool'larını kapatmanın yolu budur.
+    </div>
+
+    <p>İki ayrıntı sık şaşırtır:</p>
+    <ul>
+      <li><strong>Plugin'in getirdiği sunucular farklı adlanır.</strong> Tam biçim
+      <code>mcp__plugin_&lt;plugin-adı&gt;_&lt;server-adı&gt;__&lt;tool&gt;</code>'dur; örneğin
+      <code>mcp__plugin_my-plugin_database-tools__query</code>. Çıplak sunucu adına yazılmış bir hook matcher'ı
+      (<code>mcp__database-tools__.*</code>) plugin sunucusunda <strong>hiç tetiklenmez</strong>. Sunucunun
+      kendisi ise <code>plugin:&lt;plugin-adı&gt;:&lt;server-adı&gt;</code> adıyla kaydolur.</li>
+      <li><strong>claude.ai connector tool'ları</strong> <code>mcp__claude_ai_&lt;server&gt;__&lt;tool&gt;</code>
+      olarak görünür. Kurumun bir connector tool'unu <code>ask</code>'e ayarladıysa allow kuralların işe yaramaz:
+      Claude Code <code>auto</code> ve <code>bypassPermissions</code> modlarında bile her çağrıda sorar,
+      <code>dontAsk</code> modunda ise çağrıyı reddeder.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Sunucu yazarları için</span>
+      Bir tool'u <code>tools/list</code> yanıtında
+      <code>_meta["anthropic/requiresUserInteraction"]: true</code> ile işaretlersen Claude Code o tool için
+      <strong>her çağrıda</strong> izin sorar; "bir daha sorma" seçeneği sunmaz ve eşleşen allow kuralları
+      soruyu atlatmaz. Onayın kendisi işin amacı olan adımlar için — erişim talebi, rıza ekranı — doğru araç
+      budur. (v2.1.199+)
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="m9">
+    <h2><span class="num">09</span> Context faturasını kim ödüyor?</h2>
+    <p>Eskiden "çok fazla MCP server context'i şişirir" doğru bir uyarıydı. Bugün varsayılan davranış
+    <strong>tool search</strong>: oturum başında yalnızca tool <em>adları</em> ve sunucu talimatları yüklenir,
+    şemalar Claude ihtiyaç duyana kadar ertelenir. Claude Code sunucu başına sabit bir tool sınırı koymaz;
+    pratik sınır context bütçendir.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th><code>ENABLE_TOOL_SEARCH</code></th><th>Davranış</th></tr></thead>
+        <tbody>
+          <tr><td>(ayarsız)</td><td>Varsayılan. Tüm MCP tool'ları ertelenir, ihtiyaç oldukça yüklenir.</td></tr>
+          <tr><td><code>true</code></td><td>Erteleme zorlanır; beta başlığı proxy'lere de gönderilir.</td></tr>
+          <tr><td><code>auto</code></td><td>Eşik modu: şemalar context'in %10'una sığıyorsa baştan yüklenir, taşan kısım ertelenir.</td></tr>
+          <tr><td><code>auto:N</code></td><td>Eşik yüzdesini sen ver — <code>auto:5</code> gibi.</td></tr>
+          <tr><td><code>false</code></td><td>Tüm MCP tool'ları baştan yüklenir, erteleme yok.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Tool search <code>tool_reference</code> bloklarını destekleyen bir model ister: Claude Sonnet 4.5,
+    Haiku 4.5, Opus 4.5 ve sonrası. <code>ANTHROPIC_BASE_URL</code> birinci taraf olmayan bir adrese
+    bakıyorsa Claude Code bunu kendiliğinden kapatır — çoğu proxy o blokları iletmez.</p>
+
+    <h3>Her turda lazım olan sunucuyu muaf tut</h3>
+    <p>Bir sunucunun tool'ları arama adımı olmadan hep görünür olsun istiyorsan <code>alwaysLoad</code> kullan.
+    Bunun bedeli var: baştan yüklenen her tool, konuşmaya kalacak context'ten yer alır. Ayrıca
+    <code>alwaysLoad: true</code> açılışın o sunucunun tool'larını beklemesine yol açar (5 saniyelik bağlantı
+    zaman aşımıyla sınırlı) — diğer sunucular varsayılan olarak arka planda bağlanır.</p>
+
+<pre><code>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"core-tools"</span>: {
+      <span class="k">"type"</span>: <span class="s">"http"</span>,
+      <span class="k">"url"</span>: <span class="s">"https://mcp.example.com/mcp"</span>,
+      <span class="k">"alwaysLoad"</span>: <span class="k">true</span>
+    }
+  }
+}</code></pre>
+
+    <h3>Asıl fatura: tool çıktıları</h3>
+    <p>Şemalar ertelense de <strong>tool'un döndürdüğü sonuç</strong> context'e girer. Claude Code bunu iki
+    eşikle sınırlar:</p>
+
+    <ul>
+      <li><strong>10.000 token</strong> üzerindeki her MCP tool çıktısı için uyarı gösterir. Bu eşik sabittir.</li>
+      <li><strong>Varsayılan üst sınır 25.000 token</strong>'dır; <code>MAX_MCP_OUTPUT_TOKENS</code> ile
+      yükseltilir (<code>export MAX_MCP_OUTPUT_TOKENS=50000</code>).</li>
+      <li>Sunucu yazıyorsan tek bir tool'un sınırını
+      <code>_meta["anthropic/maxResultSizeChars"]</code> ile yükseltebilirsin — üst tavan 500.000 karakter.
+      Bu ek açıklama metin içerik için ortam değişkeninden bağımsız çalışır, ama <strong>görsel döndüren
+      tool'lar yine <code>MAX_MCP_OUTPUT_TOKENS</code>'a tabidir</strong>.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Nereye bakılır</span>
+      Sunucu başına maliyeti <code>/mcp</code> gösterir; genel kırılım için <code>/usage</code>, anlık bağlam
+      dağılımı için <code>/context</code>. Bir işi hem CLI hem MCP ile yapabiliyorsan CLI genelde daha ucuzdur:
+      <code>gh</code>, <code>aws</code>, <code>sentry-cli</code> hiçbir tool listesi eklemez.
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="m10">
+    <h2><span class="num">10</span> Kapat ama silme</h2>
+    <p>Bir sunucuyu bu hafta kullanmıyorsan yapılandırmasını silmene gerek yok: <code>/mcp</code> panelinden
+    kapat. Sunucu listede <em>disabled</em> olarak durur, Claude Code ona bağlanmaz.</p>
+
+    <p>Tercihin proje bazında <code>~/.claude.json</code> içine yazılır ve <strong>ayrık iki listeden</strong>
+    birine düşer:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Liste</th><th>Kimi kapsar</th><th>Anlamı</th></tr></thead>
+        <tbody>
+          <tr><td><code>disabledMcpServers</code></td><td>Kullanıcı sunucuları, plugin sunucuları, claude.ai connector'ları ve varsayılan olarak <strong>açık</strong> yerleşik sunucular</td><td>Opt-out: buradakine bağlanılmaz</td></tr>
+          <tr><td><code>enabledMcpServers</code></td><td>Varsayılan olarak <strong>kapalı</strong> yerleşik sunucular (<code>computer-use</code> gibi)</td><td>Opt-in: yalnızca buradakine bağlanılır</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Claude Code her sunucu için bu listelerden yalnızca birine bakar; biri diğerini ezmez. Normal bir sunucuyu
+    <code>enabledMcpServers</code>'a yazarsan o girdi yok sayılır. Bu ikisinin,
+    <code>.mcp.json</code> onaylarını yöneten <code>enabledMcpjsonServers</code> /
+    <code>disabledMcpjsonServers</code> ile <strong>hiçbir ilgisi yoktur</strong> — adları benzer, işleri ayrı.</p>
+
+    <h3>Hangi sunucuyu ne zaman kapatırsın?</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Durum</th><th>Yapılacak</th></tr></thead>
+        <tbody>
+          <tr><td>Bu projede hiç kullanmıyorsun</td><td><code>/mcp</code> panelinden kapat — yapılandırma kalır.</td></tr>
+          <tr><td>Hiçbir projede kullanmıyorsun</td><td><code>claude mcp remove &lt;ad&gt;</code></td></tr>
+          <tr><td>Kimlik doğrulaması bozuk, sürekli uyarı basıyor</td><td><code>claude mcp login</code> ya da <code>/mcp</code> → Re-authenticate; düzelmiyorsa kapat.</td></tr>
+          <tr><td>Ekip repo'sundaki bir sunucuyu sen istemiyorsun</td><td>Kendi ayarında <code>disabledMcpjsonServers</code> — her modda geçerlidir.</td></tr>
+          <tr><td>Yazma yetkisi olan tool'lardan çekiniyorsun</td><td>Sunucuyu açık bırak, <code>permissions.deny</code> ile riskli tool'ları kapat (08. bölüm).</td></tr>
+          <tr><td>Tüm claude.ai connector'larını kapatmak istiyorsun</td><td><code>"disableClaudeAiConnectors": true</code> — herhangi bir ayar kaynağındaki <code>true</code> kazanır.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">claude.ai connector'ları</span>
+      Claude Code'a bir claude.ai hesabıyla giriş yaptıysan, claude.ai'da eklediğin connector'lar otomatik
+      olarak <code>/mcp</code> listesinde belirir. Bunlar yalnızca aktif kimlik doğrulaman claude.ai aboneliği
+      girişiyken çekilir: <code>ANTHROPIC_API_KEY</code>, <code>ANTHROPIC_AUTH_TOKEN</code>,
+      <code>apiKeyHelper</code>, Bedrock/Vertex gibi üçüncü taraf sağlayıcılar veya bir profil devredeyse
+      yüklenmezler. Beklediğin connector listede yoksa önce <code>/status</code> ile hangi yöntemin aktif
+      olduğuna bak.
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section id="m11">
+    <h2><span class="num">11</span> @ ile resource, / ile prompt</h2>
+    <p>MCP sunucuları yalnızca tool sunmaz. İki yüzeyi daha var ve ikisi de tanıdık sözdizimini kullanır.</p>
+
+    <h3>Resources: dosya gibi @ ile referans ver</h3>
+    <p>İstemin içinde <code>@</code> yazdığında bağlı sunucuların kaynakları da dosyaların yanında
+    otomatik tamamlamada çıkar. Biçim: <code>@server:protocol://resource/path</code></p>
+
+<pre><code>@github:issue://123 sorununu inceleyip bir düzeltme önerir misin?
+
+@postgres:schema://users ile @docs:file://database/user-model arasındaki farkı karşılaştır</code></pre>
+
+    <p>Referans verilen kaynak otomatik olarak getirilip eke dönüştürülür; yollar bulanık aramayla
+    (fuzzy) taranabilir.</p>
+
+    <h3>Prompts: sunucudan gelen slash command'lar</h3>
+    <p>Sunucunun tanımladığı prompt'lar <code>/</code> menüsünde
+    <code>/mcp__servername__promptname</code> biçiminde görünür. Argümanları boşlukla ayırarak verirsin:</p>
+
+<pre><code>/mcp__github__list_prs
+/mcp__github__pr_review 456
+/mcp__jira__create_issue "Bug in login flow" high</code></pre>
+
+    <p>Sunucu ve prompt adları normalleştirilir — boşluklar alt çizgiye dönüşür. Prompt'un sonucu doğrudan
+    konuşmaya enjekte edilir.</p>
+
+    <h3>Elicitation: sunucu sana soru sorduğunda</h3>
+    <p>Bir sunucu iş ortasında kendi başına elde edemeyeceği bir bilgiye ihtiyaç duyarsa Claude Code etkileşimli
+    bir kutucuk açar: <strong>form modunda</strong> sunucunun tanımladığı alanları doldurursun,
+    <strong>URL modunda</strong> tarayıcıda akışı tamamlayıp CLI'da onaylarsın. Senin tarafında yapılandırma
+    gerekmez. Diyaloğu göstermeden otomatik cevap vermek istersen <code>Elicitation</code> hook'unu kullan.</p>
+  </section>
+
+  <!-- 12 -->
+  <section id="m12">
+    <h2><span class="num">12</span> Hızlı referans</h2>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Ekle (uzak):</strong> <code>claude mcp add --transport http &lt;ad&gt; &lt;url&gt;</code></li>
+        <li><strong>Ekle (yerel):</strong> <code>claude mcp add --transport stdio &lt;ad&gt; -- &lt;komut&gt; [args]</code></li>
+        <li><strong>Kısa bayraklar:</strong> <code>-t</code> = <code>--transport</code>, <code>-H</code> = <code>--header</code>, <code>-s</code> = <code>--scope</code>, <code>-e</code> = <code>--env</code></li>
+        <li><strong>Scope:</strong> <code>local</code> (varsayılan, <code>~/.claude.json</code>) · <code>project</code> (<code>.mcp.json</code>, ekiple paylaşılır) · <code>user</code> (tüm projeler)</li>
+        <li><strong>Öncelik:</strong> local → project → user → plugin → claude.ai connector; alanlar birleştirilmez</li>
+        <li><strong>Yönet:</strong> <code>claude mcp list</code> · <code>get &lt;ad&gt;</code> · <code>remove &lt;ad&gt;</code> · <code>add-json</code> · <code>reset-project-choices</code></li>
+        <li><strong>Giriş:</strong> <code>/mcp</code> · <code>claude mcp login &lt;ad&gt;</code> · <code>logout</code> · <code>--no-browser</code></li>
+        <li><strong>İzin kuralı:</strong> <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>; allow'da joker yalnızca sunucu adından sonra</li>
+        <li><strong>Plugin tool adı:</strong> <code>mcp__plugin_&lt;plugin&gt;_&lt;server&gt;__&lt;tool&gt;</code></li>
+        <li><strong>Context:</strong> tool search varsayılan açık · <code>ENABLE_TOOL_SEARCH</code> · sunucu bazında <code>alwaysLoad</code></li>
+        <li><strong>Çıktı sınırı:</strong> 10.000 token'da uyarı (sabit), 25.000 token varsayılan tavan, <code>MAX_MCP_OUTPUT_TOKENS</code> ile yükselir</li>
+        <li><strong>Zaman aşımı:</strong> <code>MCP_TIMEOUT</code> (başlatma) · sunucu bazında <code>timeout</code> · <code>MCP_TOOL_TIMEOUT</code> · <code>CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT</code></li>
+        <li><strong>Kapat:</strong> <code>/mcp</code> toggle → <code>disabledMcpServers</code>; <code>.mcp.json</code> onayı → <code>disabledMcpjsonServers</code></li>
+        <li><strong>Resource:</strong> <code>@server:protocol://path</code> · <strong>Prompt:</strong> <code>/mcp__server__prompt</code></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Kaynaklar:
+    <a href="https://code.claude.com/docs/en/mcp">code.claude.com/docs/en/mcp</a> ·
+    <a href="https://code.claude.com/docs/en/permissions">/permissions</a> ·
+    <a href="https://code.claude.com/docs/en/settings">/settings</a> ·
+    <a href="https://code.claude.com/docs/en/managed-mcp">/managed-mcp</a> ·
+    <a href="https://code.claude.com/docs/en/plugins">/plugins</a>
+  </footer>
+
+</div>
+</body>
+</html>

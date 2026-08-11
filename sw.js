@@ -1,7 +1,7 @@
 /* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Çevrimdışı okuma için service worker. Sürüm damgası önbellekteki dosyaların
    içeriğinden türer; içerik değiştiğinde eski önbellek atılır. */
-const SURUM = "bb30ec778177";
+const SURUM = "72a34cbbc7e9";
 const AD = "ai-handbook-" + SURUM;
 const ONBELLEK = [
   "./",
@@ -33,7 +33,9 @@ const ONBELLEK = [
   "posts/creating-subagents-guide.html",
   "posts/doctor-command-guide.html",
   "posts/hooks-guide.html",
+  "posts/mcp-servers-guide.html",
   "posts/output-styles-guide.html",
+  "posts/permissions-settings-guide.html",
   "posts/plan-mode-guide.html",
   "posts/plugins-guide.html",
   "posts/statusline-guide.html",

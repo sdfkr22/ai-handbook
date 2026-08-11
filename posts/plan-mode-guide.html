@@ -105,7 +105,7 @@
 <script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
    gezinme bloğunu basar. */
-window.YAZI_VERI={"sure":9,"yeni":{"dosya":"output-styles-guide.html","baslik":"Ne bildiğini değil, nasıl davrandığını değiştir"},"eski":{"dosya":"doctor-command-guide.html","baslik":"Bir şey mi ters? Önce /doctor"},"ilgili":[]};</script>
+window.YAZI_VERI={"sure":9,"yeni":{"dosya":"output-styles-guide.html","baslik":"Ne bildiğini değil, nasıl davrandığını değiştir"},"eski":{"dosya":"doctor-command-guide.html","baslik":"Bir şey mi ters? Önce /doctor"},"ilgili":[{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"}]};</script>
 <!-- /yazi:veri -->
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
@@ -817,7 +817,7 @@ try{
       <span class="tag">İsim karışıklığı</span>
       Her aksiyonu tek tek onaylatan mod arayüzde <strong>Manual</strong> diye görünür, ama config değeri <code>default</code>'tur — hook'lar ve SDK bu değeri görür. CLI, yazdığın yerde <code>manual</code> takma adını da kabul eder (v2.1.200+).
     </div>
-    <p>Mod bir <em>taban</em> belirler. Üstüne <code>permissions.allow</code> / <code>ask</code> / <code>deny</code> kuralları binebilir; deny ve açık ask kuralları her modda geçerlidir.</p>
+    <p>Mod bir <em>taban</em> belirler. Üstüne <code>permissions.allow</code> / <code>ask</code> / <code>deny</code> kuralları binebilir; deny ve açık ask kuralları her modda geçerlidir. Kuralların sözdizimi, hangi ayar dosyasına yazılacağı ve neden deny'ın her zaman kazandığı için <a href="permissions-settings-guide.html" style="color:var(--ink-soft);">settings.json: deny her zaman kazanır</a> sayfasına bak.</p>
   </section>
 
   <section id="m2">

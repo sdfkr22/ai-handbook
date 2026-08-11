@@ -5,8 +5,47 @@
   <link>https://sdfkr22.github.io/ai-handbook/</link>
   <description>Claude Code ve yapay zekâ araçları üzerine teknik yazılar. Konu başlığına göre filtrelenebilir arşiv.</description>
   <language>tr</language>
-  <lastBuildDate>Mon, 10 Aug 2026 12:00:00 GMT</lastBuildDate>
+  <lastBuildDate>Tue, 11 Aug 2026 12:00:00 GMT</lastBuildDate>
   <atom:link href="https://sdfkr22.github.io/ai-handbook/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title>MCP: aracını Claude&#39;a devret</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html</guid>
+    <pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Sentry&#39;den, Jira&#39;dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json&#39;ı repoya koymak, OAuth, izin kuralları ve context faturası.</description>
+    <category>MCP</category>
+    <category>claude mcp add</category>
+    <category>.mcp.json</category>
+    <category>scope</category>
+    <category>stdio</category>
+    <category>http</category>
+    <category>OAuth</category>
+    <category>/mcp</category>
+    <category>tool search</category>
+    <category>alwaysLoad</category>
+    <category>izin kuralları</category>
+    <category>connector</category>
+  </item>
+  <item>
+    <title>settings.json: deny her zaman kazanır</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/permissions-settings-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/permissions-settings-guide.html</guid>
+    <pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Kurallar deny → ask → allow sırasıyla değerlendirilir ve hangi ayar dosyasında yazdığın bu sırayı değiştirmez. settings.json hiyerarşisi, kural sözdizimi, Bash tuzakları, dosya yolu desenleri ve workspace trust.</description>
+    <category>permissions</category>
+    <category>settings.json</category>
+    <category>settings.local.json</category>
+    <category>allow</category>
+    <category>ask</category>
+    <category>deny</category>
+    <category>defaultMode</category>
+    <category>additionalDirectories</category>
+    <category>/permissions</category>
+    <category>managed settings</category>
+    <category>workspace trust</category>
+    <category>hooks</category>
+    <category>env</category>
+  </item>
   <item>
     <title>Ne bildiğini değil, nasıl davrandığını değiştir</title>
     <link>https://sdfkr22.github.io/ai-handbook/posts/output-styles-guide.html</link>

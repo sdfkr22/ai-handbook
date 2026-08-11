@@ -105,7 +105,7 @@
 <script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
    gezinme bloğunu basar. */
-window.YAZI_VERI={"sure":9,"yeni":null,"eski":{"dosya":"plan-mode-guide.html","baslik":"Önce plan, sonra diff"},"ilgili":[{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"}]};</script>
+window.YAZI_VERI={"sure":9,"yeni":{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"},"eski":{"dosya":"plan-mode-guide.html","baslik":"Önce plan, sonra diff"},"ilgili":[{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"},{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"}]};</script>
 <!-- /yazi:veri -->
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
@@ -877,6 +877,8 @@ try{
         </tbody>
       </table>
     </div>
+    <p>Bu sıra bütün settings alanları için aynıdır — <strong>izin kuralları hariç</strong>: onlar ezmez,
+      birleşir. Ayrıntısı için <a href="permissions-settings-guide.html" style="color:var(--ink-soft);">settings.json: deny her zaman kazanır</a>.</p>
     <div class="note">
       <span class="tag">Sürüm notu</span>
       Bağımsız <code>/output-style</code> komutu <strong>v2.1.73'te deprecate edildi, v2.1.91'de kaldırıldı</strong>. Eski bir blog yazısında ya da not defterinde bu komutu görürsen: artık <code>/config</code> kullanılıyor veya <code>outputStyle</code> alanı doğrudan düzenleniyor.

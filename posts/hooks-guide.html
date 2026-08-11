@@ -103,7 +103,7 @@
 <script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
    gezinme bloğunu basar. */
-window.YAZI_VERI={"sure":16,"yeni":{"dosya":"creating-subagents-guide.html","baslik":"Kendi subagent'ını yazmak"},"eski":{"dosya":"writing-skills-guide.html","baslik":"Sıfırdan skill yazmak"},"ilgili":[{"dosya":"doctor-command-guide.html","baslik":"Bir şey mi ters? Önce /doctor"},{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"},{"dosya":"statusline-guide.html","baslik":"Statusline'ı sen yaz"}]};</script>
+window.YAZI_VERI={"sure":16,"yeni":{"dosya":"creating-subagents-guide.html","baslik":"Kendi subagent'ını yazmak"},"eski":{"dosya":"writing-skills-guide.html","baslik":"Sıfırdan skill yazmak"},"ilgili":[{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"},{"dosya":"doctor-command-guide.html","baslik":"Bir şey mi ters? Önce /doctor"},{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"}]};</script>
 <!-- /yazi:veri -->
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
@@ -1547,7 +1547,9 @@ exit 0</code></pre>
       kurallarına uyan işleri, salt okunur Bash komutlarını ve bir <code>PreToolUse</code> hook'unun
       onayladığı çağrıları çalıştırır. Exit 2 ile engelleyen bir hook ise çağrıyı <strong>izin kuralları
       değerlendirilmeden önce</strong> durdurur; bu yüzden engelleme, eşleşen bir allow kuralı olsa bile
-      geçerlidir.</p>
+      geçerlidir. İzin kurallarının kendi sırası ve hangi ayar dosyasının kimi ezdiği
+      <a href="permissions-settings-guide.html" style="color:var(--ink-soft);">settings.json: deny her zaman kazanır</a>
+      sayfasında.</p>
 
     <div class="note">
       <span class="tag">Asimetrik kural</span>
