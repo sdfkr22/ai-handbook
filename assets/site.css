@@ -1,6 +1,8 @@
 /* Katalog sayfası stili — yazı dosyalarıyla aynı editoryal tema.
    Koyu varsayılan; açık tema sistem tercihinden gelir, toggle her iki yönde de ezer. */
 :root{
+  /* color-scheme yerleşik denetimleri (select, kaydırma çubuğu) da temaya uydurur. */
+  color-scheme:dark;
   --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13;
   --card:#16140f; --card-line:#2c281e;
   --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
@@ -11,6 +13,7 @@
    Aynı kurallar iki kez yazılır: bir kez düğmeyle seçilen tema için, bir kez de
    sistem açık temadayken. Değiştirirken iki bloğu birlikte güncelle. */
 :root[data-theme="light"]{
+  color-scheme:light;
   --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
   --card:#fbf5e9; --card-line:#ecdfc8;
   --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
@@ -29,6 +32,7 @@
 
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
+    color-scheme:light;
     --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc;
     --card:#fbf5e9; --card-line:#ecdfc8;
     --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
@@ -117,6 +121,17 @@ h1::before{content:"❯ ";color:var(--accent);opacity:.5;}
 .search input:focus + kbd{opacity:0;}
 .count{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-mute);letter-spacing:.08em;white-space:nowrap;}
 
+/* Sıralama — chip diliyle aynı, ama yerleşik <select> olarak kalır ki
+   klavye ve ekran okuyucu davranışı tarayıcıdan gelsin. */
+.sirala{
+  font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.04em;
+  background:var(--card);border:1px solid var(--card-line);border-radius:999px;
+  color:var(--ink-soft);padding:7px 12px;cursor:pointer;line-height:1.2;
+  outline:none;transition:border-color .15s,color .15s;
+}
+.sirala:hover{border-color:var(--accent);color:var(--ink);}
+.sirala:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,163,61,.22);}
+
 .filters{display:flex;flex-wrap:wrap;gap:8px;}
 .chip{
   font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.04em;
@@ -157,9 +172,22 @@ h1::before{content:"❯ ";color:var(--accent);opacity:.5;}
 /* Klavyeyle gezinme: odaklanan kart hover ile aynı dili konuşur. */
 .card-link:focus{outline:none;}
 .card:has(.card-link:focus-visible){border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,163,61,.22);}
+.card .ust{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .card .cat{
   font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--accent);margin:0;
+}
+/* Okuma durumu — yalnızca bu tarayıcıda okunmuş/yarım kalmış yazılarda görünür. */
+.card .durum{
+  font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;white-space:nowrap;flex:none;
+  border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--ink-mute);
+}
+.card .durum.okundu{color:var(--accent-2);border-color:var(--accent-2);opacity:.85;}
+/* Yarım kalan yazıda kartın altında ince bir ilerleme şeridi. */
+.card .ilerleme{
+  position:absolute;left:0;bottom:0;height:2px;border-radius:0 0 0 14px;
+  background:var(--accent);opacity:.5;pointer-events:none;
 }
 .card h2{
   font-family:"Fraunces",serif;font-weight:600;font-size:21px;line-height:1.2;

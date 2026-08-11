@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /archive/
+
+Sitemap: https://sdfkr22.github.io/ai-handbook/sitemap.xml

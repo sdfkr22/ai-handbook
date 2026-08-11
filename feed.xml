@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>AI Handbook</title>
+  <link>https://sdfkr22.github.io/ai-handbook/</link>
+  <description>Claude Code ve yapay zekâ araçları üzerine teknik yazılar. Konu başlığına göre filtrelenebilir arşiv.</description>
+  <language>tr</language>
+  <lastBuildDate>Tue, 11 Aug 2026 12:00:00 GMT</lastBuildDate>
+  <atom:link href="https://sdfkr22.github.io/ai-handbook/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title>MCP: aracını Claude&#39;a devret</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/mcp-servers-guide.html</guid>
+    <pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Sentry&#39;den, Jira&#39;dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json&#39;ı repoya koymak, OAuth, izin kuralları ve context faturası.</description>
+    <category>MCP</category>
+    <category>claude mcp add</category>
+    <category>.mcp.json</category>
+    <category>scope</category>
+    <category>stdio</category>
+    <category>http</category>
+    <category>OAuth</category>
+    <category>/mcp</category>
+    <category>tool search</category>
+    <category>alwaysLoad</category>
+    <category>izin kuralları</category>
+    <category>connector</category>
+  </item>
+  <item>
+    <title>settings.json: deny her zaman kazanır</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/permissions-settings-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/permissions-settings-guide.html</guid>
+    <pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Kurallar deny → ask → allow sırasıyla değerlendirilir ve hangi ayar dosyasında yazdığın bu sırayı değiştirmez. settings.json hiyerarşisi, kural sözdizimi, Bash tuzakları, dosya yolu desenleri ve workspace trust.</description>
+    <category>permissions</category>
+    <category>settings.json</category>
+    <category>settings.local.json</category>
+    <category>allow</category>
+    <category>ask</category>
+    <category>deny</category>
+    <category>defaultMode</category>
+    <category>additionalDirectories</category>
+    <category>/permissions</category>
+    <category>managed settings</category>
+    <category>workspace trust</category>
+    <category>hooks</category>
+    <category>env</category>
+  </item>
+  <item>
+    <title>Ne bildiğini değil, nasıl davrandığını değiştir</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/output-styles-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/output-styles-guide.html</guid>
+    <pubDate>Mon, 10 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Output styles system prompt&#39;u değiştirir: rol, ton ve varsayılan yanıt biçimi. Yerleşik stiller, keep-coding-instructions kararı, /config ile ayarlama, senaryolar ve stil tutmadığında bakılacak yerler.</description>
+    <category>output styles</category>
+    <category>outputStyle</category>
+    <category>/config</category>
+    <category>keep-coding-instructions</category>
+    <category>Explanatory</category>
+    <category>Learning</category>
+    <category>Proactive</category>
+    <category>system prompt</category>
+    <category>settings.local.json</category>
+    <category>force-for-plugin</category>
+  </item>
+  <item>
+    <title>Önce plan, sonra diff</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/plan-mode-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/plan-mode-guide.html</guid>
+    <pubDate>Sun, 09 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Plan mode bir rica değil, bir permission mode: Claude okur, araştırır, plan yazar ama sen onaylayana kadar diske dokunmaz. Tetikleme yolları, onay ekranı, senaryolar ve plan mode&#39;a girmemen gereken durumlar.</description>
+    <category>plan mode</category>
+    <category>permission mode</category>
+    <category>Shift+Tab</category>
+    <category>/plan</category>
+    <category>--permission-mode</category>
+    <category>defaultMode</category>
+    <category>auto mode</category>
+    <category>acceptEdits</category>
+    <category>ExitPlanMode</category>
+    <category>workflow</category>
+  </item>
+  <item>
+    <title>Bir şey mi ters? Önce /doctor</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/doctor-command-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/doctor-command-guide.html</guid>
+    <pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server&#39;lar, yavaş hook&#39;lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.</description>
+    <category>doctor</category>
+    <category>checkup</category>
+    <category>troubleshooting</category>
+    <category>kurulum</category>
+    <category>settings.json</category>
+    <category>auto-update</category>
+    <category>CLAUDE.md</category>
+    <category>hooks</category>
+    <category>MCP</category>
+    <category>context</category>
+  </item>
+  <item>
+    <title>.claude/ senin, plugin herkesin</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/plugins-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/plugins-guide.html</guid>
+    <pubDate>Fri, 07 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Bir klasör, bir plugin.json ve bir marketplace.json — skill&#39;lerini, hook&#39;larını ve MCP server&#39;larını paketleyip ekibe dağıtmanın tam yolu. Yapı, adlandırma, test, sürümleme ve üç senaryo.</description>
+    <category>plugins</category>
+    <category>plugin.json</category>
+    <category>marketplace.json</category>
+    <category>CLAUDE_PLUGIN_ROOT</category>
+    <category>--plugin-dir</category>
+    <category>enabledPlugins</category>
+    <category>extraKnownMarketplaces</category>
+    <category>skills</category>
+    <category>hooks</category>
+    <category>MCP</category>
+    <category>versioning</category>
+  </item>
+  <item>
+    <title>Context window dolduğunda!!</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/context-management-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/context-management-guide.html</guid>
+    <pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Context window&#39;a neler yükleniyor, sınır kaç token, auto-compact hangi eşikte devreye giriyor ve /compact, /clear, subagent arasında nasıl seçim yapılır — senaryo senaryo.</description>
+    <category>context window</category>
+    <category>compact</category>
+    <category>autocompact</category>
+    <category>token</category>
+    <category>1M context</category>
+    <category>subagent</category>
+    <category>CLAUDE.md</category>
+    <category>maliyet</category>
+  </item>
+  <item>
+    <title>Statusline&#39;ı sen yaz</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/statusline-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/statusline-guide.html</guid>
+    <pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Ekranın dibindeki satırı çalıştıran şey senin yazdığın script. /statusline ile kurulumdan stdin&#39;e gelen JSON alanlarına, renkli context barına, Windows tuzağına ve satır boş kaldığında ne olduğuna kadar.</description>
+    <category>statusline</category>
+    <category>settings.json</category>
+    <category>jq</category>
+    <category>ANSI</category>
+    <category>context window</category>
+    <category>rate limits</category>
+    <category>subagentStatusLine</category>
+    <category>PowerShell</category>
+    <category>OSC 8</category>
+  </item>
+  <item>
+    <title>Kendi subagent&#39;ını yazmak</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/creating-subagents-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/creating-subagents-guide.html</guid>
+    <pubDate>Mon, 03 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Subagent ne zaman kurulur, dosyası nereye konur, hangi frontmatter alanı ne yapar ve araç erişimi nasıl kısıtlanır — altı bitmiş örnek senaryoyla.</description>
+    <category>subagent</category>
+    <category>agents</category>
+    <category>frontmatter</category>
+    <category>tools</category>
+    <category>permissionMode</category>
+    <category>memory</category>
+    <category>orkestrasyon</category>
+    <category>background</category>
+  </item>
+  <item>
+    <title>Talimat rica eder, hook zorlar</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/hooks-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/hooks-guide.html</guid>
+    <pubDate>Mon, 03 Aug 2026 12:00:00 GMT</pubDate>
+    <description>CLAUDE.md&#39;ye yazdığın kurala model uyabilir de uymayabilir de. Hook ise harness&#39;in çalıştırdığı koddur: event&#39;ler, matcher&#39;lar, exit kod davranışı ve altı çalışan örnek.</description>
+    <category>hooks</category>
+    <category>PreToolUse</category>
+    <category>PostToolUse</category>
+    <category>settings.json</category>
+    <category>exit code</category>
+    <category>matcher</category>
+    <category>guardrail</category>
+    <category>otomasyon</category>
+  </item>
+  <item>
+    <title>Sıfırdan skill yazmak</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/writing-skills-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/writing-skills-guide.html</guid>
+    <pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+    <description>İlk SKILL.md dosyandan test etmeye kadar: skill ne zaman yazılır, description nasıl kurulur, gövde ne kadar kısa olmalı, destekleyici dosyalar ve script&#39;ler nasıl bağlanır.</description>
+    <category>skills</category>
+    <category>SKILL.md</category>
+    <category>frontmatter</category>
+    <category>progressive disclosure</category>
+    <category>description</category>
+    <category>subagent</category>
+    <category>eval</category>
+  </item>
+  <item>
+    <title>Skills? Rules? Hooks? Hangisi ne zaman?</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/claude-code-steering-handbook.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/claude-code-steering-handbook.html</guid>
+    <pubDate>Thu, 25 Jun 2026 12:00:00 GMT</pubDate>
+    <description>CLAUDE.md, rules, skills, subagents, hooks, output styles ve system prompt — Claude&#39;a talimat vermenin yedi yolu.</description>
+    <category>CLAUDE.md</category>
+    <category>rules</category>
+    <category>skills</category>
+    <category>subagent</category>
+    <category>hooks</category>
+    <category>output styles</category>
+  </item>
+</channel>
+</rss>

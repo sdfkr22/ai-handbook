@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>settings.json: deny her zaman kazanır</title>
+<meta name="yazi:baslik" content="settings.json: deny her zaman kazanır">
+<meta name="yazi:aciklama" content="Kurallar deny → ask → allow sırasıyla değerlendirilir ve hangi ayar dosyasında yazdığın bu sırayı değiştirmez. settings.json hiyerarşisi, kural sözdizimi, Bash tuzakları, dosya yolu desenleri ve workspace trust.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="permissions, settings.json, settings.local.json, allow, ask, deny, defaultMode, additionalDirectories, /permissions, managed settings, workspace trust, hooks, env">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/permissions">
+<meta name="yazi:tarih" content="2026-08-11">
+<style>
+  /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
+     scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+<!-- yazi:bas -->
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/permissions-settings-guide.html">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="apple-touch-icon" href="../assets/icon-192.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
+<meta name="description" content="Kurallar deny → ask → allow sırasıyla değerlendirilir ve hangi ayar dosyasında yazdığın bu sırayı değiştirmez. settings.json hiyerarşisi, kural sözdizimi, Bash tuzakları, dosya yolu desenleri ve workspace trust.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Handbook">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="settings.json: deny her zaman kazanır">
+<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/permissions-settings-guide.html">
+<meta property="og:description" content="Kurallar deny → ask → allow sırasıyla değerlendirilir ve hangi ayar dosyasında yazdığın bu sırayı değiştirmez. settings.json hiyerarşisi, kural sözdizimi, Bash tuzakları, dosya yolu desenleri ve workspace trust.">
+<meta property="article:published_time" content="2026-08-11">
+<meta property="article:tag" content="permissions">
+<meta property="article:tag" content="settings.json">
+<meta property="article:tag" content="settings.local.json">
+<meta property="article:tag" content="allow">
+<meta property="article:tag" content="ask">
+<meta property="article:tag" content="deny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="settings.json: deny her zaman kazanır">
+<meta name="twitter:description" content="Kurallar deny → ask → allow sırasıyla değerlendirilir ve hangi ayar dosyasında yazdığın bu sırayı değiştirmez. settings.json hiyerarşisi, kural sözdizimi, Bash tuzakları, dosya yolu desenleri ve workspace trust.">
+<script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
+<!-- /yazi:bas -->
+</head>
+<body>
+<!-- yazi:veri -->
+<script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
+   Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
+   gezinme bloğunu basar. */
+window.YAZI_VERI={"sure":15,"yeni":{"dosya":"mcp-servers-guide.html","baslik":"MCP: aracını Claude'a devret"},"eski":{"dosya":"output-styles-guide.html","baslik":"Ne bildiğini değil, nasıl davrandığını değiştir"},"ilgili":[{"dosya":"doctor-command-guide.html","baslik":"Bir şey mi ters? Önce /doctor"},{"dosya":"hooks-guide.html","baslik":"Talimat rica eder, hook zorlar"},{"dosya":"output-styles-guide.html","baslik":"Ne bildiğini değil, nasıl davrandığını değiştir"}]};</script>
+<!-- /yazi:veri -->
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
+   Aynı yerde .yazi-yazim sınıfı eklenir: başlık, daktilo animasyonu hazırlanana
+   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür.
+
+   Bu sayfanın önceki okuma kaydı da burada, her şeyden önce anlık görüntülenir:
+   ilerleme çubuğu açılışta hemen yazmaya başlıyor ve kaydı ezmiş oluyor; "kaldığın
+   yere dön" satırının okuması gereken değer açılış anındaki değerdir. */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}
+document.documentElement.classList.add("yazi-yazim");
+try{
+  var d=(location.pathname.split("/").pop()||"").toLowerCase();
+  window.YAZI_KALDIGI=d?(JSON.parse(localStorage.getItem("okuma")||"{}")||{})[d]||null:null;
+}catch(e){window.YAZI_KALDIGI=null;}})();</script>
+<style>
+  /* color-scheme kaydırma çubuğunu ve yerleşik denetimleri temaya uydurur. */
+  :root{color-scheme:dark;}
+  :root[data-theme="light"]{
+    color-scheme:light;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root[data-theme="light"] .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root:not([data-theme="dark"]) .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  /* --- Başlık: komut satırı görünümü --- */
+  .yazi-yazim header.hero h1{visibility:hidden;}
+  header.hero h1{
+    font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-weight:500;font-size:clamp(21px,5.2vw,46px);line-height:1.32;letter-spacing:-.02em;}
+  header.hero h1 em{font-style:normal;}
+  /* Karakter düz yazılır: "\276F " biçiminde yazılırsa sondaki boşluk hex
+     kaçışın sonlandırıcısı sayılır ve içeriğe boşluk olarak geçmez. */
+  header.hero h1::before{content:"❯ ";color:var(--accent);opacity:.5;}
+  .yazi-imlec{display:inline-block;width:0;height:1em;vertical-align:-.12em;position:relative;}
+  .yazi-imlec::after{content:"";position:absolute;left:.04em;bottom:0;width:.52em;height:1em;
+    background:var(--accent);animation:yazi-imlec-yanip 1.05s steps(1) infinite;}
+  @keyframes yazi-imlec-yanip{0%,50%{opacity:1;}50.01%,100%{opacity:0;}}
+  @media (prefers-reduced-motion: reduce){.yazi-imlec::after{animation:none;}}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+  /* --- Okuma ilerleme çubuğu --- */
+  .yazi-ilerleme{position:fixed;top:0;left:0;z-index:100;height:2px;width:100%;
+    background:var(--accent);transform:scaleX(0);transform-origin:0 50%;will-change:transform;}
+  /* --- Kod bloğu kopyala düğmesi ---
+     pre'nin kendisi yatay kayabildiği için düğme, pre'yi saran ayrı bir
+     kapsayıcıya konur; böylece kod sağa kaydırılınca düğme yerinde kalır. */
+  .yazi-pre-sar{position:relative;}
+  /* Dil etiketi ve kopyala düğmesi aynı satırda durur; düğme görünmezken de
+     yer kapladığı için etiket hover'da yerinden oynamaz. */
+  .yazi-pre-ust{position:absolute;top:10px;right:10px;z-index:2;
+    display:flex;align-items:center;gap:8px;}
+  .yazi-dil{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);opacity:.7;pointer-events:none;}
+  .yazi-kopyala{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;line-height:1;
+    color:var(--ink-mute);background:var(--panel);border:1px solid var(--line);border-radius:7px;
+    padding:6px 10px;cursor:pointer;opacity:0;transition:opacity .15s,color .15s,border-color .15s;}
+  .yazi-pre-sar:hover .yazi-kopyala,.yazi-kopyala:focus-visible{opacity:1;}
+  .yazi-kopyala:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-kopyala.ok{opacity:1;color:var(--accent-2);border-color:var(--accent-2);}
+  @media (hover:none){.yazi-kopyala{opacity:.7;}}
+  /* --- İçindekiler: okunan bölümün vurgulanması ---
+     Geniş ekranda liste sol boşluğa sabitlenir ve okurken yerinde kalır;
+     dar ekranda normal akıştaki kutu görünümünü korur. */
+  .toc a{transition:color .18s,border-color .18s;}
+  .toc a.aktif{color:var(--accent);}
+  @media (min-width:1400px){
+    .toc{position:fixed;top:92px;left:calc(50vw - 676px);width:212px;
+      margin:0;padding:0;background:none;border:none;
+      max-height:calc(100vh - 150px);overflow-y:auto;}
+    .toc ol{columns:1;}
+    .toc li{margin-bottom:0;}
+    .toc a{font-size:13px;line-height:1.45;padding:5px 0 5px 12px;border-left:1px solid var(--line);}
+    .toc a.aktif{border-left-color:var(--accent);}
+  }
+  /* Dar ekranda içindekiler katlanır ve kapalı başlar; 12 maddelik liste
+     yoksa içeriği ekran boyu aşağı itiyor. Etiket bölüm sayısını verir. */
+  .yazi-toc-ac{display:none;}
+  @media (max-width:900px){
+    .yazi-toc-ac{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;
+      font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--ink-mute);background:none;border:none;padding:0;cursor:pointer;}
+    .yazi-toc-ac .ok{transition:transform .2s;font-size:14px;}
+    .toc[data-kapali="1"] ol{display:none;}
+    .toc:not([data-kapali="1"]) .yazi-toc-ac{margin-bottom:16px;}
+    .toc:not([data-kapali="1"]) .yazi-toc-ac .ok{transform:rotate(180deg);}
+  }
+  /* --- Bölüm başlığı anchor'ı --- */
+  h2 .yazi-anchor{font-family:"JetBrains Mono",monospace;font-size:.46em;flex:none;
+    color:var(--ink-mute);text-decoration:none;opacity:0;transition:opacity .15s,color .15s;}
+  h2:hover .yazi-anchor,.yazi-anchor:focus-visible{opacity:1;}
+  .yazi-anchor:hover{color:var(--accent);}
+  section.yazi-parla{animation:yazi-parla 1.3s ease-out;}
+  @keyframes yazi-parla{from{background:rgba(232,163,61,.13);}to{background:transparent;}}
+  @media (prefers-reduced-motion: reduce){section.yazi-parla{animation:none;}}
+  /* --- Yukarı dön --- */
+  .yazi-yukari{position:fixed;right:18px;bottom:18px;z-index:99;width:38px;height:38px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);opacity:0;pointer-events:none;transform:translateY(6px);
+    transition:opacity .2s,transform .2s,color .15s,border-color .15s;}
+  .yazi-yukari.gorunur{opacity:1;pointer-events:auto;transform:none;}
+  .yazi-yukari:hover{color:var(--accent);border-color:var(--accent);}
+  /* --- Sayfa sonu gezinme --- */
+  .yazi-gezinme{margin-top:72px;padding-top:28px;border-top:1px solid var(--line);}
+  .yazi-komsu{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .yazi-komsu-bag{display:flex;flex-direction:column;gap:6px;text-decoration:none;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    transition:border-color .15s,transform .15s;}
+  .yazi-komsu-bag:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .yazi-komsu-bag .yon{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);}
+  .yazi-komsu-bag .ad{color:var(--ink);font-weight:600;font-size:15px;line-height:1.35;}
+  .yazi-komsu-bag.sag{text-align:right;align-items:flex-end;}
+  .yazi-ilgili{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .yazi-ilgili-baslik{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 4px 0 0;}
+  .yazi-ilgili a{font-size:13.5px;color:var(--ink-soft);text-decoration:none;
+    border:1px solid var(--line);border-radius:999px;padding:6px 14px;
+    transition:color .15s,border-color .15s;}
+  .yazi-ilgili a:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-sure{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-mute);margin:16px 0 0;}
+  /* --- Kaldığın yere dön ---
+     Yalnızca bu tarayıcıda yarım bırakılmış yazılarda ve sayfa doğrudan bir
+     bölüm bağlantısıyla açılmadıysa görünür. */
+  .yazi-devam{display:flex;align-items:center;gap:8px;margin:12px 0 0;}
+  .yazi-devam button{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:8px 14px;cursor:pointer;
+    transition:color .15s,border-color .15s;}
+  .yazi-devam button:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-devam .yazi-devam-kapat{padding:8px 11px;font-size:13px;color:var(--ink-mute);}
+  @media (max-width:620px){
+    .yazi-komsu{grid-template-columns:1fr;}
+    .yazi-komsu-bag.sag{text-align:left;align-items:flex-start;}
+  }
+  /* --- Tema geçişi ---
+     Sınıf yalnızca düğmeye basıldığı anda eklenir; sürekli açık kalsa
+     sıradan hover'lar da yavaşlardı. */
+  :root.yazi-tema-gecis,:root.yazi-tema-gecis *{
+    transition:background-color .22s,border-color .22s,color .22s !important;}
+  @media (prefers-reduced-motion: reduce){
+    :root.yazi-tema-gecis,:root.yazi-tema-gecis *{transition:none !important;}
+  }
+  /* --- Yazdırma ---
+     :root[data-theme] seçicisi tema override'larıyla aynı özgüllükte ve
+     daha sonra geldiği için kazanır; yoksa koyu tema kâğıda basılırdı. */
+  @media print{
+    :root,:root[data-theme]{
+      --bg:#fff; --panel:#fff; --panel-2:#f2f2f2; --table-bg:#fff;
+      --card:#fff; --card-line:#bbb;
+      --ink:#000; --ink-soft:#1c1c1c; --ink-mute:#555;
+      --line:#bbb; --accent:#7a3c00; --accent-2:#1d5c20; --danger:#a01c10;
+      --code-bg:#f6f6f6; --code-ink:#111;
+    }
+    .yazi-geri,.tema-btn,.yazi-ilerleme,.yazi-kopyala,.yazi-yukari,.yazi-gezinme,.yazi-toc-ac,
+    .yazi-devam{display:none !important;}
+    /* Daktilo animasyonu sürerken yazdırılırsa başlık eksik basılırdı:
+       harfler görünürlüğü kapalı halde bekliyor. Kâğıtta hepsi görünür. */
+    .yazi-imlec{display:none !important;}
+    .yazi-yazim header.hero h1,header.hero h1 span{visibility:visible !important;}
+    body{background:#fff !important;color:#000;font-size:10.5pt;}
+    .wrap{max-width:none;padding:0;}
+    .toc{position:static !important;left:auto !important;top:auto !important;width:auto !important;
+      max-height:none !important;overflow:visible !important;
+      border:1px solid #bbb !important;padding:16px 20px !important;margin-bottom:28px !important;}
+    /* Kâğıt dar olsa da içindekiler açık basılır: katlama yalnızca ekran içindir. */
+    .toc[data-kapali="1"] ol{display:block !important;}
+    .toc ol{columns:2 !important;}
+    .toc a{border-left:none !important;padding-left:0 !important;}
+    h2,h3{break-after:avoid;}
+    pre,.card,.note,.table-scroll,figure{break-inside:avoid;}
+    a[href^="http"]::after{content:" (" attr(href) ")";font-size:8.5pt;color:#555;word-break:break-all;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  var gecisZaman;
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    /* Renkler anlık sıçramasın; sınıf kısa süre kalır (bkz. .yazi-tema-gecis). */
+    kok.classList.add("yazi-tema-gecis");
+    clearTimeout(gecisZaman);
+    gecisZaman=setTimeout(function(){kok.classList.remove("yazi-tema-gecis");},280);
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<script>
+/* Başlığı komut satırında yazılıyormuş gibi harf harf gösterir.
+   Harfler en baştan yer kaplar (görünürlük kapatılır, kaldırılmaz), böylece
+   animasyon boyunca satır sarması ve sayfa düzeni hiç oynamaz.
+   JS kapalıysa veya reduced-motion açıksa başlık olduğu gibi görünür. */
+(function(){
+  var kok=document.documentElement;
+  function ac(){kok.classList.remove("yazi-yazim");}
+  function baslat(){
+    try{
+      var h1=document.querySelector("header.hero h1");
+      if(!h1){ac();return;}
+      if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){ac();return;}
+      /* Etiketi innerText'ten alma: başlık o an gizli olduğu için boş dönebilir.
+         <br> yerine boşluk koyup metni doğrudan çıkar. */
+      var gecici=document.createElement("div");
+      gecici.innerHTML=h1.innerHTML.replace(/<br\s*\/?>/gi," ");
+      h1.setAttribute("aria-label",(gecici.textContent||"").replace(/\s+/g," ").trim());
+      var gez=document.createTreeWalker(h1,NodeFilter.SHOW_TEXT),dugumler=[],d;
+      while(d=gez.nextNode())dugumler.push(d);
+      var harfler=[];
+      dugumler.forEach(function(tn){
+        var parca=document.createDocumentFragment();
+        tn.nodeValue.split("").forEach(function(h){
+          var s=document.createElement("span");
+          s.textContent=h;s.style.visibility="hidden";s.setAttribute("aria-hidden","true");
+          parca.appendChild(s);harfler.push(s);
+        });
+        tn.parentNode.replaceChild(parca,tn);
+      });
+      if(!harfler.length){ac();return;}
+      var imlec=document.createElement("span");
+      imlec.className="yazi-imlec";imlec.setAttribute("aria-hidden","true");
+      ac();
+      var i=0;
+      (function tik(){
+        if(i>=harfler.length){
+          setTimeout(function(){if(imlec.parentNode)imlec.parentNode.removeChild(imlec);},2600);
+          return;
+        }
+        var s=harfler[i++];
+        s.style.visibility="visible";
+        s.parentNode.insertBefore(imlec,s.nextSibling);
+        setTimeout(tik,/[,.:?!]/.test(s.textContent)?190:38);
+      })();
+    }catch(e){ac();}
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Üstteki ilerleme çubuğu + içindekilerde o an okunan bölümün vurgulanması.
+   İkisi de aynı scroll dinleyicisinden beslenir, rAF ile tek karede güncellenir. */
+(function(){
+  function baslat(){
+    var cubuk=document.createElement("div");
+    cubuk.className="yazi-ilerleme";
+    cubuk.setAttribute("aria-hidden","true");
+    document.body.appendChild(cubuk);
+
+    var baglar=[],hedefler=[];
+    Array.prototype.forEach.call(document.querySelectorAll(".toc a[href^='#']"),function(a){
+      var el=document.getElementById(a.getAttribute("href").slice(1));
+      if(el){baglar.push(a);hedefler.push(el);}
+    });
+
+    /* Okuma ilerlemesi tarayıcıda saklanır; katalogdaki "okundu" rozeti ve
+       "kaldığın yere dön" satırı bunu okur. Hiçbir veri dışarı gitmez. */
+    var DOSYA=(location.pathname.split("/").pop()||"").toLowerCase();
+    var BASTA=window.YAZI_KALDIGI||null;
+    var sonBolum="",sonYazilan=-1,yazZaman=0,sonOran=0,kaydirildi=false;
+    /* Sayfayı açıp hiç kaydırmadan kapatmak kaydı silmemeli: aksi halde okunmuş
+       bir yazıya tekrar bakmak "okundu" işaretini düşürürdü. */
+    window.addEventListener("scroll",function(){kaydirildi=true;},{passive:true,once:true});
+    function kaydet(oran,zorla){
+      if(!DOSYA||!kaydirildi)return;
+      /* Okundu işareti geri alınmaz; yazı yeniden sonuna kadar okunursa tazelenir. */
+      if(BASTA&&BASTA.o>=0.92&&oran<0.92)return;
+      var t=Date.now();
+      /* Her karede yazmak anlamsız: %2'lik değişimde ya da yarım saniyede bir. */
+      if(!zorla&&Math.abs(oran-sonYazilan)<0.02&&t-yazZaman<500)return;
+      sonYazilan=oran;yazZaman=t;
+      try{
+        var h=JSON.parse(localStorage.getItem("okuma")||"{}")||{};
+        h[DOSYA]={o:Math.round(oran*1000)/1000,b:sonBolum,t:t};
+        /* Kayıt şişmesin; en eski girdiler atılır. */
+        var adlar=Object.keys(h);
+        if(adlar.length>60){
+          adlar.sort(function(a,b){return (h[a].t||0)-(h[b].t||0);});
+          for(var i=0;i<adlar.length-60;i++)delete h[adlar[i]];
+        }
+        localStorage.setItem("okuma",JSON.stringify(h));
+      }catch(e){}
+    }
+
+    var bekliyor=false,sonAktif=-1;
+    function guncelle(){
+      bekliyor=false;
+      var yol=document.documentElement.scrollHeight-window.innerHeight;
+      var oran=yol>0?Math.min(1,Math.max(0,window.scrollY/yol)):0;
+      cubuk.style.transform="scaleX("+oran+")";
+      /* Ekrandan kısa sayfada kaydırılacak yer yok: tamamı görülmüş sayılır —
+         kaydırma beklenemeyeceği için kayıt da hemen serbest bırakılır. */
+      if(yol<=0)kaydirildi=true;
+      sonOran=yol>0?oran:1;
+      kaydet(sonOran);
+      if(!hedefler.length)return;
+      /* Üst kenarın 120px altını geçmiş son bölüm aktif sayılır. */
+      var s=0;
+      for(var i=0;i<hedefler.length;i++){
+        if(hedefler[i].getBoundingClientRect().top<=120)s=i;
+      }
+      /* Son bölüm kısaysa dibe inince hiç aktifleşmeyebilir; en altta onu seç. */
+      if(yol>0&&window.scrollY>=yol-4)s=hedefler.length-1;
+      if(s!==sonAktif){
+        if(sonAktif>-1)baglar[sonAktif].classList.remove("aktif");
+        baglar[s].classList.add("aktif");
+        sonAktif=s;
+        sonBolum=hedefler[s].id||"";
+      }
+    }
+    function tetikle(){if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}}
+    window.addEventListener("scroll",tetikle,{passive:true});
+    window.addEventListener("resize",tetikle);
+    /* Sekme kapanırken son konum kısıtsız yazılır; aksi halde eşik yüzünden
+       son birkaç yüzde kaybolurdu. */
+    window.addEventListener("pagehide",function(){kaydet(sonOran,true);});
+    document.addEventListener("visibilitychange",function(){
+      if(document.visibilityState==="hidden")kaydet(sonOran,true);
+    });
+    guncelle();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Her kod bloğuna kopyala düğmesi. Sözdizimi renklendirmesi <span>'lerle
+   yapıldığı için textContent düz metni doğru verir. clipboard API yoksa
+   (veya izin vermezse) execCommand ile geri düşülür. */
+(function(){
+  function kopyala(metin){
+    if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(metin);
+    return new Promise(function(coz,red){
+      var a=document.createElement("textarea");
+      a.value=metin;a.setAttribute("readonly","");
+      a.style.position="fixed";a.style.top="-1000px";
+      document.body.appendChild(a);a.select();
+      var ok=false;
+      try{ok=document.execCommand("copy");}catch(e){ok=false;}
+      document.body.removeChild(a);
+      ok?coz():red();
+    });
+  }
+  /* Dil etiketi. Öncelik <pre data-dil="…">; yoksa yalnızca tereddütsüz
+     sinyallerde çıkarım yapılır. Bu sitedeki blokların önemli bir kısmı düz
+     Türkçe istem metni veya slash command satırı — yanlış etiket, etiketsiz
+     bırakmaktan kötü olduğu için kural tutmazsa sessiz kalınır. */
+  function dilBul(pre){
+    var acik=pre.getAttribute("data-dil");
+    if(acik)return acik;
+
+    var ham=String((pre.querySelector("code")||pre).textContent).split(/\r?\n/)
+      .map(function(s){return s.trim();}).filter(Boolean);
+    if(!ham.length)return "";
+
+    /* Shebang ve markdown başlığı yorum satırı elenmeden önce bakılır: ikisi de
+       "#" ile başlıyor. Tek "#" bu sitede kabuk yorumu, "##" markdown başlığı. */
+    if(/^#!/.test(ham[0]))return "bash";
+    if(/^#{2,6}\s/.test(ham[0]))return "markdown";
+
+    var satirlar=ham.filter(function(s){return !/^#($|\s)/.test(s)&&s.indexOf("//")!==0;});
+    if(!satirlar.length)return "";
+    var ilk=satirlar[0],govde=satirlar.join("\n");
+
+    /* "---" ile başlayan blok: kapanış çizgisinden sonra da içerik varsa bu bir
+       frontmatter'lı markdown dosyasıdır (SKILL.md, agent .md), saf YAML değil. */
+    if(ilk==="---"){
+      var kapanis=satirlar.indexOf("---",1);
+      if(kapanis>-1&&satirlar.length>kapanis+1)return "markdown";
+      return /^[A-Za-z_][\w-]*\s*:/m.test(govde)?"yaml":"";
+    }
+
+    if(/^[{["]/.test(ilk)&&/"\s*:/.test(govde))return "json";
+    /* PowerShell, bash'ten önce: iki blok da "claude …" ile başlayabiliyor,
+       ayırt eden here-string ve cmdlet sözdizimi. */
+    if(/@'|\$env:|(^|\s)(New|Get|Set|Remove|Write)-[A-Z]/.test(govde))return "powershell";
+    if(/^\$\s/.test(ilk))return "bash";
+    if(/^(claude|npm|npx|node|git|cd|curl|mkdir|chmod|export|brew|pip|pipx|uv)\s/.test(ilk))return "bash";
+    return "";
+  }
+
+  function baslat(){
+    Array.prototype.forEach.call(document.querySelectorAll("pre"),function(pre){
+      if(pre.parentNode&&pre.parentNode.classList.contains("yazi-pre-sar"))return;
+      var sar=document.createElement("div");
+      sar.className="yazi-pre-sar";
+      pre.parentNode.insertBefore(sar,pre);
+      sar.appendChild(pre);
+
+      var ust=document.createElement("div");
+      ust.className="yazi-pre-ust";
+      sar.appendChild(ust);
+
+      var dil=dilBul(pre);
+      if(dil){
+        var etiket=document.createElement("span");
+        etiket.className="yazi-dil";
+        etiket.textContent=dil;
+        etiket.setAttribute("aria-hidden","true");
+        ust.appendChild(etiket);
+      }
+
+      var btn=document.createElement("button");
+      btn.type="button";
+      btn.className="yazi-kopyala";
+      btn.textContent="kopyala";
+      btn.setAttribute("aria-label","Kod bloğunu kopyala");
+      ust.appendChild(btn);
+
+      var zaman;
+      btn.addEventListener("click",function(){
+        var kod=pre.querySelector("code")||pre;
+        /* Kaynak dosyalar CRLF olabiliyor; panoya LF gitsin ki kod
+           doğrudan terminale yapıştırılabilsin. */
+        var metin=String(kod.textContent).replace(/\r\n?/g,"\n").replace(/\s+$/,"");
+        kopyala(metin).then(function(){
+          btn.textContent="kopyalandı ✓";btn.classList.add("ok");
+        },function(){
+          btn.textContent="kopyalanamadı";btn.classList.remove("ok");
+        });
+        clearTimeout(zaman);
+        zaman=setTimeout(function(){btn.textContent="kopyala";btn.classList.remove("ok");},1800);
+      });
+    });
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Sayfaya özel veriden (window.YAZI_VERI, build.mjs üretir) beslenen parçalar:
+   okuma süresi ve sayfa sonundaki gezinme bloğu. Veri yoksa hiçbiri basılmaz. */
+(function(){
+  function esc(s){
+    return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function komsuBag(k,yon,sinif){
+    return '<a class="yazi-komsu-bag '+sinif+'" href="'+esc(k.dosya)+'">'+
+      '<span class="yon">'+esc(yon)+'</span><span class="ad">'+esc(k.baslik)+'</span></a>';
+  }
+  function baslat(){
+    var v=window.YAZI_VERI||{};
+
+    var lede=document.querySelector("header.hero .lede");
+    if(v.sure&&lede&&!document.querySelector(".yazi-sure")){
+      var s=document.createElement("p");
+      s.className="yazi-sure";
+      s.textContent="~"+v.sure+" dakikalık okuma";
+      lede.parentNode.insertBefore(s,lede.nextSibling);
+    }
+
+    var footer=document.querySelector(".wrap > footer");
+    if(!footer||document.querySelector(".yazi-gezinme"))return;
+    var ilgili=v.ilgili||[];
+    if(!v.yeni&&!v.eski&&!ilgili.length)return;
+
+    var html="";
+    if(v.yeni||v.eski){
+      /* Sıralama yeniden eskiye; komşuları tarih diliyle adlandırmak
+         "önceki/sonraki"den daha az kafa karıştırıyor. */
+      html+='<div class="yazi-komsu">'+
+        (v.yeni?komsuBag(v.yeni,"← Daha yeni",""):"<span></span>")+
+        (v.eski?komsuBag(v.eski,"Daha eski →","sag"):"<span></span>")+
+      "</div>";
+    }
+    if(ilgili.length){
+      html+='<div class="yazi-ilgili"><p class="yazi-ilgili-baslik">İlgili</p>'+
+        ilgili.map(function(k){
+          return '<a href="'+esc(k.dosya)+'">'+esc(k.baslik)+"</a>";
+        }).join("")+"</div>";
+    }
+
+    var nav=document.createElement("nav");
+    nav.className="yazi-gezinme";
+    nav.setAttribute("aria-label","Diğer yazılar");
+    nav.innerHTML=html;
+    footer.parentNode.insertBefore(nav,footer);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* "Kaldığın yere dön" satırı. Kaynak, ilerleme çubuğunun yazdığı localStorage
+   kaydı. Sayfa doğrudan bir bölüm bağlantısıyla açıldıysa (#mN) hiç gösterilmez:
+   okuyucu zaten nereye gideceğini söylemiş. Okuma süresi satırının hemen altına
+   girer, o yüzden bu blok YAZI_VERI script'inden sonra gelmeli. */
+(function(){
+  function baslat(){
+    if(location.hash.length>1)return;
+    /* Kayıt açılışta anlık görüntülendi (bkz. kabuğun ilk script'i); doğrudan
+       localStorage okunsaydı ilerleme çubuğunun yazdığı taze değer gelirdi. */
+    var d=window.YAZI_KALDIGI;
+    if(!d||typeof d.o!=="number"||d.o<0.08||d.o>=0.92)return;
+
+    var yer=document.querySelector(".yazi-sure")||document.querySelector("header.hero .lede");
+    if(!yer)return;
+
+    var kutu=document.createElement("p");
+    kutu.className="yazi-devam";
+    var git=document.createElement("button");
+    git.type="button";
+    git.textContent="↩ kaldığın yere dön · %"+Math.round(d.o*100);
+    var kapat=document.createElement("button");
+    kapat.type="button";
+    kapat.className="yazi-devam-kapat";
+    kapat.textContent="×";
+    kapat.setAttribute("aria-label","Bu satırı kapat");
+    kutu.appendChild(git);
+    kutu.appendChild(kapat);
+    yer.parentNode.insertBefore(kutu,yer.nextSibling);
+
+    git.addEventListener("click",function(){
+      /* Bölüm kimliği varsa oraya git: pencere boyu değişmişse yüzde kayar,
+         bölüm kaymaz. Yoksa orana göre yaklaşık konuma in. */
+      var hedef=d.b&&document.getElementById(d.b);
+      if(hedef)hedef.scrollIntoView({behavior:"smooth",block:"start"});
+      else window.scrollTo({top:(document.documentElement.scrollHeight-window.innerHeight)*d.o,behavior:"smooth"});
+      kutu.parentNode.removeChild(kutu);
+    });
+    kapat.addEventListener("click",function(){kutu.parentNode.removeChild(kutu);});
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Bölüm başlığı anchor'ları, yukarı dön düğmesi ve dar ekranda katlanan
+   içindekiler. Üçü de sayfa içeriğinden bağımsız, tamamen DOM üstünde çalışır. */
+(function(){
+  function parlat(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.classList.remove("yazi-parla");
+    void el.offsetWidth;           /* animasyonu yeniden tetiklemek için */
+    el.classList.add("yazi-parla");
+  }
+
+  function anchorlar(){
+    Array.prototype.forEach.call(document.querySelectorAll("section[id] > h2"),function(h2){
+      if(h2.querySelector(".yazi-anchor"))return;
+      var id=h2.parentNode.id;
+      var a=document.createElement("a");
+      a.className="yazi-anchor";
+      a.href="#"+id;
+      a.textContent="#";
+      a.setAttribute("aria-label","Bu bölüme bağlantı");
+      h2.appendChild(a);
+      a.addEventListener("click",function(){setTimeout(function(){parlat(id);},380);});
+    });
+  }
+
+  function yukariDugmesi(){
+    var btn=document.createElement("button");
+    btn.type="button";
+    btn.className="yazi-yukari";
+    btn.textContent="↑";
+    btn.setAttribute("aria-label","Sayfanın başına dön");
+    document.body.appendChild(btn);
+    btn.addEventListener("click",function(){
+      window.scrollTo({top:0,behavior:"smooth"});
+      var h1=document.querySelector("header.hero h1");
+      if(h1){h1.setAttribute("tabindex","-1");h1.focus({preventScroll:true});}
+    });
+    var bekliyor=false;
+    function guncelle(){
+      bekliyor=false;
+      btn.classList.toggle("gorunur",window.scrollY>600);
+    }
+    window.addEventListener("scroll",function(){
+      if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}
+    },{passive:true});
+    guncelle();
+  }
+
+  function katlanabilirToc(){
+    var toc=document.querySelector(".toc");
+    var ol=toc&&toc.querySelector("ol");
+    if(!toc||!ol||toc.querySelector(".yazi-toc-ac"))return;
+    var adet=ol.querySelectorAll("li").length;
+    var btn=document.createElement("button");
+    btn.type="button";
+    btn.className="yazi-toc-ac";
+    btn.innerHTML='<span>'+adet+' bölüm</span><span class="ok" aria-hidden="true">▾</span>';
+    btn.setAttribute("aria-expanded","false");
+    toc.insertBefore(btn,ol);
+    toc.dataset.kapali="1";
+    btn.addEventListener("click",function(){
+      var kapali=toc.dataset.kapali==="1";
+      if(kapali)delete toc.dataset.kapali; else toc.dataset.kapali="1";
+      btn.setAttribute("aria-expanded",String(kapali));
+    });
+    /* Bir bölüme gidilince liste yine kapansın, içerik hemen görünsün. */
+    ol.addEventListener("click",function(e){
+      if(e.target.closest("a")&&window.matchMedia("(max-width:900px)").matches){
+        toc.dataset.kapali="1";
+        btn.setAttribute("aria-expanded","false");
+      }
+    });
+  }
+
+  function baslat(){
+    anchorlar();
+    yukariDugmesi();
+    katlanabilirToc();
+    /* Sayfa doğrudan #mN ile açıldıysa hedef bölüm bir an vurgulansın. */
+    if(location.hash.length>1)setTimeout(function(){parlat(location.hash.slice(1));},300);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · permissions &amp; settings.json</p>
+    <h1>settings.json:<br><em>deny her zaman kazanır</em></h1>
+    <p class="lede">Claude Code'un neye izin verdiğini prompt'un değil, kuralların belirler. Bu sayfa kuralların hangi sırayla değerlendirildiğini, hangi dosyaya yazılırsa ne olduğunu ve en çok hangi noktada sessizce çalışmadığını anlatıyor. Permission mode'ların karşılaştırması ayrı bir yazının konusu — burada modlar yalnızca kuralların oturduğu taban olarak geçiyor.</p>
+    <p class="source">11 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/permissions">code.claude.com/docs/en/permissions</a></p>
+  </header>
+
+  <nav class="toc" aria-label="İçindekiler">
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Üç katman: mod, kural, hook</a></li>
+      <li><a href="#m2"><span class="n">02</span> deny, ask, allow — hep bu sırayla</a></li>
+      <li><a href="#m3"><span class="n">03</span> Dosya nerede, hangisi kimi ezer?</a></li>
+      <li><a href="#m4"><span class="n">04</span> Sözdizimi: Tool ve Tool(specifier)</a></li>
+      <li><a href="#m5"><span class="n">05</span> Bash kuralları kırılgandır</a></li>
+      <li><a href="#m6"><span class="n">06</span> Dosya yolları gitignore gibi çalışır</a></li>
+      <li><a href="#m7"><span class="n">07</span> Bash dışındakiler: WebFetch, MCP, Agent, Cd</a></li>
+      <li><a href="#m8"><span class="n">08</span> "Bir daha sorma" dediğinde ne yazılıyor?</a></li>
+      <li><a href="#m9"><span class="n">09</span> Klasöre güvenmediysen allow kuralın çalışmaz</a></li>
+      <li><a href="#m10"><span class="n">10</span> additionalDirectories dosya açar, yapılandırma açmaz</a></li>
+      <li><a href="#m11"><span class="n">11</span> settings.json'da izinlerden başka ne var?</a></li>
+      <li><a href="#m12"><span class="n">12</span> Hızlı referans</a></li>
+    </ol>
+  </nav>
+
+  <!-- 01 -->
+  <section id="m1">
+    <h2><span class="num">01</span> Üç katman: mod, kural, hook</h2>
+    <p>Claude Code bir tool çağrısını onaylarken üç ayrı katmana bakar. Karıştırıldığında en çok vakit
+    kaybettiren şey bu üçünün rollerini ayırmamaktır:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Katman</th><th>Ne yapar</th><th>Nerede tanımlanır</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Permission mode</strong></td><td>Tabanı belirler: hangi tool sınıfı sorulmadan geçer.</td><td><code>permissions.defaultMode</code>, <code>--permission-mode</code>, <code>Shift+Tab</code></td></tr>
+          <tr><td><strong>Permission rule</strong></td><td>Tek tek tool ve desen bazında izin verir, sorar veya yasaklar.</td><td><code>permissions.allow</code> / <code>ask</code> / <code>deny</code>, <code>/permissions</code></td></tr>
+          <tr><td><strong>PreToolUse hook</strong></td><td>Çalışma anında kod çalıştırıp karar üretir.</td><td><code>hooks</code> ayarı</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Mod bir taban, kural onun üstüne binen istisnadır. <code>defaultMode</code> değeri bir permission mode
+    adıdır — <code>default</code> (arayüzde <em>Manual</em>), <code>acceptEdits</code>, <code>plan</code>,
+    <code>auto</code>, <code>dontAsk</code>, <code>bypassPermissions</code>. Modların karşılaştırması ve plan
+    mode'un ayrıntısı <a href="plan-mode-guide.html" style="color:var(--ink-soft);">Önce plan, sonra diff</a>
+    sayfasında:</p>
+
+<pre><code>{
+  <span class="k">"permissions"</span>: {
+    <span class="k">"defaultMode"</span>: <span class="s">"acceptEdits"</span>
+  }
+}</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Kuralları model değil, harness uygular</span>
+      <code>CLAUDE.md</code>'ye "şu klasöre dokunma" yazmak Claude'un <em>ne denemek isteyeceğini</em> şekillendirir;
+      neye <em>izin verileceğini</em> değiştirmez. Gerçek sınır <code>/permissions</code>, kural dizileri, permission
+      mode ve PreToolUse hook'larıdır. Aynı ayrım sitedeki <em>"Talimat rica eder, hook zorlar"</em> yazısının da
+      çıkış noktası.
+    </div>
+
+    <h3>Hook kararı kuralların yerine geçmez</h3>
+    <p>PreToolUse hook'ları izin ekranından önce çalışır ve çağrıyı reddedebilir, prompt'a zorlayabilir ya da
+    prompt'u atlatabilir. Ama <strong>deny ve ask kuralları hook ne döndürürse döndürsün değerlendirilir</strong>:
+    eşleşen bir deny kuralı çağrıyı yine engeller, eşleşen bir ask kuralı hook <code>"allow"</code> dönse bile
+    sorar. Ters yön de doğrudur: <strong>2 exit kodu ile biten bir hook</strong>, kurallar değerlendirilmeden
+    çağrıyı durdurur — yani allow kuralın varken bile bloklar. "Bash'in tamamı serbest olsun ama şu üç komut
+    asla" düzenini kurmanın yolu budur: <code>"Bash"</code>'i allow'a koy, gerisini hook'la kes. Hook'ların
+    tamamı için <a href="hooks-guide.html" style="color:var(--ink-soft);">Talimat rica eder, hook zorlar</a>.</p>
+  </section>
+
+  <!-- 02 -->
+  <section id="m2">
+    <h2><span class="num">02</span> deny, ask, allow — hep bu sırayla</h2>
+    <p>Kurallar <strong>deny, sonra ask, sonra allow</strong> sırasıyla değerlendirilir. Bu sıradaki
+    <strong>ilk eşleşme</strong> sonucu belirler ve <strong>kuralın ne kadar spesifik olduğu sırayı
+    değiştirmez</strong>.</p>
+
+    <p>Bunun pratik sonucu, izin yapılandırmasında en sık yapılan hatayı doğrudan açıklıyor: geniş bir deny
+    kuralına istisna yazamazsın.</p>
+
+<pre><code>{
+  <span class="k">"permissions"</span>: {
+    <span class="k">"allow"</span>: [<span class="s">"Bash(aws s3 ls)"</span>],
+    <span class="k">"deny"</span>: [<span class="s">"Bash(aws *)"</span>]
+  }
+}</code></pre>
+
+    <p>Buradaki <code>aws s3 ls</code> <strong>çalışmaz</strong>. Deny önce bakıldığı için daha dar allow kuralı
+    hiç sıraya gelmez. Aynısı ask ile allow arasında da geçerlidir: eşleşen bir ask kuralı, daha spesifik bir
+    allow kuralı olsa da sorar. İstisna istiyorsan deny kuralını daraltmak zorundasın.</p>
+
+    <h3>Çıplak tool adı ile kapsamlı kural aynı şey değil</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Deny kuralı</th><th>Sonuç</th></tr></thead>
+        <tbody>
+          <tr><td><code>Bash</code> (veya eşdeğeri <code>Bash(*)</code>)</td><td>Tool Claude'un context'inden <strong>tamamen çıkarılır</strong> — Claude onu hiç görmez.</td></tr>
+          <tr><td><code>Bash(rm *)</code></td><td>Tool kullanılabilir kalır; yalnızca eşleşen çağrılar denendiğinde engellenir.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Çıplak adla çıkarma <code>EndConversation</code> dışındaki her tool için geçerlidir: bir deny kuralı,
+    başka tool'lar dururken onu kaldıramaz ve bir ask kuralı onun için hiç sormaz.</p>
+
+    <div class="note">
+      <span class="tag">Yazım hatası yakalama</span>
+      Bilinen hiçbir tool ile eşleşmeyen bir deny veya ask kuralı açılışta uyarı üretir. İçinde <code>_</code>
+      veya <code>*</code> geçen tool adları bu denetimden muaftır. Ayrıca dökümde gördüğün etiket ile
+      <strong>kanonik ad</strong> farklı olabilir: transcript'te <code>Stop Task</code> yazan tool'un kanonik adı
+      <code>TaskStop</code>'tur ve kurallar yalnızca kanonik adla eşleşir.
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="m3">
+    <h2><span class="num">03</span> Dosya nerede, hangisi kimi ezer?</h2>
+    <p>Ayarlar tek bir dosyada durmaz. Hangi dosyaya yazdığın hem <em>kimlerin</em> etkileneceğini hem de
+    <em>kimin ezebileceğini</em> belirler.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kapsam</th><th>Dosya</th><th>Kimin için</th></tr></thead>
+        <tbody>
+          <tr><td>User</td><td><code>~/.claude/settings.json</code><br><span style="opacity:.7">Windows: <code>%USERPROFILE%\.claude\settings.json</code></span></td><td>Senin tüm projelerin</td></tr>
+          <tr><td>Project</td><td><code>.claude/settings.json</code></td><td>Repoya commit'lenir, ekibin tamamı</td></tr>
+          <tr><td>Local</td><td><code>.claude/settings.local.json</code></td><td>Sadece sen, o repo — commit edilmez</td></tr>
+          <tr><td>Managed (macOS)</td><td><code>/Library/Application Support/ClaudeCode/managed-settings.json</code></td><td>Kurum politikası</td></tr>
+          <tr><td>Managed (Linux/WSL)</td><td><code>/etc/claude-code/managed-settings.json</code></td><td>Kurum politikası</td></tr>
+          <tr><td>Managed (Windows)</td><td><code>C:\Program Files\ClaudeCode\managed-settings.json</code></td><td>Kurum politikası</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Managed ayarlar MDM/OS politikalarıyla da dağıtılabilir (macOS'ta <code>com.anthropic.claudecode</code>
+    managed preferences, Windows'ta <code>HKLM\SOFTWARE\Policies\ClaudeCode</code> anahtarı) ve sunucu tarafından
+    girişte teslim edilebilir.</p>
+
+    <h3>Öncelik sırası</h3>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>1. Managed ayarlar</strong> — en yüksek. <strong>Komut satırı argümanları dahil</strong> hiçbir seviye bir managed izin kuralını ezemez.</li>
+        <li><strong>2. Komut satırı argümanları</strong> — o oturuma özel geçici override.</li>
+        <li><strong>3. Local</strong> — <code>.claude/settings.local.json</code></li>
+        <li><strong>4. Project</strong> — <code>.claude/settings.json</code></li>
+        <li><strong>5. User</strong> — <code>~/.claude/settings.json</code></li>
+      </ul>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">İzin kuralları ezmez, birleşir</span>
+      Sıradan bir ayarda üst seviye alt seviyeyi <strong>ezer</strong>: user'da <code>true</code>, project'te
+      <code>false</code> ise project kazanır. <strong>İzin kuralları böyle davranmaz — scope'lar arasında
+      birleşirler.</strong> Bir tool herhangi bir seviyede deny edilmişse başka hiçbir seviye ona izin veremez:
+      user'daki bir deny, project'teki bir allow'u bloklar; managed'daki bir deny'ı <code>--allowedTools</code>
+      ezemez. <code>--disallowedTools</code> ise managed'ın üstüne <em>kısıtlama ekleyebilir</em>.
+    </div>
+
+    <p>Yani 02. bölümdeki "deny önce gelir" kuralı yalnızca tek bir dosyanın içinde değil,
+    <strong>bütün dosyalar arasında</strong> geçerlidir. Sayfa başlığı buradan geliyor.</p>
+
+    <h3>Hangi dosya gerçekten yüklendi?</h3>
+    <p>Ayar dosyasını düzenledikten sonra oturumda <code>/status</code> çalıştır. <strong>Setting sources</strong>
+    satırı o oturumda yüklenen her ayar kaynağını listeler. Bir kaynak, en az bir ayarla yüklendiğinde listede
+    belirir — yani <strong>JSON'u bozuk bir dosya hiç görünmez</strong>. "Ayarı yazdım ama hiçbir şey olmadı"
+    şikâyetlerinin bir kısmı doğrudan budur; <code>/doctor</code> da bozuk settings dosyalarını raporlar.</p>
+
+    <p>Tek seferlik denemeler için ayrı bir dosya da geçebilirsin:</p>
+
+<pre><code>claude --settings ./deneme-ayarlari.json</code></pre>
+
+    <div class="note">
+      <span class="tag">Kurum tarafı</span>
+      Yalnızca managed ayarlardan okunan anahtarlar var; kullanıcı veya proje dosyasına yazmak etkisizdir.
+      İzinler açısından en önemlisi <code>allowManagedPermissionRulesOnly</code>: <code>true</code> olduğunda
+      kullanıcı ve proje ayarları <code>allow</code>, <code>ask</code> veya <code>deny</code> kuralı
+      <strong>tanımlayamaz</strong>, yalnızca managed kurallar geçerlidir. <code>bypassPermissions</code> ve
+      <code>auto</code> modlarını kapatan <code>permissions.disableBypassPermissionsMode</code> ve
+      <code>permissions.disableAutoMode</code> ise (değer: <code>"disable"</code>) her scope'ta çalışır —
+      kendini bypass modundan kilitlemek için kendi ayarına da yazabilirsin.
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="m4">
+    <h2><span class="num">04</span> Sözdizimi: Tool ve Tool(specifier)</h2>
+    <p>Her kural iki biçimden biridir: çıplak <code>Tool</code> ya da <code>Tool(specifier)</code>.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kural</th><th>Eşleştiği şey</th></tr></thead>
+        <tbody>
+          <tr><td><code>Bash</code></td><td>Bütün Bash komutları</td></tr>
+          <tr><td><code>Read</code></td><td>Bütün dosya okumaları</td></tr>
+          <tr><td><code>Bash(npm run build)</code></td><td>Tam olarak <code>npm run build</code> komutu</td></tr>
+          <tr><td><code>Read(./.env)</code></td><td>Geçerli dizindeki <code>.env</code> dosyasının okunması</td></tr>
+          <tr><td><code>WebFetch(domain:example.com)</code></td><td>example.com'a yapılan istekler</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Girdi parametresine göre eşleme</h3>
+    <p><strong>Deny ve ask kuralları</strong> herhangi bir tool'un üst düzey bir girdi parametresini
+    <code>Tool(param:value)</code> ile hedefleyebilir. Allow kuralları bunu kullanamaz — tek bir parametrenin
+    değeri çağrının bütününün güvenli olduğunu göstermez:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kural</th><th>Eşleştiği çağrı</th></tr></thead>
+        <tbody>
+          <tr><td><code>Agent(model:opus)</code></td><td>Opus modelini isteyen Agent çağrıları</td></tr>
+          <tr><td><code>Agent(isolation:worktree)</code></td><td>Git worktree isteyen Agent çağrıları</td></tr>
+          <tr><td><code>Bash(run_in_background:true)</code></td><td>Arka planda çalışan Bash çağrıları</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ul>
+      <li>Parametre, tool girdisinin <strong>doğrudan alanı</strong> olmalı; nesne veya dizi içine gömülü alanlar eşleşmez.</li>
+      <li>Her kural tek bir parametre adlandırır. Hem <code>model</code> hem <code>isolation</code> için iki ayrı kural yaz.</li>
+      <li>Değerde <code>*</code> joker çalışır; joker yoksa eşleşme tam olmalıdır. Modelin hiç göndermediği bir parametre asla eşleşmez — <code>Agent(model:*)</code>, <code>model</code> boş bırakılmış bir çağrıyı yakalamaz.</li>
+      <li>Karşılaştırma <strong>normalleştirmeden önceki ham girdiyle</strong> yapılır: <code>Agent(model:opus)</code> takma adı yakalar, tam model kimliğini yakalamaz. Gerçekte ne gönderildiğini görmek için <code>--verbose</code>.</li>
+    </ul>
+
+    <div class="note warn">
+      <span class="tag">Ana içerik alanı bu yolla eşlenemez</span>
+      <code>Bash</code> ve <code>PowerShell</code> için <code>command</code>, <code>Read</code>/<code>Edit</code>/<code>Write</code>
+      için <code>file_path</code>, <code>Grep</code>/<code>Glob</code> için <code>path</code>, <code>WebFetch</code>
+      için <code>url</code> — bunlar parametre eşlemesine kapalıdır. <code>Bash(command:rm *)</code> gibi bir kural
+      bileşik komutla atlatılabileceği için <strong>yok sayılır</strong> ve açılışta uyarı basılır. Yerine
+      <code>Bash(rm *)</code>, <code>Read(./yol)</code>, <code>WebFetch(domain:host)</code> yaz.
+    </div>
+
+    <h3>Tool adında joker</h3>
+    <p>Deny ve ask kuralları tool adı konumunda da glob kabul eder; desen adın tamamıyla eşleşmelidir.
+    <code>"*"</code> her tool'u, <code>"mcp__*"</code> tüm sunuculardaki her MCP tool'unu yakalar. Allow tarafında
+    ise joker yalnızca düz yazılmış bir <code>mcp__&lt;server&gt;__</code> önekinden sonra kabul edilir;
+    <code>"*"</code> veya <code>"mcp__*"</code> gibi bir allow kuralı <strong>uyarıyla atlanır</strong>.</p>
+  </section>
+
+  <!-- 05 -->
+  <section id="m5">
+    <h2><span class="num">05</span> Bash kuralları kırılgandır</h2>
+    <p>Bash tarafı, izin yapılandırmasının en çok yanlış anlaşılan bölümü. Joker <code>*</code> komutun her
+    yerinde durabilir ve boşluk dahil <strong>herhangi bir karakter dizisini</strong> yakalar:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kural</th><th>Eşleşir</th><th>Eşleşmez</th></tr></thead>
+        <tbody>
+          <tr><td><code>Bash(npm run test *)</code></td><td><code>npm run test -- --watch</code></td><td><code>npm run build</code></td></tr>
+          <tr><td><code>Bash(git * main)</code></td><td><code>git checkout main</code>, <code>git push origin main</code></td><td><code>git status</code></td></tr>
+          <tr><td><code>Bash(ls *)</code> — boşluklu</td><td><code>ls -la</code></td><td><code>lsof</code> (kelime sınırı var)</td></tr>
+          <tr><td><code>Bash(ls*)</code> — boşluksuz</td><td><code>ls -la</code> <em>ve</em> <code>lsof</code></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><code>:*</code> soneki, sondaki jokerin eşdeğer yazımıdır: <code>Bash(ls:*)</code> ile
+    <code>Bash(ls *)</code> aynı komutları yakalar. Ancak <code>:*</code> yalnızca desenin
+    <strong>sonunda</strong> tanınır — <code>Bash(git:* push)</code> içinde iki nokta düz bir karakter sayılır ve
+    hiçbir git komutuyla eşleşmez.</p>
+
+    <h3>Bileşik komutlar ve wrapper'lar</h3>
+    <ul>
+      <li><strong>Her alt komut ayrı eşleşmeli.</strong> <code>Bash(safe-cmd *)</code> kuralı
+      <code>safe-cmd &amp;&amp; other-cmd</code> komutuna izin vermez. Tanınan ayraçlar:
+      <code>&amp;&amp;</code>, <code>||</code>, <code>;</code>, <code>|</code>, <code>|&amp;</code>,
+      <code>&amp;</code> ve satır sonları.</li>
+      <li><strong>Bazı wrapper'lar soyulur:</strong> <code>timeout</code>, <code>time</code>, <code>nice</code>,
+      <code>nohup</code>, <code>stdbuf</code>, kabuk yerleşikleri <code>command</code> ve <code>builtin</code>,
+      zsh'ın <code>noglob</code>'u. Yani <code>Bash(npm test *)</code> kuralı <code>timeout 30 npm test</code>
+      komutunu da yakalar. Bayrak almayan <code>xargs</code> da soyulur.</li>
+      <li><strong>Ortam runner'ları soyulmaz</strong> ve liste yapılandırılamaz. <code>devbox run</code>,
+      <code>mise exec</code>, <code>npx</code>, <code>docker exec</code> bu listede değildir; bu yüzden
+      <code>Bash(devbox run *)</code> kuralı <code>devbox run rm -rf .</code> komutunu da kapsar. İç komutu
+      kuralın içine yaz: <code>Bash(devbox run npm test)</code>.</li>
+      <li><strong>Bazıları hiç otomatik onaylanamaz:</strong> <code>watch</code>, <code>setsid</code>,
+      <code>ionice</code>, <code>flock</code> ve <code>-exec</code>/<code>-delete</code> taşıyan
+      <code>find</code> çağrıları önek kuralıyla geçilemez; tam eşleşen bir kural gerekir.</li>
+    </ul>
+
+    <h3>Sorulmadan çalışan komutlar</h3>
+    <p>Claude Code yerleşik bir salt okunur komut kümesini <strong>her modda</strong> sormadan çalıştırır:
+    <code>ls</code>, <code>cat</code>, <code>echo</code>, <code>pwd</code>, <code>head</code>, <code>tail</code>,
+    <code>grep</code>, <code>find</code>, <code>wc</code>, <code>which</code>, <code>diff</code>,
+    <code>stat</code>, <code>du</code>, <code>cd</code> ve <code>git</code>'in salt okunur biçimleri. Küme
+    yapılandırılamaz; birine prompt istiyorsan onun için bir <code>ask</code> veya <code>deny</code> kuralı yaz.</p>
+
+    <p>Bu kümedeki komutlar bile bazı durumlarda sorar: yazma/exec yetenekli bayrakları olan komutlarda tırnaksız
+    glob varsa (glob <code>-delete</code>'e açılabilir), <code>docker</code> başka bir daemon'a yönlendirilmişse,
+    Windows'ta argümanlarda ağ (UNC) yolu geçiyorsa, ve komut ayrıştırılamıyorsa — 10.000 karakteri aşan komutlar
+    her zaman sorar.</p>
+
+    <div class="note warn">
+      <span class="tag">Argümanı kısıtlamaya çalışan desenler güvenilir değildir</span>
+      <code>Bash(curl http://github.com/ *)</code> kuralı curl'ü GitHub ile sınırlamayı amaçlar ama şunları
+      yakalamaz: URL'den önce gelen bayraklar (<code>curl -X GET …</code>), farklı protokol
+      (<code>https://</code>), yönlendirmeler (<code>curl -L http://kisa.link/x</code>), değişkenler
+      (<code>URL=… &amp;&amp; curl $URL</code>), fazladan boşluk. Ağ erişimini gerçekten sınırlamak istiyorsan
+      <code>curl</code>/<code>wget</code>'i deny'la ve izin verdiğin alanlar için
+      <code>WebFetch(domain:…)</code> kullan — ya da PreToolUse hook'u yaz. Bash serbestse tek başına WebFetch
+      kuralı ağ erişimini kapatmaz.
+    </div>
+
+    <p>PowerShell kuralları aynı şekli kullanır; ek olarak yaygın alias'lar eşlemeden önce kanonikleştirilir, yani
+    <code>PowerShell(Get-ChildItem *)</code> kuralı <code>gci</code>, <code>ls</code> ve <code>dir</code> için de
+    çalışır. Eşleme büyük/küçük harfe duyarsızdır.</p>
+  </section>
+
+  <!-- 06 -->
+  <section id="m6">
+    <h2><span class="num">06</span> Dosya yolları gitignore gibi çalışır</h2>
+    <p><code>Read</code> ve <code>Edit</code> kuralları gitignore desen sözdizimini kullanır. En kritik ayrıntı,
+    <strong>tek eğik çizginin dosya sistemi kökü anlamına gelmemesi</strong>:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Desen</th><th>Anlamı</th><th>Örnek</th></tr></thead>
+        <tbody>
+          <tr><td><code>//yol</code></td><td>Dosya sistemi kökünden mutlak yol</td><td><code>Read(//Users/alice/secrets/**)</code></td></tr>
+          <tr><td><code>~/yol</code></td><td>Ev dizininden</td><td><code>Read(~/Documents/*.pdf)</code></td></tr>
+          <tr><td><code>/yol</code></td><td><strong>Ayarın bulunduğu kaynağa</strong> göre</td><td><code>Edit(/src/**/*.ts)</code></td></tr>
+          <tr><td><code>yol</code> veya <code>./yol</code></td><td>Geçerli dizine göre</td><td><code>Read(*.env)</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Aynı <code>/path</code> deseni, yazıldığı dosyaya göre başka yere bağlanır:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kural nerede tanımlı</th><th><code>/path</code> nereye çözülür</th></tr></thead>
+        <tbody>
+          <tr><td><code>.claude/settings.json</code> (project)</td><td><code>&lt;proje kökü&gt;/path</code></td></tr>
+          <tr><td><code>.claude/settings.local.json</code> (local)</td><td><code>&lt;oturumun başlatıldığı dizin&gt;/path</code></td></tr>
+          <tr><td><code>~/.claude/settings.json</code> (user)</td><td><code>~/.claude/path</code></td></tr>
+          <tr><td><code>--settings &lt;dosya&gt;</code></td><td><code>&lt;dosyanın dizini&gt;/path</code></td></tr>
+          <tr><td>CLI bayrakları, <code>/permissions</code>, oturum kuralları</td><td><code>&lt;oturumun başlatıldığı dizin&gt;/path</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Klasik hata</span>
+      User ayarlarına yazılan <code>Read(/secrets/**)</code> kuralı projenin <code>secrets</code> klasörünü
+      <strong>korumaz</strong> — <code>~/.claude/secrets/**</code> yolunu bloklar. User ayarında her projeye
+      uygulanacak bir kural yazmak için <code>//</code> mutlak yolunu ya da <code>~/</code> ev dizini yolunu
+      kullan. Windows'ta yollar önce POSIX biçimine çevrilir: <code>C:\Users\alice</code> →
+      <code>/c/Users/alice</code>, yani <code>//c/**/.env</code> o sürücüdeki <code>.env</code> dosyalarını,
+      <code>//**/.env</code> ise tüm sürücüleri kapsar.
+    </div>
+
+    <h3>Aynı desen, kural türüne göre farklı derinlik</h3>
+    <p>Tek segmentli göreli desenler allow ile deny/ask arasında farklı davranır:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kural</th><th><code>src/app.ts</code></th><th><code>vendor/pkg/src/lib.js</code></th></tr></thead>
+        <tbody>
+          <tr><td><code>Edit(src/**)</code> — allow</td><td>Evet</td><td><strong>Hayır</strong></td></tr>
+          <tr><td><code>Edit(src/**)</code> — deny / ask</td><td>Evet</td><td><strong>Evet</strong></td></tr>
+          <tr><td><code>Edit(/src/**)</code> — her türde</td><td>Evet</td><td>Hayır</td></tr>
+          <tr><td><code>Edit(**/src/**)</code> — her türde</td><td>Evet</td><td>Evet</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Yani deny yazarken güvenli taraf otomatik seçilir: <code>Read(secrets/**)</code> her derinlikteki
+    <code>secrets</code> klasörünü kapsar. Allow yazarken ise geniş davranmak istiyorsan
+    <code>Edit(**/src/**)</code> demen gerekir. Çıplak dosya adları gitignore semantiğiyle her derinlikte eşleşir:
+    <code>Read(.env)</code> ile <code>Read(**/.env)</code> aynıdır.</p>
+
+    <h3>Hangi tool adına kural yazacaksın?</h3>
+    <div class="note warn">
+      <span class="tag">Write(…) kuralı hiç okunmaz</span>
+      Claude Code dosya izinlerini <strong>yalnızca</strong> <code>Edit(path)</code> ve <code>Read(path)</code>
+      kurallarına karşı denetler. <code>Write</code>, <code>NotebookEdit</code>, <code>Glob</code> veya eski
+      <code>MultiEdit</code> için yol kuralı yazarsan kural kabul edilir ama <strong>hiç kullanılmaz</strong> —
+      açılışta uyarı basılır. <code>Write(docs/**)</code> yerine <code>Edit(docs/**)</code>,
+      <code>Glob(docs/**)</code> yerine <code>Read(docs/**)</code> yaz. (v2.1.210+)
+    </div>
+
+    <p>İki ek davranış:</p>
+    <ul>
+      <li><strong>Read deny'ı Edit'i de kapsar</strong> (v2.1.208+): aynı yolda yeni dosya oluşturmak dahil.
+      Ama <code>Write</code> ve <code>NotebookEdit</code> bu kapsamın dışındadır — hiçbir tool'un değiştiremeyeceği
+      yollar için ayrıca bir <code>Edit</code> deny kuralı ekle.</li>
+      <li><strong>Symlink'lerde allow ve deny farklı davranır.</strong> Allow kuralı ancak hem symlink yolu hem de
+      hedefi eşleşirse geçerlidir; deny kuralı <em>ikisinden biri</em> eşleşirse uygular. İzinli bir klasörün
+      içindeki, dışarı işaret eden symlink yine sorar; yasaklı bir dosyaya işaret eden symlink doğrudan bloklanır.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Sınırın nerede bitiyor</span>
+      Read ve Edit deny kuralları Claude'un yerleşik dosya tool'larına ve Bash içinde tanınan
+      <code>cat</code>, <code>head</code>, <code>tail</code>, <code>sed</code> gibi komutlara uygulanır.
+      <strong>Dosyayı kendi açan bir Python veya Node script'ine uygulanmaz.</strong> Bütün süreçleri kapsayan
+      OS seviyesinde bir sınır istiyorsan sandbox'ı aç; sandbox'ın dosya sistemi ayarları Read/Edit deny
+      kurallarıyla <em>birleştirilerek</em> nihai sınırı oluşturur.
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="m7">
+    <h2><span class="num">07</span> Bash dışındakiler: WebFetch, MCP, Agent, Cd</h2>
+
+    <h3>WebFetch</h3>
+    <p>Kurallar <code>domain:</code> önekiyle yazılır ve URL'in hostname'iyle eşleşir; büyük/küçük harfe duyarsızdır.</p>
+    <ul>
+      <li><code>WebFetch(domain:example.com)</code> — yalnızca o alan adı.</li>
+      <li><code>WebFetch(domain:*.example.com)</code> — her derinlikte alt alan adı (<code>a.b.example.com</code>), ama <code>example.com</code>'un kendisi <strong>değil</strong>.</li>
+      <li><code>WebFetch(domain:*)</code> — çıplak <code>WebFetch</code> kuralına eşdeğer.</li>
+    </ul>
+    <p>Baştaki <code>*.</code> ve tek başına <code>*</code> dışındaki konumlarda joker yalnızca iki nokta arasını
+    yakalar: <code>example.*</code> deseni <code>example.org</code> ile eşleşir,
+    <code>example.evil.com</code> ile eşleşmez. Bu, sondaki jokerin saldırganın kaydedebileceği bir alan adına
+    açılmasını engeller.</p>
+
+    <h3>MCP</h3>
+    <ul>
+      <li><code>mcp__puppeteer</code> — o sunucunun sağladığı her tool.</li>
+      <li><code>mcp__puppeteer__*</code> — aynısı, joker sözdizimiyle.</li>
+      <li><code>mcp__puppeteer__puppeteer_navigate</code> — tek bir tool.</li>
+    </ul>
+    <p>Plugin'lerin getirdiği sunucular farklı adlanır ve claude.ai connector'larının kendi kuralları vardır;
+    ikisi de <a href="mcp-servers-guide.html" style="color:var(--ink-soft);">MCP: aracını Claude'a devret</a>
+    sayfasının 08. bölümünde.</p>
+
+    <h3>Agent</h3>
+    <p><code>Agent(AdıBuraya)</code> kuralları hangi subagent'ların kullanılabileceğini belirler:
+    <code>Agent(Explore)</code>, <code>Agent(Plan)</code>, <code>Agent(kendi-agent-im)</code>. Bir subagent'ı
+    kapatmak için deny dizisine ekle ya da <code>--disallowedTools</code> ile geç.</p>
+
+<pre><code>{
+  <span class="k">"permissions"</span>: {
+    <span class="k">"deny"</span>: [<span class="s">"Agent(Explore)"</span>]
+  }
+}</code></pre>
+
+    <h3>Cd</h3>
+    <p><code>Cd</code>, modelin çağırabileceği bir tool <strong>değildir</strong>: kurallar yalnızca sen
+    <code>/cd</code> çalıştırdığında devreye girer. Çıplak bir <code>Cd</code> deny kuralı <code>/cd</code>'yi
+    tümden kapatır. <strong>Herhangi bir <code>Cd</code> allow kuralı eklemek</strong> komutu allowlist moduna
+    geçirir: hedef dizin allow kurallarından biriyle eşleşmezse <code>/cd</code> reddeder.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kural</th><th>Eşleşir</th><th>Eşleşmez</th></tr></thead>
+        <tbody>
+          <tr><td><code>Cd(~/code/*)</code></td><td><code>~/code/app</code></td><td><code>~/code/app/src</code>, <code>~/code</code></td></tr>
+          <tr><td><code>Cd(~/code/**)</code></td><td><code>~/code</code> ve altındaki her dizin</td><td><code>~/code</code> dışı</td></tr>
+          <tr><td><code>Cd(**/node_modules)</code></td><td>Her derinlikteki <code>node_modules</code></td><td><code>node_modules/pkg</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Burada eşleme gitignore değil, <strong>dizin yolunun tamamına</strong> göredir: <code>*</code> tam olarak
+    bir segment, <code>**</code> segmentler boyunca eşleşir. Deny kuralları hedefin her yazımını, çözüldüğü her
+    symlink adımını denetler.</p>
+  </section>
+
+  <!-- 08 -->
+  <section id="m8">
+    <h2><span class="num">08</span> "Bir daha sorma" dediğinde ne yazılıyor?</h2>
+    <p>Kuralların çoğu elle yazılmaz; izin ekranında verdiğin kararlardan doğar. Nereye ve ne kadar kalıcı
+    yazıldıkları tool türüne göre değişir:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Tool türü</th><th>Onay gerekir mi</th><th>"Evet, bir daha sorma" ne kadar sürer</th></tr></thead>
+        <tbody>
+          <tr><td>Salt okunur (Read, Grep)</td><td>Hayır — çalışma dizini ve ek dizinler içinde</td><td>—</td></tr>
+          <tr><td>Bash komutları</td><td>Evet, yerleşik salt okunur küme hariç</td><td><strong>Kalıcı</strong>, repo ve komut bazında</td></tr>
+          <tr><td>Dosya değişikliği (Edit/Write)</td><td>Evet</td><td><strong>Yalnızca oturum sonuna kadar</strong> — dosyaya yazılmaz</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Kalıcı kaydedilen kurallar <strong>git deposunun kökündeki</strong> <code>.claude/settings.local.json</code>
+    dosyasına yazılır ve worktree'ler ana checkout'a çözülür. Yani alt dizinde verdiğin onay, repo genelinde ve
+    sonraki oturumlarda da geçerlidir. Git deposu dışındaysan ya da repo kökü ev dizininse, kural oturumu
+    başlattığın dizine yazılır. (v2.1.211 öncesinde kural her zaman başlangıç dizinine yazılırdı; eski sürümlerin
+    alt dizine yazdığı kurallar hâlâ orada geçerli.)</p>
+
+    <ul>
+      <li><strong>Bileşik komutları onaylamak birden çok kural üretir.</strong> <code>git status &amp;&amp; npm test</code>
+      onaylandığında <code>npm test</code> için ayrı bir kural kaydedilir; böylece önünde ne olursa olsun tanınır.
+      Alt dizine giren <code>cd</code> gibi parçalar kendi <code>Read</code> kurallarını üretir. Tek bir bileşik
+      komut için en fazla 5 kural kaydedilir.</li>
+      <li><strong>Onayladığın yollar kaçışlanır.</strong> <code>[</code>, <code>]</code>, <code>*</code> gibi
+      gitignore desen karakterleri kaçışlanır ki üretilen kural yalnızca o gerçek yolu eşlesin. Kendi yazdığın
+      kurallar kaçışlanmaz. (v2.1.202 öncesinde <code>[2024-06] Reports</code> gibi bir klasör adı için üretilen
+      kural kendi yoluyla eşleşmeyebiliyordu.)</li>
+    </ul>
+
+    <p>Mevcut kuralların tamamını ve her birinin <strong>hangi settings dosyasından geldiğini</strong> görmek için
+    <code>/permissions</code> ekranını aç. Bir Bash veya PowerShell izin ekranındayken <code>Ctrl+E</code> komutun
+    ne yaptığını, Claude'un neden çalıştırdığını ve neyin ters gidebileceğini <strong>Low / Med / High risk</strong>
+    etiketiyle açıklar. Açıklama yalnızca sen bastığında üretilir ve komutu çalıştırmaz; kapatmak için
+    <code>~/.claude.json</code> içindeki <code>permissionExplainerEnabled</code> değerini <code>false</code> yap.</p>
+  </section>
+
+  <!-- 09 -->
+  <section id="m9">
+    <h2><span class="num">09</span> Klasöre güvenmediysen allow kuralın çalışmaz</h2>
+    <p>Bir projenin <code>.claude/settings.json</code> dosyasındaki <code>permissions.allow</code> kuralları ve
+    <code>permissions.additionalDirectories</code> girdileri <strong>yetki verir</strong>. Bu yüzden Claude Code
+    onları ancak o workspace için <strong>güven onayını</strong> verdikten sonra uygular. O ana kadar kuralları
+    okur ama uygulamaz — ve güven ekranı, klasörün vereceği allow kurallarını ve ek dizinleri sana listeler.</p>
+
+    <p><code>deny</code> ve <code>ask</code> kuralları bundan etkilenmez: onlar yalnızca kısıtladığı için güven
+    beklemeden uygulanır.</p>
+
+    <div class="note warn">
+      <span class="tag">-p ile hiç sorulmaz</span>
+      Etkileşimsiz modda (<code>claude -p</code>) güven ekranı çıkmaz ve <strong>kurallar uygulanmadan
+      kalır</strong>. CI'da "izin kuralım neden işlemiyor" sorusunun en olası cevabı budur.
+    </div>
+
+    <p>Birkaç ayrıntı:</p>
+    <ul>
+      <li>Güven, <strong>workspace başına</strong> saklanır; anahtar git deposunun kökü, depo dışındaysa oturumu
+      başlattığın dizindir. <strong>Üst dizine güvenmek iç içe bir projenin allow kurallarını uygulamaz.</strong></li>
+      <li>Ev dizininde başlattığında güven yalnızca o oturum için tutulur, diske yazılmaz.</li>
+      <li><code>.claude/settings.local.json</code> senin kendi dosyandır, normalde güven denetimine takılmaz.
+      Ama repo o dosyayı sağlamış olabiliyorsa — git'e commit'lenmişse veya <code>.claude</code> bir symlink ise —
+      allow kuralları proje ayarları gibi denetimden geçer.</li>
+      <li>Kuralları hâlâ uygulanmayan ama üst dizini zaten güvenilir olduğu için güven ekranını hiç görmemiş bir
+      workspace, v2.1.200'den itibaren bir sonraki etkileşimli açılışta ekranı gösterir. <strong>"No, continue
+      without these permissions"</strong> dersen o kurallar yok sayılarak devam edersin ve ekran sonraki oturumda
+      tekrar çıkar.</li>
+    </ul>
+  </section>
+
+  <!-- 10 -->
+  <section id="m10">
+    <h2><span class="num">10</span> additionalDirectories dosya açar, yapılandırma açmaz</h2>
+    <p>Claude varsayılan olarak yalnızca başlatıldığı dizindeki dosyalara erişir. Bunu üç yolla genişletirsin:</p>
+
+<pre><code><span class="c"># Açılışta</span>
+claude --add-dir ../ortak-kutuphane
+
+<span class="c"># Oturum içinde</span>
+/add-dir ../ortak-kutuphane</code></pre>
+
+<pre><code>{
+  <span class="k">"permissions"</span>: {
+    <span class="k">"additionalDirectories"</span>: [<span class="s">"../ortak-kutuphane"</span>]
+  }
+}</code></pre>
+
+    <p>Ek dizinlerdeki dosyalar asıl çalışma dizininin kurallarına tabidir: prompt'suz okunur, düzenleme izni
+    ise geçerli permission mode'a bağlıdır.</p>
+
+    <div class="note warn">
+      <span class="tag">Bayrak ile ayar aynı şeyi yapmaz</span>
+      Bir dizini eklemek Claude'un orada <em>dosya okuyup düzenlemesini</em> sağlar; o dizini tam bir
+      yapılandırma kökü <strong>yapmaz</strong>. Üstelik iki yol farklı davranır: aşağıdaki istisnalar yalnızca
+      <code>--add-dir</code> bayrağı veya <code>/add-dir</code> komutu için geçerlidir.
+      <strong><code>permissions.additionalDirectories</code> ile eklenen dizinler yalnızca dosya erişimi verir,
+      hiçbir yapılandırma yüklemez.</strong>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yapılandırma</th><th><code>--add-dir</code> dizininden yüklenir mi</th></tr></thead>
+        <tbody>
+          <tr><td><code>.claude/skills/</code></td><td>Evet, canlı yeniden yüklemeyle</td></tr>
+          <tr><td><code>.claude/agents/</code></td><td>Evet</td></tr>
+          <tr><td><code>.claude/settings.json</code> ve <code>.local.json</code></td><td>Yalnızca <code>enabledPlugins</code> ve <code>extraKnownMarketplaces</code> anahtarları</td></tr>
+          <tr><td><code>CLAUDE.md</code>, <code>.claude/rules/</code>, <code>CLAUDE.local.md</code></td><td>Yalnızca <code>CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1</code> ayarlıysa</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Hook'lar ve diğer <code>.claude/settings.json</code> anahtarları geçerli çalışma dizininin
+    <code>.claude/</code> klasöründen yüklenir — <strong>üst dizine düşme yoktur</strong> — artı senin
+    <code>~/.claude/settings.json</code> dosyan ve managed ayarlar. <code>.claude/settings.local.json</code> ise
+    git deposunun kökünden yüklenir, alt dizinde başlasan bile.</p>
+
+    <p>Oturumun asıl çalışma dizinini <em>değiştirmek</em> istiyorsan <code>/add-dir</code> değil
+    <code>/cd</code> kullan: <code>/cd</code> oturumu taşır, yeni dizinin <code>CLAUDE.md</code>'si yüklenir ve
+    <code>--resume</code> oturumu oradan bulur.</p>
+  </section>
+
+  <!-- 11 -->
+  <section id="m11">
+    <h2><span class="num">11</span> settings.json'da izinlerden başka ne var?</h2>
+    <p>Aynı dosya izin dışındaki davranışları da taşır. En çok kullanılanlar ve <strong>ne zaman etkili
+    olduğu</strong>:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Anahtar</th><th>Ne yapar</th><th>Ne zaman devreye girer</th></tr></thead>
+        <tbody>
+          <tr><td><code>env</code></td><td>Her oturuma ve Claude Code'un başlattığı alt süreçlere uygulanan ortam değişkenleri.</td><td>Oturum başında</td></tr>
+          <tr><td><code>hooks</code></td><td>Yaşam döngüsü olaylarında çalışan hook'lar. Scope'lar arasında birleşir.</td><td>Oturum başında</td></tr>
+          <tr><td><code>statusLine</code></td><td>Ekranın dibindeki satırı üreten komut: <code>{"type":"command","command":"…"}</code></td><td>Her güncellemede</td></tr>
+          <tr><td><code>model</code></td><td>Oturumun modeli; <code>"opus"</code> gibi takma ad veya tam kimlik.</td><td>Oturum başında — orta oturum için <code>/model</code></td></tr>
+          <tr><td><code>outputStyle</code></td><td>System prompt'un parçası olan yanıt stili.</td><td><code>/clear</code> veya yeniden başlatmada</td></tr>
+          <tr><td><code>apiKeyHelper</code></td><td>Kimlik değeri üreten kabuk komutu; sonuç <code>X-Api-Key</code> ve <code>Authorization</code> başlıklarında gönderilir.</td><td>Çalışan oturumda yeniden yüklenir</td></tr>
+          <tr><td><code>cleanupPeriodDays</code></td><td>Bu süreden eski oturum dosyalarını açılışta siler. Varsayılan 30 gün, en az 1.</td><td>Açılışta</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre><code>{
+  <span class="k">"env"</span>: {
+    <span class="k">"CLAUDE_CODE_ENABLE_TELEMETRY"</span>: <span class="s">"1"</span>
+  },
+  <span class="k">"permissions"</span>: {
+    <span class="k">"defaultMode"</span>: <span class="s">"plan"</span>,
+    <span class="k">"allow"</span>: [<span class="s">"Bash(npm run test:*)"</span>, <span class="s">"Bash(git commit *)"</span>],
+    <span class="k">"deny"</span>: [<span class="s">"Read(./.env)"</span>, <span class="s">"Read(./.env.*)"</span>, <span class="s">"Read(./secrets/**)"</span>, <span class="s">"Bash(git push *)"</span>],
+    <span class="k">"additionalDirectories"</span>: [<span class="s">"../ortak-kutuphane"</span>]
+  },
+  <span class="k">"statusLine"</span>: {
+    <span class="k">"type"</span>: <span class="s">"command"</span>,
+    <span class="k">"command"</span>: <span class="s">"~/.claude/statusline.sh"</span>
+  }
+}</code></pre>
+
+    <div class="note">
+      <span class="tag">env için iki ayrıntı</span>
+      Bir değişkeni <code>""</code> yapmak kabuktaki export'u ezer ve Claude Code bunu sağlayıcı seçimi açısından
+      <em>tanımsız</em> sayar; alt süreçler yine boş değeri devralır. <code>NO_COLOR</code> ve
+      <code>FORCE_COLOR</code> buradan yalnızca alt süreçlere ulaşır — Claude Code'un kendi arayüz renklerini
+      değiştirmek için onları <code>claude</code>'u başlatmadan önce kabukta ayarlaman gerekir.
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section id="m12">
+    <h2><span class="num">12</span> Hızlı referans</h2>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Değerlendirme sırası:</strong> deny → ask → allow. İlk eşleşme kazanır, spesifiklik sırayı değiştirmez.</li>
+        <li><strong>Scope'lar arası:</strong> izin kuralları birleşir; herhangi bir seviyedeki deny her yerdeki allow'u yener.</li>
+        <li><strong>Öncelik:</strong> managed → CLI argümanları → local → project → user</li>
+        <li><strong>Dosyalar:</strong> <code>~/.claude/settings.json</code> · <code>.claude/settings.json</code> · <code>.claude/settings.local.json</code> · <code>managed-settings.json</code></li>
+        <li><strong>Ne yüklendi:</strong> <code>/status</code> → Setting sources · bozuk JSON listede görünmez · <code>/doctor</code></li>
+        <li><strong>Kuralları gör:</strong> <code>/permissions</code> — her kuralın kaynağını gösterir</li>
+        <li><strong>Sözdizimi:</strong> <code>Tool</code> · <code>Tool(specifier)</code> · deny/ask'te <code>Tool(param:value)</code></li>
+        <li><strong>Bash:</strong> <code>Bash(npm run test:*)</code> = <code>Bash(npm run test *)</code> · her alt komut ayrı eşleşmeli</li>
+        <li><strong>Yollar:</strong> <code>//mutlak</code> · <code>~/ev</code> · <code>/ayar-kaynağına-göre</code> · <code>./geçerli-dizin</code></li>
+        <li><strong>Dosya kuralı:</strong> yalnızca <code>Edit(path)</code> ve <code>Read(path)</code> denetlenir — <code>Write(path)</code> yazma</li>
+        <li><strong>Mod:</strong> <code>permissions.defaultMode</code> · <code>--permission-mode</code> · <code>Shift+Tab</code></li>
+        <li><strong>Kilit:</strong> <code>disableBypassPermissionsMode</code> / <code>disableAutoMode</code> = <code>"disable"</code></li>
+        <li><strong>Ek dizin:</strong> <code>--add-dir</code> yapılandırma da yükler; <code>additionalDirectories</code> yalnızca dosya erişimi verir</li>
+        <li><strong>allow kuralın çalışmıyorsa:</strong> workspace trust ekranını onayladın mı? <code>-p</code> modunda ekran hiç çıkmaz.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Kaynaklar:
+    <a href="https://code.claude.com/docs/en/permissions">code.claude.com/docs/en/permissions</a> ·
+    <a href="https://code.claude.com/docs/en/settings">/settings</a> ·
+    <a href="https://code.claude.com/docs/en/permission-modes">/permission-modes</a> ·
+    <a href="https://code.claude.com/docs/en/sandboxing">/sandboxing</a> ·
+    <a href="https://code.claude.com/docs/en/hooks">/hooks</a>
+  </footer>
+
+</div>
+</body>
+</html>

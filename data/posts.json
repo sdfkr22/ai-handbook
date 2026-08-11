@@ -1,5 +1,254 @@
 [
   {
+    "dosya": "posts/mcp-servers-guide.html",
+    "baslik": "MCP: aracını Claude'a devret",
+    "aciklama": "Sentry'den, Jira'dan, veritabanından pano üzerinden veri taşıyorsan orada bir MCP server var. Transport seçimi, local/project/user scope, .mcp.json'ı repoya koymak, OAuth, izin kuralları ve context faturası.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "MCP",
+      "claude mcp add",
+      ".mcp.json",
+      "scope",
+      "stdio",
+      "http",
+      "OAuth",
+      "/mcp",
+      "tool search",
+      "alwaysLoad",
+      "izin kuralları",
+      "connector"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/mcp",
+    "tarih": "2026-08-11",
+    "sure": 15,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Panoya kopyalıyorsan, orada bir server var"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Hangi transport? Neredeyse her zaman http"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "İlk sunucu: tek satır, bir de -- kuralı"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "local, project, user: sunucu nerede yaşasın?"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": ".mcp.json'ı commit'lemek: ekibin tamamı aynı araçlarla"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "OAuth'lu sunucular ve /mcp ekranı"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Bağlanmadı: durum satırını oku"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "mcp__server__tool: kuralların dayandığı ad"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Context faturasını kim ödüyor?"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Kapat ama silme"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "@ ile resource, / ile prompt"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Hızlı referans"
+      }
+    ]
+  },
+  {
+    "dosya": "posts/permissions-settings-guide.html",
+    "baslik": "settings.json: deny her zaman kazanır",
+    "aciklama": "Kurallar deny → ask → allow sırasıyla değerlendirilir ve hangi ayar dosyasında yazdığın bu sırayı değiştirmez. settings.json hiyerarşisi, kural sözdizimi, Bash tuzakları, dosya yolu desenleri ve workspace trust.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "permissions",
+      "settings.json",
+      "settings.local.json",
+      "allow",
+      "ask",
+      "deny",
+      "defaultMode",
+      "additionalDirectories",
+      "/permissions",
+      "managed settings",
+      "workspace trust",
+      "hooks",
+      "env"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/permissions",
+    "tarih": "2026-08-11",
+    "sure": 15,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Üç katman: mod, kural, hook"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "deny, ask, allow — hep bu sırayla"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Dosya nerede, hangisi kimi ezer?"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Sözdizimi: Tool ve Tool(specifier)"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Bash kuralları kırılgandır"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Dosya yolları gitignore gibi çalışır"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Bash dışındakiler: WebFetch, MCP, Agent, Cd"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "\"Bir daha sorma\" dediğinde ne yazılıyor?"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Klasöre güvenmediysen allow kuralın çalışmaz"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "additionalDirectories dosya açar, yapılandırma açmaz"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "settings.json'da izinlerden başka ne var?"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Hızlı referans"
+      }
+    ]
+  },
+  {
+    "dosya": "posts/output-styles-guide.html",
+    "baslik": "Ne bildiğini değil, nasıl davrandığını değiştir",
+    "aciklama": "Output styles system prompt'u değiştirir: rol, ton ve varsayılan yanıt biçimi. Yerleşik stiller, keep-coding-instructions kararı, /config ile ayarlama, senaryolar ve stil tutmadığında bakılacak yerler.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "output styles",
+      "outputStyle",
+      "/config",
+      "keep-coding-instructions",
+      "Explanatory",
+      "Learning",
+      "Proactive",
+      "system prompt",
+      "settings.local.json",
+      "force-for-plugin"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/output-styles",
+    "tarih": "2026-08-10",
+    "sure": 9,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Her turda aynı şeyi rica ediyorsan"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Rolü değiştirir, bildiğini değil"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Yerleşik üç stil, bir de Default"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Nereden ayarlanır: /config, sonra /clear"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "keep-coding-instructions: tek satırlık büyük karar"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Kendi stilini yazmak"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Hangi durumda hangi değeri seçersin?"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Senaryo defteri"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Bu iş gerçekten output style'ın işi mi?"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Stil tutmadığında bakılacak yerler"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Hızlı referans"
+      }
+    ]
+  },
+  {
     "dosya": "posts/plan-mode-guide.html",
     "baslik": "Önce plan, sonra diff",
     "aciklama": "Plan mode bir rica değil, bir permission mode: Claude okur, araştırır, plan yazar ama sen onaylayana kadar diske dokunmaz. Tetikleme yolları, onay ekranı, senaryolar ve plan mode'a girmemen gereken durumlar.",
@@ -165,7 +414,7 @@
     ],
     "kaynak": "https://code.claude.com/docs/en/plugins",
     "tarih": "2026-08-07",
-    "sure": 21,
+    "sure": 22,
     "bolumler": [
       {
         "id": "m1",

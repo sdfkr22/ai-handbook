@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çevrimdışısın — AI Handbook</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{color-scheme:dark light;}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#0e0d0b;color:#ece7da;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.65;padding:32px;}
+  .kutu{max-width:44ch;}
+  .isaret{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#e8a33d;margin:0 0 18px;}
+  h1{font-size:28px;line-height:1.2;margin:0 0 14px;font-weight:600;}
+  p{color:#b3ab98;margin:0 0 22px;}
+  a{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;color:#ece7da;text-decoration:none;background:#16140f;
+    border:1px solid #2c281e;border-radius:999px;padding:10px 18px;}
+  a:hover{color:#e8a33d;border-color:#e8a33d;}
+  @media (prefers-color-scheme: light){
+    body{background:#fdf7ec;color:#1c1710;}
+    .isaret,a:hover{color:#b8480a;}
+    p{color:#4b4234;}
+    a{background:#fbf5e9;border-color:#ecdfc8;color:#1c1710;}
+    a:hover{border-color:#b8480a;}
+  }
+</style>
+</head>
+<body>
+  <div class="kutu">
+    <p class="isaret">❯ bağlantı yok</p>
+    <h1>Bu sayfa çevrimdışı elinde değil</h1>
+    <p>Daha önce açtığın ve arşivde önbelleğe alınmış yazılar çevrimdışı da okunur;
+       bu adres onlardan biri değil. Bağlantı gelince tekrar dene.</p>
+    <a id="geri" href="/">← Tüm yazılar</a>
+  </div>
+<script>
+/* Site bir alt dizinde olabilir; doğru kök, service worker'ın scope'u. */
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.getRegistration().then(function (r) {
+    if (r && r.scope) document.getElementById("geri").href = r.scope;
+  }).catch(function () {});
+}
+</script>
+</body>
+</html>

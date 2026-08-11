@@ -34,12 +34,31 @@
   var aktifKategori = "hepsi";
   var aktifEtiket = "";
   var arama = "";
+  var siralama = "yeni";
 
   var grid = document.getElementById("grid");
   var filters = document.getElementById("filters");
   var input = document.getElementById("q");
   var count = document.getElementById("count");
   var updated = document.getElementById("updated");
+  var siralaSec = document.getElementById("sirala");
+
+  // --- Okuma durumu ---
+  // Yazı sayfaları ilerlemeyi localStorage'daki "okuma" anahtarına yazar
+  // (bkz. scripts/build.mjs içindeki ortak kabuk). Katalog burada yalnızca okur;
+  // veri tarayıcıya özeldir, sunucuya hiçbir şey gitmez.
+  var okuma = {};
+  function okumayiTazele() {
+    try { okuma = JSON.parse(localStorage.getItem("okuma") || "{}") || {}; }
+    catch (e) { okuma = {}; }
+  }
+  function durumu(y) {
+    var d = okuma[String(y.dosya).split("/").pop()];
+    if (!d || typeof d.o !== "number") return null;
+    if (d.o >= 0.92) return { okundu: true };
+    if (d.o >= 0.08) return { okundu: false, oran: d.o };
+    return null;                       // sayfayı açıp hemen kapatmış: iz bırakma
+  }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -173,6 +192,14 @@
     });
   }
 
+  // --- Sıralama ---
+  var siralayicilar = {
+    yeni: function (a, b) { return String(b.tarih || "").localeCompare(String(a.tarih || "")); },
+    eski: function (a, b) { return String(a.tarih || "").localeCompare(String(b.tarih || "")); },
+    kisa: function (a, b) { return (a.sure || 0) - (b.sure || 0) || siralayicilar.yeni(a, b); },
+    uzun: function (a, b) { return (b.sure || 0) - (a.sure || 0) || siralayicilar.yeni(a, b); },
+  };
+
   function azHareket() {
     return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }
@@ -231,9 +258,20 @@
         "</div>";
     }
 
+    var d = durumu(y);
+    var durumHtml = "";
+    var ilerlemeHtml = "";
+    if (d && d.okundu) {
+      durumHtml = '<span class="durum okundu">okundu</span>';
+    } else if (d) {
+      var yuzde = Math.round(d.oran * 100);
+      durumHtml = '<span class="durum">%' + yuzde + "</span>";
+      ilerlemeHtml = '<span class="ilerleme" style="width:' + yuzde + '%"></span>';
+    }
+
     return (
       '<article class="card" data-dosya="' + esc(y.dosya) + '">' +
-        '<p class="cat">' + esc(y.kategori || "Diğer") + "</p>" +
+        '<div class="ust"><p class="cat">' + esc(y.kategori || "Diğer") + "</p>" + durumHtml + "</div>" +
         '<h2><a class="card-link" href="' + esc(y.dosya) + '">' + vurgula(y.baslik, kelimeler) + "</a></h2>" +
         "<p>" + vurgula(y.aciklama, kelimeler) + "</p>" +
         bolumHtml +
@@ -242,6 +280,7 @@
           '<span class="src">' + esc(host(y.kaynak)) + "</span>" +
           "<span>" + (y.sure ? y.sure + " dk · " : "") + esc(tarihTR(y.tarih)) + "</span>" +
         "</div>" +
+        ilerlemeHtml +
       "</article>"
     );
   }
@@ -255,7 +294,7 @@
     var oyna = animasyonlu && !azHareket();
     var eskiKonumlar = oyna && !ilkCizim ? konumlariOlc() : null;
 
-    var gorunen = yazilar.filter(eslesir);
+    var gorunen = yazilar.filter(eslesir).sort(siralayicilar[siralama] || siralayicilar.yeni);
     count.textContent = gorunen.length + " / " + yazilar.length + " YAZI";
 
     if (!gorunen.length) {
@@ -311,13 +350,38 @@
     ciz(false);
   });
 
-  // Yeniden eskiye sırala
-  yazilar.sort(function (a, b) { return String(b.tarih || "").localeCompare(String(a.tarih || "")); });
+  if (siralaSec) {
+    // Seçim tarayıcıda kalsın; tema tercihiyle aynı mantık.
+    try {
+      var kayitli = localStorage.getItem("siralama");
+      if (kayitli && siralayicilar[kayitli]) siralama = kayitli;
+    } catch (e) {}
+    siralaSec.value = siralama;
+    siralaSec.addEventListener("change", function () {
+      siralama = siralayicilar[siralaSec.value] ? siralaSec.value : "yeni";
+      try { localStorage.setItem("siralama", siralama); } catch (e) {}
+      ciz(true);
+    });
+  }
 
   if (updated && window.YAZILAR_GUNCELLEME) {
     updated.textContent = "Son güncelleme: " + tarihTR(window.YAZILAR_GUNCELLEME);
   }
 
+  /* Rozetleri tazele: geri tuşuyla dönüşte sayfa bfcache'ten gelirse script
+     yeniden çalışmaz, sekme değiştirilerek dönüldüğünde de öyle. Sıradan bir
+     yeniden yüklemede zaten aşağıdaki okumayiTazele() çağrısı yeterli. */
+  function durumuTazele() {
+    var onceki = JSON.stringify(okuma);
+    okumayiTazele();
+    if (JSON.stringify(okuma) !== onceki) ciz(false);
+  }
+  window.addEventListener("pageshow", function (e) { if (e.persisted) durumuTazele(); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") durumuTazele();
+  });
+
+  okumayiTazele();
   filtreleriCiz();
   ciz(true);
 })();
