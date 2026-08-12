@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ne bildiğini değil, nasıl davrandığını değiştir</title>
-<meta name="yazi:baslik" content="Ne bildiğini değil, nasıl davrandığını değiştir">
-<meta name="yazi:aciklama" content="Output styles system prompt'u değiştirir: rol, ton ve varsayılan yanıt biçimi. Yerleşik stiller, keep-coding-instructions kararı, /config ile ayarlama, senaryolar ve stil tutmadığında bakılacak yerler.">
+<title>Nöbeti /loop devralsın</title>
+<meta name="yazi:baslik" content="Nöbeti /loop devralsın">
+<meta name="yazi:aciklama" content="/loop bir promptu oturum boyunca tekrar çalıştırır: sabit aralıkla, Claude'un seçtiği aralıkla ya da hiç prompt vermeden bakım turu olarak. Aralık grameri, loop.md, jitter, 7 günlük son ve durdurma yolları.">
 <meta name="yazi:kategori" content="Claude Code">
-<meta name="yazi:etiketler" content="output styles, outputStyle, /config, keep-coding-instructions, Explanatory, Learning, Proactive, system prompt, settings.local.json, force-for-plugin">
-<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/output-styles">
-<meta name="yazi:tarih" content="2026-08-10">
+<meta name="yazi:etiketler" content="/loop, scheduled tasks, cron, CronCreate, CronList, CronDelete, ScheduleWakeup, loop.md, /proactive, Monitor, otomasyon">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/scheduled-tasks">
+<meta name="yazi:tarih" content="2026-08-12">
 <style>
   /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
      scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
@@ -73,30 +73,30 @@
 </style>
 <!-- yazi:bas -->
 <link rel="stylesheet" href="../assets/fonts.css">
-<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/output-styles-guide.html">
+<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/loop-scheduled-tasks-guide.html">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="apple-touch-icon" href="../assets/icon-192.png">
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
-<meta name="description" content="Output styles system prompt&#39;u değiştirir: rol, ton ve varsayılan yanıt biçimi. Yerleşik stiller, keep-coding-instructions kararı, /config ile ayarlama, senaryolar ve stil tutmadığında bakılacak yerler.">
+<meta name="description" content="/loop bir promptu oturum boyunca tekrar çalıştırır: sabit aralıkla, Claude&#39;un seçtiği aralıkla ya da hiç prompt vermeden bakım turu olarak. Aralık grameri, loop.md, jitter, 7 günlük son ve durdurma yolları.">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="AI Handbook">
 <meta property="og:locale" content="tr_TR">
-<meta property="og:title" content="Ne bildiğini değil, nasıl davrandığını değiştir">
-<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/output-styles-guide.html">
-<meta property="og:description" content="Output styles system prompt&#39;u değiştirir: rol, ton ve varsayılan yanıt biçimi. Yerleşik stiller, keep-coding-instructions kararı, /config ile ayarlama, senaryolar ve stil tutmadığında bakılacak yerler.">
-<meta property="article:published_time" content="2026-08-10">
-<meta property="article:tag" content="output styles">
-<meta property="article:tag" content="outputStyle">
-<meta property="article:tag" content="/config">
-<meta property="article:tag" content="keep-coding-instructions">
-<meta property="article:tag" content="Explanatory">
-<meta property="article:tag" content="Learning">
+<meta property="og:title" content="Nöbeti /loop devralsın">
+<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/loop-scheduled-tasks-guide.html">
+<meta property="og:description" content="/loop bir promptu oturum boyunca tekrar çalıştırır: sabit aralıkla, Claude&#39;un seçtiği aralıkla ya da hiç prompt vermeden bakım turu olarak. Aralık grameri, loop.md, jitter, 7 günlük son ve durdurma yolları.">
+<meta property="article:published_time" content="2026-08-12">
+<meta property="article:tag" content="/loop">
+<meta property="article:tag" content="scheduled tasks">
+<meta property="article:tag" content="cron">
+<meta property="article:tag" content="CronCreate">
+<meta property="article:tag" content="CronList">
+<meta property="article:tag" content="CronDelete">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Ne bildiğini değil, nasıl davrandığını değiştir">
-<meta name="twitter:description" content="Output styles system prompt&#39;u değiştirir: rol, ton ve varsayılan yanıt biçimi. Yerleşik stiller, keep-coding-instructions kararı, /config ile ayarlama, senaryolar ve stil tutmadığında bakılacak yerler.">
+<meta name="twitter:title" content="Nöbeti /loop devralsın">
+<meta name="twitter:description" content="/loop bir promptu oturum boyunca tekrar çalıştırır: sabit aralıkla, Claude&#39;un seçtiği aralıkla ya da hiç prompt vermeden bakım turu olarak. Aralık grameri, loop.md, jitter, 7 günlük son ve durdurma yolları.">
 <script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
 <!-- /yazi:bas -->
 </head>
@@ -105,7 +105,7 @@
 <script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
    gezinme bloğunu basar. */
-window.YAZI_VERI={"sure":9,"yeni":{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"},"eski":{"dosya":"plan-mode-guide.html","baslik":"Önce plan, sonra diff"},"ilgili":[{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"},{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"}]};</script>
+window.YAZI_VERI={"sure":9,"yeni":null,"eski":{"dosya":"rewind-checkpoints-guide.html","baslik":"/rewind: geri sarar, ama her şeyi değil"},"ilgili":[{"dosya":"hooks-guide.html","baslik":"Talimat rica eder, hook zorlar"}]};</script>
 <!-- /yazi:veri -->
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
@@ -773,317 +773,273 @@ try{
 <div class="wrap">
 
   <header class="hero">
-    <p class="kicker">Claude Code · output styles</p>
-    <h1>Ne bildiğini değil,<br><em>nasıl davrandığını</em> değiştir</h1>
-    <p class="lede">Output styles, Claude Code'un system prompt'unu değiştirerek rolünü, tonunu ve varsayılan yanıt biçimini belirler. Her turda aynı şeyi tekrar tekrar rica ediyorsan ya da Claude'un yazılım mühendisi gibi davranmasını hiç istemiyorsan aradığın ayar budur.</p>
-    <p class="source">10 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/output-styles">code.claude.com/docs/en/output-styles</a></p>
+    <p class="kicker">Claude Code · scheduled tasks</p>
+    <h1>Nöbeti<br><em>/loop devralsın</em></h1>
+    <p class="lede">"CI bitti mi?", "deploy geçti mi?", "yeni review comment var mı?" — bunları elle sormak yerine bir kez zamanlarsın. <code>/loop</code> bir promptu oturum boyunca tekrar tekrar çalıştırır; aralığı sen verirsin, Claude seçer ya da hiç prompt vermezsin ve kendi bakım turunu atar.</p>
+    <p class="source">12 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/scheduled-tasks">code.claude.com/docs/en/scheduled-tasks</a></p>
   </header>
 
   <nav class="toc" aria-label="İçindekiler">
     <ol>
-      <li><a href="#m1"><span class="n">01</span> Her turda aynı şeyi rica ediyorsan</a></li>
-      <li><a href="#m2"><span class="n">02</span> Rolü değiştirir, bildiğini değil</a></li>
-      <li><a href="#m3"><span class="n">03</span> Yerleşik üç stil, bir de Default</a></li>
-      <li><a href="#m4"><span class="n">04</span> Nereden ayarlanır: /config, sonra /clear</a></li>
-      <li><a href="#m5"><span class="n">05</span> keep-coding-instructions: tek satırlık büyük karar</a></li>
-      <li><a href="#m6"><span class="n">06</span> Kendi stilini yazmak</a></li>
-      <li><a href="#m7"><span class="n">07</span> Hangi durumda hangi değeri seçersin?</a></li>
-      <li><a href="#m8"><span class="n">08</span> Senaryo defteri</a></li>
-      <li><a href="#m9"><span class="n">09</span> Bu iş gerçekten output style'ın işi mi?</a></li>
-      <li><a href="#m10"><span class="n">10</span> Stil tutmadığında bakılacak yerler</a></li>
-      <li><a href="#m11"><span class="n">11</span> Hızlı referans</a></li>
+      <li><a href="#m1"><span class="n">01</span> Zamanlayıcı senin oturumunda yaşıyor</a></li>
+      <li><a href="#m2"><span class="n">02</span> Ne verdiğin, ne olacağını belirler</a></li>
+      <li><a href="#m3"><span class="n">03</span> Aralığı sen veriyorsan</a></li>
+      <li><a href="#m4"><span class="n">04</span> Aralığı bilmiyorsan Claude seçsin</a></li>
+      <li><a href="#m5"><span class="n">05</span> Prompt vermezsen ne çalışır?</a></li>
+      <li><a href="#m6"><span class="n">06</span> loop.md: varsayılanı kendin yaz</a></li>
+      <li><a href="#m7"><span class="n">07</span> Esc döngüyü keser</a></li>
+      <li><a href="#m8"><span class="n">08</span> Nerede gerçekten işe yarıyor?</a></li>
+      <li><a href="#m9"><span class="n">09</span> Sessizce ısırdığı yerler</a></li>
+      <li><a href="#m10"><span class="n">10</span> /loop mu, cloud routine mı, Desktop mı?</a></li>
     </ol>
   </nav>
 
-  <!-- 01 -->
   <section id="m1">
-    <h2><span class="num">01</span> Her turda aynı şeyi rica ediyorsan</h2>
-    <p>Output style'a ihtiyaç duyduğunu anlamanın iki net işareti var:</p>
-    <ul>
-      <li><strong>Aynı ricayı tekrarlıyorsun.</strong> "Kısa yaz", "önce diyagram çiz", "ne yaptığını da anlat" — her oturumda, her turda. Bunu bir kez system prompt'a yazarsan tekrar etmen gerekmez.</li>
-      <li><strong>Claude'un yaptığı iş yazılım mühendisliği değil.</strong> Veri analizi, doküman yazımı, araştırma… Claude Code varsayılan olarak kendini bir yazılım mühendisi sanır ve bu varsayım işine yaramıyor olabilir.</li>
-    </ul>
-    <p>Bu sayfa output styles'ın ne olduğunu, dört yerleşik değerin hangi durumda seçileceğini, kendi stilini nasıl yazacağını ve ayarın nereden yapıldığını kapsıyor. <strong>Kapsamadığı şey</strong>: proje bilgisi vermek. Proje kuralların, komutların ve dizin yapın output style'a değil <code>CLAUDE.md</code>'ye yazılır — 09. bölümde ayrımı netleştiriyoruz.</p>
+    <h2><span class="num">01</span> Zamanlayıcı senin oturumunda yaşıyor</h2>
+    <p><code>/loop</code> bir bundled skill. Yaptığı şey basit: verdiğin promptu bir zamanlanmış göreve dönüştürüp <strong>aynı konuşmanın içinde</strong> tekrar tekrar tetikliyor. Arka planda kullandığı araçlar <code>CronCreate</code>, <code>CronList</code> ve <code>CronDelete</code>; sen bunları elle çağırmıyorsun, doğal dille "hangi zamanlanmış görevlerim var?" diye soruyorsun.</p>
+    <p>Kritik nokta şu: görevler <strong>oturuma bağlı</strong>. Terminali kapatırsan, oturum düşerse veya yeni bir konuşma başlatırsan tetiklenmeyi bırakırlar. <code>claude --resume</code> / <code>--continue</code> ile geri döndüğünde henüz süresi dolmamış görevler geri gelir.</p>
     <div class="note">
-      <span class="tag">Tek cümlelik tanım</span>
-      Output styles, Claude'un <strong>ne bildiğini</strong> değil <strong>nasıl yanıt verdiğini</strong> değiştirir: rol, ton ve çıktı biçimi.
+      <span class="tag">Takma ad</span>
+      <code>/proactive</code>, <code>/loop</code> ile birebir aynı komuttur. İkisinden hangisini yazdığın fark etmez.
+    </div>
+    <ul>
+      <li><strong>Tetikleme anı:</strong> zamanlayıcı her saniye kontrol eder ama prompt <em>turlar arasında</em> düşer — Claude cevabın ortasındayken araya girmez, mevcut tur bitene kadar bekler.</li>
+      <li><strong>Saat dilimi:</strong> her şey senin yerel saatinde yorumlanır. <code>0 9 * * *</code>, UTC değil, senin 09:00'un.</li>
+      <li><strong>Kaçan tetikleme telafi edilmez:</strong> Claude uzun bir işle meşgulken üç aralık geçtiyse, boşa çıktığında bir kez tetiklenir, üç kez değil.</li>
+      <li><strong>Yetkiler devralınır:</strong> oturumun permission ayarları ve MCP server'ları aynen geçerli. <code>/loop</code> ayrı bir izin evreni açmaz.</li>
+    </ul>
+    <div class="note warn">
+      <span class="tag">Tek seferlik iş için /loop kullanma</span>
+      "3'te bana haber ver" gibi bir istek için <code>/loop</code> gerekmez — düz cümleyle söyle: <code>in 45 minutes, check whether the integration tests passed</code>. Claude tek atışlık bir görev kurar, çalıştıktan sonra kendini siler.
     </div>
   </section>
 
-  <!-- 02 -->
   <section id="m2">
-    <h2><span class="num">02</span> Rolü değiştirir, bildiğini değil</h2>
-    <p>Mekanizma sade: Claude Code, seçili output style'ın talimatlarını <strong>system prompt'un sonuna ekler</strong>. Bunun üç doğrudan sonucu var.</p>
-    <ul>
-      <li><strong>Her yanıta uygulanır.</strong> Bir skill gibi çağrıldığında değil, oturum boyunca. Claude Code ayrıca konuşma sürerken stile uyumu hatırlatan reminder'lar üretir.</li>
-      <li><strong>Sadece ana konuşmaya uygulanır.</strong> Bir subagent kendi system prompt'uyla çalışır, dolayısıyla output style subagent'ların nasıl yanıt verdiğini değiştirmez. Tek istisna <strong>fork</strong>'tur: fork, parent'ın system prompt'unun tamamını miras alır.</li>
-      <li><strong>Oturum başında okunur.</strong> System prompt oturum açılırken bir kez kurulur; ortada değiştirdiğin stil o oturumda uygulanmaz (04. bölüm).</li>
-    </ul>
-    <h3>Token tarafında ne oluyor?</h3>
-    <p>System prompt'a talimat eklemek input token'larını artırır, ama prompt caching ilk istekten sonra bu maliyeti düşürür. Asıl fark output tarafında: yerleşik <strong>Explanatory</strong> ve <strong>Learning</strong> stilleri tasarımı gereği Default'tan daha uzun yanıt üretir, yani output token'ları artar. Kendi yazdığın stilde output maliyeti tamamen talimatının ne istediğine bağlıdır.</p>
-    <div class="note">
-      <span class="tag">Cache açısından ucuz bir değişiklik</span>
-      Output style'ı oturum ortasında değiştirmek cache'i <strong>geçersiz kılmaz</strong> — çünkü zaten uygulanmaz. Değişiklik bir sonraki <code>/clear</code> veya yeni oturumda yüklenir; asıl yeniden hesaplama orada olur.
+    <h2><span class="num">02</span> Ne verdiğin, ne olacağını belirler</h2>
+    <p>Komutun grameri <code>/loop [aralık] [prompt]</code>. İkisi de opsiyonel ve <strong>hangisini verdiğin davranışı tamamen değiştiriyor</strong> — asıl kafa karışıklığı burada çıkıyor, bu yüzden üç modu baştan ayır:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Ne veriyorsun</th><th>Örnek</th><th>Ne oluyor</th></tr></thead>
+        <tbody>
+          <tr><td>Aralık + prompt</td><td><code>/loop 5m check the deploy</code></td><td>Prompt sabit bir cron programında çalışır</td></tr>
+          <tr><td>Sadece prompt</td><td><code>/loop check the deploy</code></td><td>Her turdan sonra Claude bir sonraki gecikmeyi kendisi seçer</td></tr>
+          <tr><td>Sadece aralık ya da hiçbir şey</td><td><code>/loop</code> · <code>/loop 15m</code></td><td>Yerleşik bakım promptu — ya da varsa <code>loop.md</code>'in — çalışır</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Prompt yerine bir skill de verebilirsin; her turda o skill yeniden çalışır:</p>
+    <pre><code>/loop 20m /review-pr 1234</code></pre>
+    <div class="note warn">
+      <span class="tag">Her slash command tetiklenmez</span>
+      v2.1.196'dan itibaren zamanlanmış bir tetikleme yalnızca <strong>Claude'un kendi başına çağırabildiği</strong> skill'leri çalıştırır. <code>/permissions</code>, <code>/model</code>, <code>/clear</code> gibi yerleşik komutlar; <code>disable-model-invocation: true</code> işaretli skill'ler (bundled <code>/verify</code> dahil); <code>skillOverrides</code> veya <code>Skill</code> deny kuralıyla gizlenmiş skill'ler ve <code>/mcp__github__list_prs</code> gibi MCP prompt'ları Claude'a <em>düz metin</em> olarak ulaşır — çalışmaz.
     </div>
   </section>
 
-  <!-- 03 -->
   <section id="m3">
-    <h2><span class="num">03</span> Yerleşik üç stil, bir de Default</h2>
-    <p>Kendi dosyanı yazmadan önce yerleşiklere bak; çoğu ihtiyaç bakımını üstleneceğin bir dosya olmadan karşılanıyor.</p>
+    <h2><span class="num">03</span> Aralığı sen veriyorsan</h2>
+    <p>Aralığı iki şekilde yazabilirsin: promptun <strong>başında çıplak bir token</strong> olarak ya da <strong>sonunda bir "every" cümleciği</strong> olarak. İkisi de aynı kapıya çıkar.</p>
+    <pre><code>/loop 5m check if the deployment finished and tell me what happened
+/loop check the deploy every 20m
+/loop run the smoke tests every 2 hours</code></pre>
+    <p>Birimler: <code>s</code> saniye, <code>m</code> dakika, <code>h</code> saat, <code>d</code> gün. Cron'un çözünürlüğü bir dakika olduğu için saniyeler yukarı yuvarlanır — <code>30s</code> pratikte <code>1m</code>'dir.</p>
+    <div class="note">
+      <span class="tag">"every" her zaman aralık demek değil</span>
+      Ayrıştırıcı yalnızca "every"den sonra bir <em>zaman ifadesi</em> gelirse aralık olarak okur. <code>/loop check every PR</code> aralık içermez — tüm cümle prompt sayılır ve dinamik moda düşer.
+    </div>
+    <p>Aralığın cron'a temiz çevrilmesi gerekir. <code>7m</code> (saatin sonunda :56 → :00 gibi bozuk boşluklar üretir) veya <code>90m</code> (1.5 saati cron ifade edemez) gibi durumlarda Claude en yakın temiz aralığa yuvarlar ve <strong>neye yuvarladığını söyler</strong>.</p>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Değer</th><th>Ne yapar</th><th>Ne zaman seç</th></tr></thead>
+        <thead><tr><th>Yazdığın</th><th>Üretilen cron</th><th>Anlamı</th></tr></thead>
         <tbody>
-          <tr><td><code>Default</code></td><td>Claude Code'un mevcut system prompt'u: yazılım mühendisliği görevlerini verimli bitirmek üzere tasarlanmış varsayılan davranış.</td><td>Normal geliştirme işi. Bir sebebin yoksa buradan ayrılma.</td></tr>
-          <tr><td><code>Proactive</code></td><td>Hemen yürütür, rutin kararlar için durup sormak yerine makul varsayımlar yapar, planlamaktansa eylemi tercih eder. Bu, auto mode'un uyguladığından <strong>daha güçlü</strong> bir otonom yürütme yönlendirmesidir.</td><td>Ne yapılacağı belli, tempolu iş; sürekli "devam et" yazmaktan yorulduğunda.</td></tr>
-          <tr><td><code>Explanatory</code></td><td>Görevleri yaparken aralara eğitici <strong>"Insights"</strong> serpiştirir; implementasyon tercihlerini ve codebase pattern'lerini anlamana yardım eder.</td><td>Yabancı bir codebase'e girerken, yeni bir framework öğrenirken, code review öncesi.</td></tr>
-          <tr><td><code>Learning</code></td><td>İşbirlikçi, yaparak öğrenme modu: hem "Insights" paylaşır hem de küçük ve stratejik kod parçalarını senin yazmanı ister; koda <code>TODO(human)</code> işaretçileri bırakır.</td><td>Onboarding, eğitim, "kendim de yazmalıyım" dediğin dönemler.</td></tr>
+          <tr><td><code>5m</code></td><td><code>*/5 * * * *</code></td><td>Her 5 dakikada bir</td></tr>
+          <tr><td><code>1h</code></td><td><code>0 * * * *</code></td><td>Her saat başı</td></tr>
+          <tr><td><code>2h</code></td><td><code>0 */2 * * *</code></td><td>İki saatte bir</td></tr>
+          <tr><td><code>1d</code></td><td><code>0 0 * * *</code></td><td>Her gün gece yarısı, yerel saat</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="note warn">
-      <span class="tag">Proactive ≠ auto mode</span>
-      <code>Proactive</code> bir <strong>permission mode değildir</strong>. Permission mode'unu değiştirmeden çalışır, yani araçlar çalışmadan önce izin istemlerini görmeye devam edersin. İzin istemlerini azaltmak istiyorsan aradığın şey auto mode; Claude'un daha az tereddüt etmesini istiyorsan Proactive. İkisi birbirinin yerine geçmez.
-    </div>
+    <p>Claude görevi kurar, cadence'i ve <strong>8 karakterlik job ID</strong>'sini söyler, sonra <em>ilk turu beklemeden hemen çalıştırır</em>. Yani <code>/loop 30m …</code> yazdığında ilk sonucu 30 dakika beklemezsin.</p>
   </section>
 
-  <!-- 04 -->
   <section id="m4">
-    <h2><span class="num">04</span> Nereden ayarlanır: /config, sonra /clear</h2>
-    <p>Menüden seçmek en kısa yol:</p>
-    <pre><code><span class="c"># Claude Code içinde</span>
-<span class="k">/config</span>   <span class="c"># → "Output style" satırını seç → listeden stili seç</span></code></pre>
-    <p>Seçimin <strong>proje-local</strong> seviyeye, yani <code>.claude/settings.local.json</code> dosyasına yazılır. Menüsüz kurmak istersen aynı alanı elle de yazabilirsin:</p>
-    <pre><code><span class="c">// .claude/settings.json — ekibe dağıtmak istiyorsan buraya</span>
-{
-  <span class="k">"outputStyle"</span>: <span class="s">"Explanatory"</span>
-}</code></pre>
-    <div class="note warn">
-      <span class="tag">Değişiklik anında tutmaz</span>
-      Output style system prompt'un parçasıdır ve system prompt oturum başında bir kez okunur. <code>/config</code> ile ya da settings dosyasını düzenleyerek yaptığın değişiklik, <strong><code>/clear</code> çalıştırana veya yeni bir oturum açana kadar uygulanmaz.</strong> "Seçtim ama hiçbir şey değişmedi" şikâyetlerinin çoğunun sebebi budur.
-    </div>
-    <h3>Hangi dosya kazanır?</h3>
-    <p><code>outputStyle</code> normal bir settings alanıdır, dolayısıyla standart öncelik sırasına tabidir (yukarıdaki alttakini ezer):</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>#</th><th>Kapsam</th><th>Dosya</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>Managed (kurumsal politika)</td><td>Sistem dizinindeki <code>managed-settings.json</code> — ezilemez</td></tr>
-          <tr><td>2</td><td>CLI argümanları</td><td>Oturumluk override</td></tr>
-          <tr><td>3</td><td>Local</td><td><code>.claude/settings.local.json</code> — <code>/config</code> buraya yazar, gitignore'dadır</td></tr>
-          <tr><td>4</td><td>Project</td><td><code>.claude/settings.json</code> — repoya commit'lenir, ekip paylaşır</td></tr>
-          <tr><td>5</td><td>User</td><td><code>~/.claude/settings.json</code> — tüm projelerde geçerli varsayılanın</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Bu sıra bütün settings alanları için aynıdır — <strong>izin kuralları hariç</strong>: onlar ezmez,
-      birleşir. Ayrıntısı için <a href="permissions-settings-guide.html" style="color:var(--ink-soft);">settings.json: deny her zaman kazanır</a>.</p>
+    <h2><span class="num">04</span> Aralığı bilmiyorsan Claude seçsin</h2>
+    <p>Aralığı atlarsan sabit cron kurulmaz; Claude her turun sonunda bir sonraki gecikmeyi kendisi belirler — <strong>bir dakika ile bir saat arasında</strong>. Bunu <code>ScheduleWakeup</code> aracıyla yapar ve seçtiği gecikmeyi, gerekçesiyle birlikte turun sonunda yazar.</p>
+    <pre><code>/loop check whether CI passed and address any review comments</code></pre>
+    <p>Mantık şu: build bitmek üzereyken veya PR hareketliyken kısa bekler, ortalık sessizleştikçe aralığı açar. Sabit <code>5m</code> ile saatlerce boşa tur atmanın alternatifi budur.</p>
     <div class="note">
-      <span class="tag">Sürüm notu</span>
-      Bağımsız <code>/output-style</code> komutu <strong>v2.1.73'te deprecate edildi, v2.1.91'de kaldırıldı</strong>. Eski bir blog yazısında ya da not defterinde bu komutu görürsen: artık <code>/config</code> kullanılıyor veya <code>outputStyle</code> alanı doğrudan düzenleniyor.
+      <span class="tag">Poll etmek yerine dinlemek</span>
+      Dinamik bir <code>/loop</code> istediğinde Claude doğrudan <strong>Monitor</strong> aracını kullanabilir. Monitor arka planda bir script çalıştırıp her çıktı satırını akıtır; olay geldiği anda döngüyü uyandırır. Aralıkla yoklamaktan hem daha hızlı hem daha az token yakar. Böyle bir durumda <code>ScheduleWakeup</code> gecikmesi asıl uyandırıcı değil, <em>emniyet ağı</em> olur.
+    </div>
+    <p>Dinamik döngü de zamanlanmış görev listesinde görünür; listeleyebilir, iptal edebilirsin. <a href="#m9">Jitter</a> ona uygulanmaz ama <strong>7 günlük son</strong> uygulanır: başlattıktan yedi gün sonra kendiliğinden biter.</p>
+    <div class="note warn">
+      <span class="tag">Her ortamda yok</span>
+      Amazon Bedrock, AWS üzerindeki Claude Platform, Google Cloud Agent Platform ve Microsoft Foundry'de — ve feature-flag çekimini kapattığında — aralıksız prompt dinamik moda girmez, <strong>sabit 10 dakikalık</strong> programda çalışır.
     </div>
   </section>
 
-  <!-- 05 -->
   <section id="m5">
-    <h2><span class="num">05</span> keep-coding-instructions: tek satırlık büyük karar</h2>
-    <p>Kendi output style'ını yazarken vereceğin en önemli karar bu tek frontmatter alanıdır ve <strong>varsayılanı <code>false</code></strong>'tur.</p>
-    <p>Custom bir output style, Claude Code'un yerleşik yazılım mühendisliği talimatlarını — bir değişikliğin kapsamını nasıl belirleyeceği, ne zaman kod yorumu yazacağı, işini nasıl doğrulayacağı gibi — <strong>dışarıda bırakır</strong>. <code>keep-coding-instructions: true</code> yazmadığın sürece Claude Code varsayılan davranışıyla bir mühendis olmaktan çıkıp genel bir asistana dönüşür.</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Durum</th><th>Değer</th><th>Neden</th></tr></thead>
-        <tbody>
-          <tr><td>Claude yine kod yazacak, sen sadece <em>nasıl anlattığını</em> değiştiriyorsun</td><td><code>keep-coding-instructions: true</code></td><td>Mühendislik davranışı korunur, üstüne senin talimatın eklenir.</td></tr>
-          <tr><td>Claude hiç yazılım mühendisliği yapmayacak (yazı asistanı, veri analisti, araştırmacı)</td><td>Alanı hiç yazma (varsayılan <code>false</code>)</td><td>Rol tamamen değişsin istiyorsun; kodlama talimatları sadece gürültü olurdu.</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="note warn">
-      <span class="tag">Sessiz kayıp</span>
-      Bu alanı unutmanın belirtisi hemen görünmez: Claude çalışmaya devam eder, ama testleri çalıştırmadan "bitti" demeye, değişikliğin kapsamını genişletmeye veya doğrulama adımını atlamaya başlar. Hâlâ kod yazdıran bir stil yazıyorsan <code>keep-coding-instructions: true</code> satırını atlama.
-    </div>
-  </section>
-
-  <!-- 06 -->
-  <section id="m6">
-    <h2><span class="num">06</span> Kendi stilini yazmak</h2>
-    <p>Custom output style bir Markdown dosyasıdır: frontmatter'da metadata, gövdede system prompt'a eklenecek talimatlar. Üç seviyeden birine koyabilirsin ve <strong>dosya adı, frontmatter'da <code>name</code> yazmadığın sürece stilin adı olur</strong>.</p>
-    <pre><code><span class="c"># Kullanıcı seviyesi — tüm projelerde görünür</span>
-~/.claude/output-styles/tutor.md
-
-<span class="c"># Proje seviyesi — repoya commit'lenir, ekip paylaşır</span>
-.claude/output-styles/diagrams-first.md
-
-<span class="c"># Managed policy — kurumsal ayar dizinindeki .claude/output-styles/</span></code></pre>
-    <p>Proje stilleri, <strong>çalışma dizini ile repo kökü arasındaki her</strong> <code>.claude/output-styles/</code> klasöründen yüklenir. v2.1.178'den itibaren bu iç içe klasörlerden birden fazlası aynı ada sahip bir stil tanımlarsa Claude Code çalışma dizinine <strong>en yakın</strong> olanı kullanır.</p>
-    <h3>Örnek — <code>.claude/output-styles/diagrams-first.md</code></h3>
-    <pre><code><span class="c">---</span>
-<span class="k">name:</span> Diagrams first
-<span class="k">description:</span> Her açıklamaya bir diyagramla başla
-<span class="k">keep-coding-instructions:</span> true
-<span class="c">---</span>
-
-Kodu, mimariyi veya veri akışını açıklarken önce yapıyı gösteren
-bir Mermaid diyagramıyla başla, sonra düz yazıyla anlat.
-
-<span class="k">## Diagram conventions</span>
-
-Kontrol akışı için `flowchart TD`, istek yolları için
-`sequenceDiagram` kullan. Diyagramları 15 node'un altında tut.</code></pre>
-    <p>Dosyayı kaydettikten sonra <code>/config</code> → <strong>Output style</strong> altından seç; <code>/clear</code> ya da bir sonraki oturumda devreye girer.</p>
-    <h3>Frontmatter alanları</h3>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Alan</th><th>Ne işe yarar</th><th>Varsayılan</th></tr></thead>
-        <tbody>
-          <tr><td><code>name</code></td><td>Stilin adı</td><td>Dosya adından türer</td></tr>
-          <tr><td><code>description</code></td><td><code>/config</code> seçicisinde görünen açıklama</td><td>Yok</td></tr>
-          <tr><td><code>keep-coding-instructions</code></td><td>Claude Code'un yerleşik yazılım mühendisliği talimatlarını korur</td><td><code>false</code></td></tr>
-          <tr><td><code>force-for-plugin</code></td><td>Yalnızca plugin stilleri için: plugin etkinken kullanıcı seçmeden bu stili uygular ve kullanıcının <code>outputStyle</code> ayarını <strong>ezer</strong>. Birden fazla plugin bunu yaparsa ilk yüklenen kazanır.</td><td><code>false</code></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="note">
-      <span class="tag">Dağıtım</span>
-      Plugin'ler de <code>output-styles/</code> klasörüyle stil taşıyabilir — skill, hook ve agent'larla aynı pakette. Ekip genelinde tek bir stil dayatmak istiyorsan seçenekler: proje <code>.claude/settings.json</code>'da <code>outputStyle</code>, managed settings, ya da <code>force-for-plugin</code>.
-    </div>
-  </section>
-
-  <!-- 07 -->
-  <section id="m7">
-    <h2><span class="num">07</span> Hangi durumda hangi değeri seçersin?</h2>
-    <p>Tek tabloda karar:</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>İhtiyacın</th><th>Seçim</th></tr></thead>
-        <tbody>
-          <tr><td>Normal geliştirme, bir şikâyetin yok</td><td><code>Default</code></td></tr>
-          <tr><td>Sürekli "evet, devam et" yazıyorsun; Claude gereksiz yere duruyor</td><td><code>Proactive</code></td></tr>
-          <tr><td>Kodun neden öyle yazıldığını da öğrenmek istiyorsun</td><td><code>Explanatory</code></td></tr>
-          <tr><td>Kodun bir kısmını kendin yazarak öğrenmek istiyorsun</td><td><code>Learning</code></td></tr>
-          <tr><td>Claude yine kod yazsın ama her açıklamada belirli bir biçimi tuttursun</td><td>Custom stil + <code>keep-coding-instructions: true</code></td></tr>
-          <tr><td>Claude hiç kod yazmayacak: yazı, analiz, araştırma asistanı</td><td>Custom stil, <code>keep-coding-instructions</code> yok</td></tr>
-          <tr><td>Sadece bu tek çalıştırma için bir talimat ekleyeceksin</td><td><code>--append-system-prompt</code> (output style değil)</td></tr>
-          <tr><td>Proje kuralları, komutlar, klasör yapısı</td><td><code>CLAUDE.md</code> (output style değil)</td></tr>
-          <tr><td>Tek bir odaklı görev için ayrı davranış</td><td>Subagent (output style değil)</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- 08 -->
-  <section id="m8">
-    <h2><span class="num">08</span> Senaryo defteri</h2>
-
-    <h3>1 — Yeni ekip üyesi codebase'i öğreniyor</h3>
-    <p>Yeni gelen kişi kodu yazdırmaktan çok anlamak istiyor. Kullanıcı seviyesinde <code>Explanatory</code> yeter; kimsenin dosya yazmasına gerek yok.</p>
-    <pre><code><span class="c">// ~/.claude/settings.json</span>
-{
-  <span class="k">"outputStyle"</span>: <span class="s">"Explanatory"</span>
-}</code></pre>
-    <p>Sonra <code>/clear</code>. İşin akışına döndüğünde <code>/config</code>'den <code>Default</code>'a geri al.</p>
-
-    <h3>2 — Onboarding haftası: kodu kendin yazacaksın</h3>
-    <p><code>Learning</code>, koda <code>TODO(human)</code> işaretçileri bırakır ve stratejik parçaları sana bırakır. Öğrenme için ideal, teslim tarihi olan bir iş için değil — çünkü akış bilerek yavaşlar.</p>
-
-    <h3>3 — Claude'un kod yazmadığı bir repo: veri analizi</h3>
-    <p>Burada Claude Code'un mühendislik varsayımları sadece yolunu tıkar. <code>keep-coding-instructions</code> alanını <strong>hiç yazmıyoruz</strong>.</p>
-    <pre><code><span class="c">---</span>
-<span class="k">name:</span> Data analyst
-<span class="k">description:</span> Veri analisti gibi çalış, yazılım mühendisi gibi değil
-<span class="c">---</span>
-
-Sen bir veri analistisin. Bir soru geldiğinde önce hangi tabloya
-ve hangi metriğe baktığını tek cümleyle söyle, sonra sonucu
-bir tabloyla ver, en sonunda "ne anlama geliyor" başlığı altında
-en fazla üç maddede yorumla.
-
-Emin olmadığın bir metriği tahmin etme; hangi veriye ihtiyacın
-olduğunu açıkça sor.</code></pre>
-
-    <h3>4 — Mimari açıklamalarında hep diyagram istiyorsun</h3>
-    <p>Claude kod yazmaya devam etmeli, sadece anlatım biçimi değişiyor → 06. bölümdeki <code>diagrams-first.md</code> ve <code>keep-coding-instructions: true</code>.</p>
-
-    <h3>5 — Ekipteki herkes aynı stille çalışsın</h3>
-    <p>Stil dosyasını ve ayarı birlikte commit'le. <code>settings.local.json</code> gitignore'da olduğu için ekip için doğru yer <code>.claude/settings.json</code>'dır:</p>
-    <pre><code>.claude/output-styles/diagrams-first.md   <span class="c"># commit et</span>
-.claude/settings.json                    <span class="c"># commit et</span>
-
-<span class="c">// .claude/settings.json</span>
-{
-  <span class="k">"outputStyle"</span>: <span class="s">"Diagrams first"</span>
-}</code></pre>
-    <div class="note warn">
-      <span class="tag">Local, project'i ezer</span>
-      Bir geliştirici daha önce <code>/config</code>'den bir stil seçtiyse bu seçim <code>settings.local.json</code>'a yazılmıştır ve senin commit'lediğin proje ayarını <strong>ezer</strong>. "Bende çalışmıyor" diyen kişide önce <code>.claude/settings.local.json</code>'a bak.
-    </div>
-
-    <h3>6 — Subagent'ın stile uymuyor</h3>
-    <p>Uymaz, uyması da beklenmez: subagent kendi system prompt'uyla çalışır. Bir subagent'ın belirli bir davranışı olsun istiyorsan talimatı agent dosyasının gövdesine yaz. İstisna fork'tur; fork parent'ın system prompt'unu miras aldığı için stili de taşır.</p>
-  </section>
-
-  <!-- 09 -->
-  <section id="m9">
-    <h2><span class="num">09</span> Bu iş gerçekten output style'ın işi mi?</h2>
-    <p>Çoğu "Claude şunu hep yapsın" isteği aslında başka bir aracın işidir. Ayrım, talimatın <strong>nereye</strong> yerleştiğine bakılarak yapılır:</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Özellik</th><th>Nasıl çalışır</th><th>Ne zaman kullan</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Output styles</strong></td><td>System prompt'u değiştirir</td><td>Her turda farklı bir rol, ton veya varsayılan yanıt biçimi istiyorsun</td></tr>
-          <tr><td><strong>CLAUDE.md</strong></td><td>System prompt'tan sonra bir user mesajı ekler</td><td>Claude proje kurallarını ve codebase context'ini hep bilsin istiyorsun</td></tr>
-          <tr><td><strong><code>--append-system-prompt</code></strong></td><td>System prompt'a hiçbir şeyi çıkarmadan ekleme yapar</td><td>Tek bir çalıştırmalık ekleme yeterli</td></tr>
-          <tr><td><strong>Agents (subagent)</strong></td><td>Kendi system prompt'u, modeli ve araçlarıyla ayrı bir subagent koşturur</td><td>Odaklı bir görev için ayrı kapsamlı bir yardımcı istiyorsun</td></tr>
-          <tr><td><strong>Skills</strong></td><td>Çağrıldığında veya ilgili olduğunda göreve özel talimatları yükler</td><td>Tekrar kullanılabilir bir iş akışın var</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="note">
-      <span class="tag">Pratik kural</span>
-      "Claude <strong>neyi bilmeli</strong>?" sorusunun cevabı <code>CLAUDE.md</code>'ye, "Claude <strong>kim gibi davranmalı</strong>?" sorusunun cevabı output style'a yazılır. Output style'a proje kuralı doldurursan hem yanlış yere koymuş olursun hem de kodlama talimatlarını farkında olmadan devre dışı bırakabilirsin.
-    </div>
-  </section>
-
-  <!-- 10 -->
-  <section id="m10">
-    <h2><span class="num">10</span> Stil tutmadığında bakılacak yerler</h2>
-    <p>Sırayla, en sık karşılaşılandan başlayarak:</p>
-    <ul>
-      <li><strong><code>/clear</code> çalıştırdın mı?</strong> Değişiklik oturum ortasında uygulanmaz. Bu tek başına şikâyetlerin çoğunu açıklıyor.</li>
-      <li><strong>Başka bir settings dosyası eziyor mu?</strong> <code>.claude/settings.local.json</code>, <code>.claude/settings.json</code>'ı ve o da <code>~/.claude/settings.json</code>'ı ezer. Aynı <code>outputStyle</code> anahtarını iki yere yazmak en klasik tuzaktır.</li>
-      <li><strong>Managed settings devrede mi?</strong> <code>/status</code>, hangi ayar kaynaklarının aktif olduğunu ve kurumsal ayarların yürürlükte olup olmadığını gösterir. Managed ayar ezilemez.</li>
-      <li><strong>Bir plugin stili zorluyor olabilir.</strong> <code>force-for-plugin: true</code> taşıyan bir plugin stili, sen ne seçersen seç <code>outputStyle</code> ayarını ezer.</li>
-      <li><strong>Dosya doğru yerde mi?</strong> Custom stil <code>output-styles/</code> klasöründe ve <code>.md</code> uzantılı olmalı. Frontmatter'da <code>name</code> yoksa stilin adı dosya adıdır — <code>/config</code> listesinde beklediğin adı göremiyorsan sebebi bu olabilir.</li>
-      <li><strong>Settings dosyası geçerli mi?</strong> <code>/doctor</code>, bozuk veya şema hatası olan settings dosyalarını raporlar. Bozuk bir dosya sessizce reddedilebilir.</li>
-      <li><strong>Beklediğin şey subagent'ta mı olmuyor?</strong> Bu bir hata değil, tasarım (02. bölüm).</li>
-    </ul>
-    <p>Hiçbiri değilse temiz bir yapılandırmayla karşılaştır: <code>claude --safe-mode</code> tüm özelleştirmeleri kapalı bir oturum açar. Sorun orada kayboluyorsa sebep senin <code>.claude</code> dosyalarındadır.</p>
-  </section>
-
-  <!-- 11 -->
-  <section id="m11">
-    <h2><span class="num">11</span> Hızlı referans</h2>
+    <h2><span class="num">05</span> Prompt vermezsen ne çalışır?</h2>
+    <p>Çıplak <code>/loop</code> boş bir döngü kurmaz. Claude yerleşik bir <strong>bakım promptu</strong> çalıştırır ve her turda sırayla şuna bakar:</p>
     <div class="card">
       <ul style="margin-bottom:0;">
-        <li><strong>Değiştir:</strong> <code>/config</code> → Output style. Ardından <code>/clear</code>.</li>
-        <li><strong>Ayar anahtarı:</strong> <code>"outputStyle": "Explanatory"</code></li>
-        <li><strong>Yerleşik değerler:</strong> <code>Default</code>, <code>Proactive</code>, <code>Explanatory</code>, <code>Learning</code></li>
-        <li><strong>Custom stil:</strong> <code>~/.claude/output-styles/&lt;ad&gt;.md</code> veya <code>.claude/output-styles/&lt;ad&gt;.md</code></li>
-        <li><strong>Frontmatter:</strong> <code>name</code>, <code>description</code>, <code>keep-coding-instructions</code>, <code>force-for-plugin</code></li>
-        <li><strong>Hâlâ kod yazdıracaksan:</strong> <code>keep-coding-instructions: true</code> — unutma, varsayılanı <code>false</code>.</li>
-        <li><strong>Kaldırılan komut:</strong> <code>/output-style</code> (v2.1.91'de kaldırıldı)</li>
-        <li><strong>Teşhis:</strong> <code>/status</code> ayar kaynakları · <code>/doctor</code> bozuk settings · <code>claude --safe-mode</code> temiz oturum</li>
+        <li><strong>Konuşmadaki yarım kalan iş:</strong> transcript'te sen ne üzerinde çalışıyorduysan onu ilerletir — yarım bırakılmış implementasyon, "sırada şunu yapacağım" denip yapılmamış adımlar.</li>
+        <li><strong>Mevcut branch'in PR'ı:</strong> review comment'ları yanıtlayıp thread'i kapatmak, kırmızı CI'ın log'unu çekip teşhis etmek, merge conflict çözmek. Hedef, PR'ı yalnızca insan onayını bekler hâle getirmek.</li>
+        <li><strong>Ortalık sakinse temizlik turu:</strong> bug avı veya sadeleştirme geçişi.</li>
       </ul>
+    </div>
+    <p>Bu promptun sınırı açıkça çizilmiş: Claude <strong>yeni işler icat etmez</strong>. Push, silme gibi geri alınamaz eylemler ancak transcript'in zaten yetkilendirdiği bir işin devamıysa yapılır. Üst üste üç tur "yapacak bir şey yok" çıkarsa tek satırla söyleyip susar — her turda rapor yazıp geri döndüğünde ekranını doldurmaz.</p>
+    <pre><code>/loop        <span class="c"># bakım turu, aralığı Claude seçer</span>
+/loop 15m    <span class="c"># aynı bakım turu, sabit 15 dakikada bir</span></code></pre>
+    <div class="note warn">
+      <span class="tag">Burada da ortam kısıtı var</span>
+      Bedrock / AWS / Google Cloud / Foundry üzerinde ve feature-flag çekimi kapalıyken promptsuz <code>/loop</code> bakım turunu çalıştırmaz, sadece kullanım mesajını basar.
+    </div>
+  </section>
+
+  <section id="m6">
+    <h2><span class="num">06</span> loop.md: varsayılanı kendin yaz</h2>
+    <p>Yerleşik bakım promptu senin projene uymuyorsa bir <code>loop.md</code> koy; çıplak <code>/loop</code> artık onu çalıştırır. Bu dosya <strong>tek bir varsayılan prompt</strong> tanımlar — görev listesi ya da ayrı ayrı zamanlanmış işler değil.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yol</th><th>Kapsam</th></tr></thead>
+        <tbody>
+          <tr><td><code>.claude/loop.md</code></td><td>Proje düzeyi. İkisi de varsa bu kazanır.</td></tr>
+          <tr><td><code>~/.claude/loop.md</code></td><td>Kullanıcı düzeyi. Kendi dosyası olmayan her projede geçerli.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>İçerik düz Markdown, zorunlu bir yapısı yok. Promptu doğrudan terminale yazıyormuş gibi yaz:</p>
+    <pre><code><span class="c">&lt;!-- .claude/loop.md --&gt;</span>
+release/next PR'ına bak. CI kırmızıysa hata veren job'ın log'unu çek,
+teşhis et ve minimal bir düzeltme push'la. Yeni review comment geldiyse
+her birini yanıtla ve thread'i kapat. Her şey yeşil ve sessizse
+tek satırla söyle.</code></pre>
+    <ul>
+      <li><strong>Prompt verirsen yok sayılır.</strong> <code>/loop check the deploy</code> yazdığında <code>loop.md</code> devreye girmez; yalnızca çıplak <code>/loop</code> (ya da sadece aralık verilmiş hâli) onu okur.</li>
+      <li><strong>Canlı düzenlenebilir.</strong> Döngü çalışırken dosyayı değiştirirsen bir sonraki turda yeni hâli geçerli olur.</li>
+      <li><strong>Kısa tut.</strong> 25.000 baytı aşan kısım kesilir.</li>
+      <li>İki konumda da dosya yoksa yerleşik bakım promptuna düşülür.</li>
+    </ul>
+  </section>
+
+  <section id="m7">
+    <h2><span class="num">07</span> Esc döngüyü keser</h2>
+    <p>Döngü bir sonraki turu beklerken <strong>Esc</strong>'e bas — bekleyen uyandırma temizlenir ve döngü bir daha tetiklenmez. Bu, <code>/loop</code> ile kurduğun görevlere özeldir: Claude'dan doğal dille istediğin zamanlanmış görevler Esc'ten etkilenmez, silene kadar dururlar.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Durdurma yolu</th><th>Ne zaman</th></tr></thead>
+        <tbody>
+          <tr><td><code>Esc</code></td><td>Döngü beklerken. En hızlı yol.</td></tr>
+          <tr><td>"cancel the deploy check job"</td><td>Doğal dille. Claude <code>CronDelete</code>'i job ID ile çağırır.</td></tr>
+          <tr><td>Claude kendisi bitirir</td><td>Self-paced modda iş tamamlandığında; <code>ScheduleWakeup</code>'ı <code>stop: true</code> ile çağırır (v2.1.202+).</td></tr>
+          <tr><td>7 gün dolar</td><td>Recurring görev son bir kez tetiklenip kendini siler.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Bir tur ne yeniden zamanlama yapıp ne de durdurma çağrısı yaparsa, Claude Code yaklaşık 20 dakika sonra <strong>tek bir yedek uyandırma</strong> kurar; o tur da yeniden zamanlamazsa döngü biter.</p>
+    <p>Mevcut görevleri görmek için düz cümle yeter:</p>
+    <pre><code>what scheduled tasks do I have?
+cancel the deploy check job</code></pre>
+    <div class="note">
+      <span class="tag">Sınır</span>
+      Bir oturumda aynı anda en fazla <strong>50 zamanlanmış görev</strong> tutulabilir. Her görevin 8 karakterlik bir ID'si vardır.
+    </div>
+  </section>
+
+  <section id="m8">
+    <h2><span class="num">08</span> Nerede gerçekten işe yarıyor?</h2>
+
+    <h3>1. Deploy'un bitmesini beklemek</h3>
+    <p>Süre belli değil, sonuç ikili: geçti ya da geçmedi. Sabit ve kısa bir aralık uygundur.</p>
+    <pre><code>/loop 2m deployment loglarına bak; bitti mi, hata verdi mi tek satırla söyle</code></pre>
+
+    <h3>2. PR'ı sen toplantıdayken ayakta tutmak</h3>
+    <p>Aralık belirsiz — CI dakikalar sürebilir, review saatler. Dinamik mod tam buranın işi.</p>
+    <pre><code>/loop CI durumunu ve yeni review comment'ları kontrol et, gelenleri çöz</code></pre>
+
+    <h3>3. Uzun bir refactor'ın testlerini izlemek</h3>
+    <p>Skill'i döngüye sokarsın; her tur aynı kontrol listesini uygular.</p>
+    <pre><code>/loop 20m /review-pr 1234</code></pre>
+
+    <h3>4. Öğle arasında işin kendi kendine ilerlemesi</h3>
+    <p>Elinde net bir prompt yok, "kaldığın yerden devam et" demek istiyorsun. Çıplak <code>/loop</code> bakım turunu çalıştırır; sınırları dar olduğu için sürpriz iş açmaz.</p>
+    <pre><code>/loop</code></pre>
+
+    <h3>5. Ekibin tekrar eden kontrolünü kalıcılaştırmak</h3>
+    <p>Her seferinde aynı cümleyi yazmak yerine projeye bir <code>loop.md</code> koyarsın; artık herkesin çıplak <code>/loop</code>'u aynı işi yapar.</p>
+
+    <div class="note warn">
+      <span class="tag">Ne zaman kullanma</span>
+      Tek seferlik işlerde (<em>düz cümleyle söyle</em>), her gün sabah çalışması gereken işlerde (<em>oturum o kadar yaşamaz — cloud routine kullan</em>) ve olay anında tepki gerektiren işlerde (<em>Channels ile CI hatayı doğrudan oturuma itsin</em>). Bir koşul sağlanana kadar aralıksız çalışmasını istiyorsan <code>/loop</code> değil <code>/goal</code> aradığın şey.
+    </div>
+  </section>
+
+  <section id="m9">
+    <h2><span class="num">09</span> Sessizce ısırdığı yerler</h2>
+
+    <h3>Jitter: "5 dakikada bir" tam 5 dakika değil</h3>
+    <p>Dünyadaki bütün oturumlar aynı saniyede API'ye vurmasın diye zamanlayıcı tetikleme anına <strong>deterministik bir kayma</strong> ekler:</p>
+    <ul>
+      <li>Recurring görevler planlanan zamandan <strong>30 dakikaya kadar geç</strong> tetiklenebilir — saatten sık çalışanlarda aralığın yarısına kadar. <code>:00</code>'a kurulmuş saatlik bir iş <code>:30</code>'a kadar herhangi bir yerde düşebilir.</li>
+      <li>Tam saat veya buçuğa kurulmuş tek atışlık görevler <strong>90 saniyeye kadar erken</strong> tetiklenir.</li>
+      <li>Kayma job ID'sinden türetilir; aynı görev her seferinde aynı kaymayı alır.</li>
+    </ul>
+    <p>Zamanlama gerçekten önemliyse <code>:00</code> ve <code>:30</code> dışında bir dakika seç — <code>0 9 * * *</code> yerine <code>3 9 * * *</code> — ve tek atış jitter'ı devreye girmesin.</p>
+
+    <h3>Yedi gün ve son tetikleme</h3>
+    <p>Recurring görevler oluşturulmalarından <strong>7 gün sonra otomatik olarak sona erer</strong>: son bir kez tetiklenir, sonra kendilerini silerler. Unutulmuş bir döngünün ne kadar yaşayabileceğini sınırlayan güvenlik freni budur. Daha uzunu gerekiyorsa süre dolmadan iptal edip yeniden kur ya da kalıcı bir zamanlama yöntemine geç.</p>
+
+    <h3>Oturum kapanınca biter</h3>
+    <p>Terminali kapatmak veya oturumun düşmesi tetiklemeyi durdurur. <strong>Oturumu arka plana almak</strong> <code>/loop</code> görevlerini arka plan oturumuna taşır ve terminal olmadan da çalışmaya devam eder. Yeni bir konuşma başlatmak ise oturuma bağlı bütün görevleri temizler; <code>--resume</code> / <code>--continue</code> yalnızca süresi dolmamışları geri getirir. Arka plan Bash ve monitor görevleri resume'da <em>hiçbir zaman</em> geri gelmez.</p>
+
+    <h3>Sembolik link tuzağı</h3>
+    <p>Zamanlanmış görev listesi projenin <code>.claude</code> dizininde tutulur. Bu dizin veya içindeki görev dosyası bir symlink ise görev kurma hata verir. (v2.1.216 öncesinde dosya link üzerinden yazılıyordu.)</p>
+
+    <h3>Tamamen kapatmak</h3>
+    <pre><code>CLAUDE_CODE_DISABLE_CRON=1</code></pre>
+    <p>Bu değişken ayarlıyken zamanlayıcı komple devre dışı kalır: cron araçları ve <code>/loop</code> kullanılamaz, zaten kurulmuş görevler tetiklenmez.</p>
+  </section>
+
+  <section id="m10">
+    <h2><span class="num">10</span> /loop mu, cloud routine mı, Desktop mı?</h2>
+    <p>Claude Code'da tekrar eden işi zamanlamanın üç yolu var ve seçim tek bir soruya bakıyor: <strong>iş çalışırken senin makinenin ve oturumunun açık olması gerekiyor mu?</strong></p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th></th><th>Cloud (Routines)</th><th>Desktop scheduled task</th><th><code>/loop</code></th></tr></thead>
+        <tbody>
+          <tr><td>Nerede çalışır</td><td>Bulut, Anthropic yönetiminde</td><td>Senin makinen</td><td>Senin makinen</td></tr>
+          <tr><td>Makine açık olmalı mı</td><td>Hayır</td><td>Evet</td><td>Evet</td></tr>
+          <tr><td>Oturum açık olmalı mı</td><td>Hayır</td><td>Hayır</td><td><strong>Evet</strong></td></tr>
+          <tr><td>Yeniden başlatmaya dayanır mı</td><td>Evet</td><td>Evet</td><td>Süresi dolmadıysa <code>--resume</code> ile geri gelir</td></tr>
+          <tr><td>Yerel dosyalara erişim</td><td>Hayır (temiz clone)</td><td>Evet</td><td>Evet</td></tr>
+          <tr><td>MCP server'lar</td><td>Görev başına connector</td><td>Config dosyaları ve connector'lar</td><td>Oturumdan devralır</td></tr>
+          <tr><td>Permission prompt</td><td>Yok (otonom çalışır)</td><td>Görev başına ayarlanır</td><td>Oturumdan devralır</td></tr>
+          <tr><td>En küçük aralık</td><td>1 saat</td><td>1 dakika</td><td>1 dakika</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong>Senin makinenden bağımsız çalışmalıysa</strong> → cloud routine (<code>/schedule</code>).</li>
+        <li><strong>Yerel dosya ve araçlara ihtiyacı varsa ama oturum açık kalmayacaksa</strong> → Desktop scheduled task.</li>
+        <li><strong>Oturum zaten açık, iş birkaç saatlik ve poll etmek istiyorsan</strong> → <code>/loop</code>.</li>
+        <li><strong>CI içinde tetiklenmesi gerekiyorsa</strong> → GitHub Actions'ın <code>schedule</code> trigger'ı.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <span class="tag">Pratik ipucu</span>
+      Bir saatten uzun aralık ya da "her sabah / her gün" gibi bir cadence istediğinde Claude sana zaten cloud'u önerir — çünkü o kadar uzun aralıklı bir döngü, oturumun kapanmasından önce muhtemelen hiç tetiklenmez.
     </div>
   </section>
 
   <footer>
-    Kaynaklar:
-    <a href="https://code.claude.com/docs/en/output-styles">code.claude.com/docs/en/output-styles</a> ·
-    <a href="https://code.claude.com/docs/en/settings">/settings</a> ·
-    <a href="https://code.claude.com/docs/en/prompt-caching">/prompt-caching</a> ·
-    <a href="https://code.claude.com/docs/en/debug-your-config">/debug-your-config</a>
+    Referanslar ·
+    <a href="https://code.claude.com/docs/en/scheduled-tasks">scheduled-tasks</a> ·
+    <a href="https://code.claude.com/docs/en/commands">commands</a> ·
+    <a href="https://code.claude.com/docs/en/routines">routines</a> ·
+    <a href="https://code.claude.com/docs/en/desktop-scheduled-tasks">desktop-scheduled-tasks</a> ·
+    <a href="https://code.claude.com/docs/en/tools-reference">tools-reference</a> ·
+    <a href="https://code.claude.com/docs/en/env-vars">env-vars</a>
   </footer>
 
 </div>

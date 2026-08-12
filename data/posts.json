@@ -1,5 +1,79 @@
 [
   {
+    "dosya": "posts/loop-scheduled-tasks-guide.html",
+    "baslik": "Nöbeti /loop devralsın",
+    "aciklama": "/loop bir promptu oturum boyunca tekrar çalıştırır: sabit aralıkla, Claude'un seçtiği aralıkla ya da hiç prompt vermeden bakım turu olarak. Aralık grameri, loop.md, jitter, 7 günlük son ve durdurma yolları.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "/loop",
+      "scheduled tasks",
+      "cron",
+      "CronCreate",
+      "CronList",
+      "CronDelete",
+      "ScheduleWakeup",
+      "loop.md",
+      "/proactive",
+      "Monitor",
+      "otomasyon"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/scheduled-tasks",
+    "tarih": "2026-08-12",
+    "sure": 9,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Zamanlayıcı senin oturumunda yaşıyor"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Ne verdiğin, ne olacağını belirler"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Aralığı sen veriyorsan"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Aralığı bilmiyorsan Claude seçsin"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Prompt vermezsen ne çalışır?"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "loop.md: varsayılanı kendin yaz"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Esc döngüyü keser"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Nerede gerçekten işe yarıyor?"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Sessizce ısırdığı yerler"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "/loop mu, cloud routine mı, Desktop mı?"
+      }
+    ]
+  },
+  {
     "dosya": "posts/rewind-checkpoints-guide.html",
     "baslik": "/rewind: geri sarar, ama her şeyi değil",
     "aciklama": "Claude Code her prompt'tan önce dosyaların anlık görüntüsünü alıyor. /rewind menüsünün altı seçeneği, kodu mu konuşmayı mı geri alacağın kararı ve checkpoint'lerin sessizce kapsamadığı değişiklikler.",
