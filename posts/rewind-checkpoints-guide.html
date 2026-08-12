@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bir şey mi ters? Önce /doctor</title>
-<!-- ===== Katalog meta bilgileri ===== -->
-<meta name="yazi:baslik" content="Bir şey mi ters? Önce /doctor">
-<meta name="yazi:aciklama" content="Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server'lar, yavaş hook'lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.">
+<title>/rewind: geri sarar, ama her şeyi değil</title>
+<meta name="yazi:baslik" content="/rewind: geri sarar, ama her şeyi değil">
+<meta name="yazi:aciklama" content="Claude Code her prompt'tan önce dosyaların anlık görüntüsünü alıyor. /rewind menüsünün altı seçeneği, kodu mu konuşmayı mı geri alacağın kararı ve checkpoint'lerin sessizce kapsamadığı değişiklikler.">
 <meta name="yazi:kategori" content="Claude Code">
-<meta name="yazi:etiketler" content="doctor, checkup, troubleshooting, kurulum, settings.json, auto-update, CLAUDE.md, hooks, MCP, context">
-<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/commands">
-<meta name="yazi:tarih" content="2026-08-07">
+<meta name="yazi:etiketler" content="rewind, checkpoint, geri alma, oturum yönetimi, esc esc, branch, fork-session, summarize, cleanupPeriodDays, git">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/checkpointing">
+<meta name="yazi:tarih" content="2026-08-12">
 <style>
   /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
      scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
@@ -74,57 +73,30 @@
 </style>
 <!-- yazi:bas -->
 <link rel="stylesheet" href="../assets/fonts.css">
-<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/doctor-command-guide.html">
+<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/rewind-checkpoints-guide.html">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="apple-touch-icon" href="../assets/icon-192.png">
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
-<meta name="description" content="Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server&#39;lar, yavaş hook&#39;lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.">
+<meta name="description" content="Claude Code her prompt&#39;tan önce dosyaların anlık görüntüsünü alıyor. /rewind menüsünün altı seçeneği, kodu mu konuşmayı mı geri alacağın kararı ve checkpoint&#39;lerin sessizce kapsamadığı değişiklikler.">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="AI Handbook">
 <meta property="og:locale" content="tr_TR">
-<meta property="og:title" content="Bir şey mi ters? Önce /doctor">
-<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/doctor-command-guide.html">
-<meta property="og:description" content="Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server&#39;lar, yavaş hook&#39;lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.">
-<meta property="article:published_time" content="2026-08-07">
-<meta property="article:tag" content="doctor">
-<meta property="article:tag" content="checkup">
-<meta property="article:tag" content="troubleshooting">
-<meta property="article:tag" content="kurulum">
-<meta property="article:tag" content="settings.json">
-<meta property="article:tag" content="auto-update">
+<meta property="og:title" content="/rewind: geri sarar, ama her şeyi değil">
+<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/rewind-checkpoints-guide.html">
+<meta property="og:description" content="Claude Code her prompt&#39;tan önce dosyaların anlık görüntüsünü alıyor. /rewind menüsünün altı seçeneği, kodu mu konuşmayı mı geri alacağın kararı ve checkpoint&#39;lerin sessizce kapsamadığı değişiklikler.">
+<meta property="article:published_time" content="2026-08-12">
+<meta property="article:tag" content="rewind">
+<meta property="article:tag" content="checkpoint">
+<meta property="article:tag" content="geri alma">
+<meta property="article:tag" content="oturum yönetimi">
+<meta property="article:tag" content="esc esc">
+<meta property="article:tag" content="branch">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Bir şey mi ters? Önce /doctor">
-<meta name="twitter:description" content="Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server&#39;lar, yavaş hook&#39;lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.">
-<script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
-<!-- /yazi:bas -->
-<!-- yazi:bas -->
-<link rel="stylesheet" href="../assets/fonts.css">
-<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/doctor-command-guide.html">
-<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="apple-touch-icon" href="../assets/icon-192.png">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
-<meta property="og:type" content="article">
-<meta property="og:site_name" content="AI Handbook">
-<meta property="og:locale" content="tr_TR">
-<meta property="og:title" content="Bir şey mi ters? Önce /doctor">
-<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/doctor-command-guide.html">
-<meta property="og:description" content="Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server&#39;lar, yavaş hook&#39;lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.">
-<meta property="article:published_time" content="2026-08-07">
-<meta property="article:tag" content="doctor">
-<meta property="article:tag" content="checkup">
-<meta property="article:tag" content="troubleshooting">
-<meta property="article:tag" content="kurulum">
-<meta property="article:tag" content="settings.json">
-<meta property="article:tag" content="auto-update">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Bir şey mi ters? Önce /doctor">
-<meta name="twitter:description" content="Kurulum sağlığı, bozuk settings dosyaları, kullanılmayan skills ve MCP server&#39;lar, yavaş hook&#39;lar, şişmiş CLAUDE.md — /doctor hepsini tek seferde raporlar ve onayınla düzeltir. Yedi senaryoyla.">
+<meta name="twitter:title" content="/rewind: geri sarar, ama her şeyi değil">
+<meta name="twitter:description" content="Claude Code her prompt&#39;tan önce dosyaların anlık görüntüsünü alıyor. /rewind menüsünün altı seçeneği, kodu mu konuşmayı mı geri alacağın kararı ve checkpoint&#39;lerin sessizce kapsamadığı değişiklikler.">
 <script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
 <!-- /yazi:bas -->
 </head>
@@ -133,7 +105,7 @@
 <script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
    gezinme bloğunu basar. */
-window.YAZI_VERI={"sure":8,"yeni":{"dosya":"plan-mode-guide.html","baslik":"Önce plan, sonra diff"},"eski":{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"},"ilgili":[{"dosya":"permissions-settings-guide.html","baslik":"settings.json: deny her zaman kazanır"},{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"},{"dosya":"hooks-guide.html","baslik":"Talimat rica eder, hook zorlar"}]};</script>
+window.YAZI_VERI={"sure":7,"yeni":null,"eski":{"dosya":"claude-code-web-mobile-guide.html","baslik":"Telefondan commit, laptop kapalı"},"ilgili":[]};</script>
 <!-- /yazi:veri -->
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
@@ -801,381 +773,361 @@ try{
 <div class="wrap">
 
   <header class="hero">
-    <p class="kicker">Claude Code · Teşhis ve bakım</p>
-    <h1>Bir şey mi ters?<br><em>Önce /doctor</em></h1>
-    <p class="lede">Kurulum sağlığı, parse edilemeyen settings dosyaları, bedavaya context yiyen skills ve MCP server'lar, yavaş hook'lar, şişmiş CLAUDE.md — hepsi tek komutun raporunda. Ve rapor sadece rapor değil: bulduğunu düzeltmeyi teklif ediyor.</p>
-    <p class="source">7 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/commands">code.claude.com/docs/en/commands</a></p>
+    <p class="kicker">Claude Code · checkpointing &amp; /rewind</p>
+    <h1>/rewind:<br><em>geri sarar, ama her şeyi değil</em></h1>
+    <p class="lede">Claude Code her prompt'undan önce dosyaların anlık görüntüsünü alıyor; oturum yoldan çıktığında tek tuşla o noktaya dönebiliyorsun. Bu sayfa menünün altı seçeneğini, hangi durumda kodu hangi durumda konuşmayı geri alman gerektiğini ve checkpoint'lerin kapsamadığı — bu yüzden hâlâ git'e muhtaç olduğun — değişiklikleri anlatıyor.</p>
+    <p class="source">12 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/checkpointing">code.claude.com/docs/en/checkpointing</a></p>
   </header>
 
   <nav class="toc" aria-label="İçindekiler">
     <ol>
-      <li><a href="#m1"><span class="n">01</span> Tek komutluk bir check-up</a></li>
-      <li><a href="#m2"><span class="n">02</span> Kaputun altında neye bakıyor?</a></li>
-      <li><a href="#m3"><span class="n">03</span> Önce rapor eder, sonra izin ister</a></li>
-      <li><a href="#m4"><span class="n">04</span> claude hiç açılmıyorsa: claude doctor</a></li>
-      <li><a href="#m5"><span class="n">05</span> CLAUDE.md'ni budamaya gelir</a></li>
-      <li><a href="#m6"><span class="n">06</span> Ne zaman çalıştırmalısın?</a></li>
-      <li><a href="#m7"><span class="n">07</span> Senaryo defteri</a></li>
-      <li><a href="#m8"><span class="n">08</span> /doctor'ın bakmadığı yerler</a></li>
-      <li><a href="#m9"><span class="n">09</span> Tuzaklar ve sürüm farkları</a></li>
+      <li><a href="#m1"><span class="n">01</span> Her prompt bir dönüş noktası bırakır</a></li>
+      <li><a href="#m2"><span class="n">02</span> Esc bir kez, Esc iki kez</a></li>
+      <li><a href="#m3"><span class="n">03</span> Menüdeki altı seçenek</a></li>
+      <li><a href="#m4"><span class="n">04</span> Kodu mu geri alacaksın, konuşmayı mı?</a></li>
+      <li><a href="#m5"><span class="n">05</span> Summarize: nişan alınmış /compact</a></li>
+      <li><a href="#m6"><span class="n">06</span> Bash'in yaptığını geri alamaz</a></li>
+      <li><a href="#m7"><span class="n">07</span> Subagent kendi başına çalıştıysa</a></li>
+      <li><a href="#m8"><span class="n">08</span> 100 checkpoint, 30 gün</a></li>
+      <li><a href="#m9"><span class="n">09</span> /clear'ın ötesine geçmek</a></li>
+      <li><a href="#m10"><span class="n">10</span> Geri mi saracaksın, dallanacak mısın?</a></li>
+      <li><a href="#m11"><span class="n">11</span> Checkpoint git'in yerine geçmez</a></li>
+      <li><a href="#m12"><span class="n">12</span> Hızlı referans</a></li>
     </ol>
   </nav>
 
-  <!-- ===================================================== -->
   <section id="m1">
-    <h2><span class="num">01</span> Tek komutluk bir check-up</h2>
-    <p><code>/doctor</code>, Claude Code'un kendi kurulumunu ve yapılandırmasını denetleyen <strong>bundled skill</strong>'idir. Adı doktor ama hastası sen değilsin: makinendeki kurulum, ayar dosyaların, yüklü uzantıların ve projenin CLAUDE.md dosyaları muayene ediliyor.</p>
-    <p>Oturum içinde yazman yeterli:</p>
-
-    <pre><code><span class="c"># Claude Code oturumunun içinde</span>
-/doctor
-
-<span class="c"># Aynı şey — takma adı</span>
-/checkup</code></pre>
-
-    <p>Kritik ayrım şu: <code>/doctor</code> pasif bir teşhis ekranı değil. Bulgularını listeler, sonra <strong>düzeltmeyi teklif eder</strong> ve sen onayladıktan sonra dosyalarına dokunur.</p>
-
+    <h2><span class="num">01</span> Her prompt bir dönüş noktası bırakır</h2>
+    <p>Checkpointing arka planda, sen istemeden çalışır: <strong>gönderdiğin her prompt yeni bir
+      checkpoint yaratır</strong> ve o anda dosyaların durumu kaydedilir. Yani "şunu dene" demeden
+      önceki hâl, sen bir şey yapmasan da duruyor.</p>
+    <p>Kaydedilen şey Claude'un <strong>dosya düzenleme araçlarıyla</strong> yaptığı değişikliklerdir.
+      Bu ayrım sayfanın en önemli detayı ve 06. bölümde geri gelecek.</p>
     <div class="note">
-      <span class="tag">Bu sayfa neyi kapsıyor</span>
-      <code>/doctor</code>'ın denetlediği başlıklar, oturum içi ve terminal modu arasındaki fark, hangi problemde hangi komuta gitmen gerektiği ve yedi somut senaryo. Kapsam dışı: genel performans sorunları, login/OAuth hataları ve MCP server yapılandırmasının detayları — bunlar ayrı sayfaların konusu, burada sadece yönlendirme var.
+      <span class="tag">Ne işe yarar</span>
+      Üç tipik kullanım: bir yaklaşımı denerken başlangıç noktasını kaybetmemek, çalışan bir şeyi
+      bozan değişiklikleri hızlıca geri almak ve uzun bir debug turunu özetleyip context alanı
+      boşaltmak.
+    </div>
+    <p>Checkpoint'ler konuşmayla birlikte saklanır; oturumu kapatıp <code>--resume</code> ile geri
+      döndüğünde <code>/rewind</code> hâlâ çalışır.</p>
+  </section>
+
+  <section id="m2">
+    <h2><span class="num">02</span> Esc bir kez, Esc iki kez</h2>
+    <p>Menüyü açmanın iki yolu var: <code>/rewind</code> yazmak veya <strong>prompt kutusu boşken</strong>
+      <code>Esc</code>'ye iki kez basmak. Bu tuşun üç farklı davranışı olduğu için karışıyor:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Tuş</th><th>Durum</th><th>Ne olur</th></tr></thead>
+        <tbody>
+          <tr><td><code>Esc</code></td><td>Claude yanıt verirken</td><td>Turu keser, o ana kadarki iş korunur</td></tr>
+          <tr><td><code>Esc</code></td><td>Bir dialog açıkken</td><td>Claude'u kesmez, dialog'u kapatır</td></tr>
+          <tr><td><code>Esc</code> <code>Esc</code></td><td>Kutuda metin varken</td><td>Taslağı temizler — kaybolmaz, geçmişe yazılır</td></tr>
+          <tr><td><code>Esc</code> <code>Esc</code></td><td>Kutu boşken</td><td>Rewind menüsünü açar</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <span class="tag">Yarım yazdığın prompt</span>
+      Kutuda metin varken çift <code>Esc</code> menüyü açmaz, yazdığını siler. Ama silinen metin
+      girdi geçmişine kaydedilir: menüdeki işin bitince <code>Up</code> ile geri çağırabilirsin.
     </div>
   </section>
 
-  <!-- ===================================================== -->
-  <section id="m2">
-    <h2><span class="num">02</span> Kaputun altında neye bakıyor?</h2>
-    <p>Tek bir "her şey yolunda mı" sorusu değil; birbirinden bağımsız birkaç denetim aynı anda koşuyor.</p>
-
+  <section id="m3">
+    <h2><span class="num">03</span> Menüdeki altı seçenek</h2>
+    <p>Menü oturumda gönderdiğin prompt'ları listeler. Üzerinde işlem yapmak istediğin noktayı seçersin,
+      sonra ne yapılacağını:</p>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Denetim</th><th>Yakaladığı şey</th></tr></thead>
+        <thead><tr><th>Seçenek</th><th>Kod</th><th>Konuşma</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Restore code and conversation</strong></td><td>O noktaya döner</td><td>O noktaya döner</td></tr>
+          <tr><td><strong>Restore conversation</strong></td><td>Olduğu gibi kalır</td><td>O mesaja döner</td></tr>
+          <tr><td><strong>Restore code</strong></td><td>O noktaya döner</td><td>Olduğu gibi kalır</td></tr>
+          <tr><td><strong>Summarize from here</strong></td><td>Dokunulmaz</td><td>Bu noktadan <em>sonrası</em> özete sıkışır</td></tr>
+          <tr><td><strong>Summarize up to here</strong></td><td>Dokunulmaz</td><td>Bu noktadan <em>öncesi</em> özete sıkışır</td></tr>
+          <tr><td><strong>Never mind</strong></td><td>—</td><td>Hiçbir şey yapmadan listeye döner</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Kodla ilgili iki seçenek <strong>her zaman görünmez</strong>: seçtiğin checkpoint'ten sonra takip
+      edilen bir dosya değişikliği yoksa menüde yalnızca <em>Restore conversation</em>, iki summarize
+      seçeneği ve <em>Never mind</em> kalır.</p>
+    <div class="note">
+      <span class="tag">Küçük ama işe yarar</span>
+      Konuşmayı geri aldığında (veya <em>Summarize from here</em> seçtiğinde) seçtiğin mesajın
+      orijinal prompt'u girdi kutusuna geri konur. Aynısını tekrar gönderebilir ya da düzenleyip
+      farklı bir yönde ilerleyebilirsin — asıl kazanç bu: <strong>yeniden yazmak zorunda kalmazsın.</strong>
+    </div>
+  </section>
+
+  <section id="m4">
+    <h2><span class="num">04</span> Kodu mu geri alacaksın, konuşmayı mı?</h2>
+    <p>Üç geri alma seçeneği arasındaki seçim, neyin bozulduğuna bakılarak yapılır:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Durum</th><th>Seçim</th><th>Neden</th></tr></thead>
         <tbody>
           <tr>
-            <td><strong>Installation health</strong></td>
-            <td>Birden fazla veya artık kalmış (leftover) kurulum, <code>PATH</code> problemleri, native installer'ın oluşturmadığı bir launcher</td>
+            <td>Claude isteği baştan yanlış anladı, ürettiği kod da yanlış</td>
+            <td><strong>Restore code and conversation</strong></td>
+            <td>Yanlış anlama context'te kaldığı sürece aynı hataya döner</td>
           </tr>
           <tr>
-            <td><strong>Settings dosyaları</strong></td>
-            <td>Parse edilemeyen <code>settings.json</code>, şema hatası nedeniyle tümden reddedilmiş dosyalar</td>
+            <td>Doğru yoldaydı, son birkaç düzenleme işi bozdu</td>
+            <td><strong>Restore code</strong></td>
+            <td>Konuşmadaki birikim değerli; sadece dosyaları geri al, "şu düzenleme yanlıştı" diye devam et</td>
           </tr>
           <tr>
-            <td><strong>Uzantı / context maliyeti</strong></td>
-            <td>Kullanılmayan skills, MCP server'lar ve plugin'ler — context'e ödettikleri bedele karşı</td>
+            <td>Kod aslında iyi, ama konuşma yanlış varsayımlarla doldu</td>
+            <td><strong>Restore conversation</strong></td>
+            <td>Diskteki sonucu koruyup anlatıyı temiz bir noktadan sürdürürsün</td>
           </tr>
           <tr>
-            <td><strong>Hooks</strong></td>
-            <td>Yavaş çalışan hook'ları işaretler</td>
-          </tr>
-          <tr>
-            <td><strong>Sürüm</strong></td>
-            <td>Bulunduğun release channel'da daha yeni bir sürüm var mı; son otomatik güncelleme denemesi ne oldu</td>
-          </tr>
-          <tr>
-            <td><strong>CLAUDE.md</strong></td>
-            <td>Yerel dosyaların repo'ya commit edilmiş olanlarla çakışması; koddan türetilebilecek içeriğin budanması</td>
-          </tr>
-          <tr>
-            <td><strong>Subagents</strong></td>
-            <td>Aynı dizinde çakışan (duplicate) subagent adları</td>
-          </tr>
-          <tr>
-            <td><strong>Permissions</strong></td>
-            <td>auto mode'u varsayılan yapma teklifi; sık sık reddettiğin read-only komutları önceden onaylama teklifi</td>
+            <td>Sorun kodda değil, context'in şişmesinde</td>
+            <td><strong>Summarize…</strong></td>
+            <td>Geri almak değil, sıkıştırmak gerekiyor — 05. bölüm</td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <p>Yani <code>/doctor</code> hem "bozuk mu?" hem de "gereksiz yere pahalı mı?" sorusunu soruyor. İkinci kısım özellikle önemli: hiç kullanmadığın bir MCP server'ın tool tanımları her oturumda context window'undan yer yiyor.</p>
-
-    <div class="note">
-      <span class="tag">Skill listesi de dahil</span>
-      Skill açıklamaları bir context bütçesine sığdırılıyor; bütçe aşılırsa açıklamalar kırpılıyor. <code>/doctor</code> bu listenin context maliyetini ve en büyük katkıda bulunanları tahmin ederek raporlar.
+    <div class="note warn">
+      <span class="tag">Sık yapılan hata</span>
+      Yalnızca kodu geri alıp konuşmaya dokunmamak cazip görünür ama Claude konuşmada o dosyaların
+      son hâlini "biliyor" olarak kalır. Kodu geri aldıysan bunu <strong>açıkça söyle</strong>:
+      "az önceki düzenlemeleri geri aldım, dosya şu an X hâlinde".
     </div>
   </section>
 
-  <!-- ===================================================== -->
-  <section id="m3">
-    <h2><span class="num">03</span> Önce rapor eder, sonra izin ister</h2>
-    <p>Akış her zaman aynı sırada ilerler:</p>
+  <section id="m5">
+    <h2><span class="num">05</span> Summarize: nişan alınmış /compact</h2>
+    <p>Menüdeki iki summarize seçeneği geri alma değil, <strong>sıkıştırma</strong> işidir: konuşmanın
+      seçtiğin noktadan sonrasını ya da öncesini bir özete indirir, kalan kısmı olduğu gibi bırakır.
+      Diskteki dosyalara dokunmaz.</p>
+    <ul>
+      <li><strong>Summarize from here:</strong> baştaki talimatlarını korumak isteyip sondaki uzun debug
+        turunu eritmek için.</li>
+      <li><strong>Summarize up to here:</strong> son mesajlar üzerinde çalışmaya devam edip önceki
+        keşif aşamasını sıkıştırmak için.</li>
+    </ul>
+    <p>Özeti yönlendirebilirsin: bir <strong>Summarize</strong> satırının üzerine ok tuşlarıyla gelip
+      <strong>add context (optional)</strong> yazan yere talimat yaz ve <code>Enter</code>'a bas.
+      Seçeneği rakam tuşuyla seçersen talimatsız, anında özetlenir.</p>
+    <div class="note">
+      <span class="tag">Kaybolmaz</span>
+      Orijinal mesajlar oturumun transcript'inde durmaya devam eder; Claude gerektiğinde ayrıntıya
+      referans verebilir. Sıkıştırılan yerde konuşmada bir <strong>Summarized conversation</strong>
+      işareti görürsün. Context'i nelerin doldurduğu ve <code>/compact</code> ile farkı için
+      <a href="context-management-guide.html" style="color:var(--ink-soft);">Context window dolduğunda!!</a>
+      sayfasına bak.
+    </div>
+  </section>
 
+  <section id="m6">
+    <h2><span class="num">06</span> Bash'in yaptığını geri alamaz</h2>
+    <div class="note warn">
+      <span class="tag">En önemli sınır</span>
+      Checkpointing yalnızca Claude'un <strong>dosya düzenleme araçlarıyla</strong> yaptığı
+      değişiklikleri takip eder. Bash komutlarıyla değişen dosyalar takip edilmez ve
+      <code>/rewind</code> ile geri alınamaz.
+    </div>
+    <p>Yani bunlar geri dönmez:</p>
+    <pre><code>rm file.txt
+mv old.txt new.txt
+cp source.txt dest.txt</code></pre>
+    <p>Aynı şekilde <strong>senin</strong> Claude Code dışında elle yaptığın değişiklikler ve paralel
+      çalışan başka bir oturumun düzenlemeleri de normalde yakalanmaz — ancak tesadüfen aynı dosyalara
+      dokunuyorlarsa kapsama girerler.</p>
+    <h3>Symlink ve hard link'ler atlanır</h3>
+    <p><em>Restore code</em> seçtiğinde Claude Code, takip edilen yollardan symlink veya hard link
+      olanları atlar ve <code>Restored the code, but skipped N files</code> uyarısını gösterir. Atlanan
+      dosyalar mevcut içerikleriyle kalır; onları geri almak için Claude'dan düzenlemeyi tersine
+      çevirmesini iste ya da elle düzelt. Hangi yolların atlandığını görmek istiyorsan geri almadan
+      önce <code>/debug</code> ile debug log'unu aç:
+      <code>~/.claude/debug/&lt;session-id&gt;.txt</code> atlanan her yolu adıyla yazar.</p>
+    <div class="note">
+      <span class="tag">Kimin başına gelir</span>
+      Dotfile yöneticisinin projeye symlink'lediği config dosyaları ve pnpm'in hard link'lediği
+      dosyalar tam olarak bu kategoriye girer.
+    </div>
+    <p>Geri almanın en ucuz hâli, geri alacak bir şeyin olmamasıdır: riskli bir işte önce planı
+      görmek istiyorsan
+      <a href="plan-mode-guide.html" style="color:var(--ink-soft);">Önce plan, sonra diff</a>
+      sayfasındaki yaklaşım <code>/rewind</code>'in bu boşluğunu kapatır.</p>
+  </section>
+
+  <section id="m7">
+    <h2><span class="num">07</span> Subagent kendi başına çalıştıysa</h2>
+    <p>Bir <strong>subagent</strong> da dosyaları Claude'un düzenleme araçlarıyla değiştirir, ama bu
+      düzenlemeler çoğunlukla senin oturumunun checkpoint'lerine girmez. Belirleyen şey subagent'ın
+      nasıl çalıştığıdır:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Nasıl çalıştı</th><th>/rewind geri alır mı?</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Foreground'da çalışan forked skill (<code>context: fork</code> + <code>background: false</code>)</td>
+            <td>Evet — senin turun içinde çalışma ağacını düzenler, normal gibi geri alınır</td>
+          </tr>
+          <tr>
+            <td>Diğer her subagent (arka planda çalışan forked skill dahil, ki varsayılan budur)</td>
+            <td>Hayır — geri almak için git kullan</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Arka planda çalışan bir <code>/code-review --fix</code> turu da bu ikinci gruba girer. Subagent'ların
+      nasıl tanımlandığı ve ne zaman arka plana düştüğü
+      <a href="creating-subagents-guide.html" style="color:var(--ink-soft);">Kendi subagent'ını yazmak</a>
+      sayfasında.</p>
+  </section>
+
+  <section id="m8">
+    <h2><span class="num">08</span> 100 checkpoint, 30 gün</h2>
+    <p>Checkpoint'ler sonsuza kadar durmaz; iki sınır var:</p>
+    <ul>
+      <li><strong>Oturum başına en yeni 100 checkpoint.</strong> Daha eskisi düşünce, kalan hiçbir
+        checkpoint'in referans vermediği snapshot dosyaları silinir. İstisna: her dosyanın <em>ilk</em>
+        snapshot'ı kalır — VS Code eklentisi oturum diff'lerinde onu temel alır.</li>
+      <li><strong>30 gün.</strong> Checkpoint'ler oturumlarla birlikte silinir. Süreyi
+        <code>cleanupPeriodDays</code> ile değiştirirsin (varsayılan <code>30</code>, en az <code>1</code>).</li>
+    </ul>
+    <pre data-dil="json"><code>{
+  <span class="s">"cleanupPeriodDays"</span>: <span class="k">60</span>
+}</code></pre>
+    <h3>Tamamen kapatmak</h3>
+    <p>Checkpoint alınmasını istemiyorsan <code>fileCheckpointingEnabled</code> (varsayılan
+      <code>true</code>) ayarını kapatabilirsin; <code>/config</code> içinde
+      <strong>Rewind code (checkpoints)</strong> satırı olarak görünür.</p>
+    <pre data-dil="json"><code>{
+  <span class="s">"fileCheckpointingEnabled"</span>: <span class="k">false</span>
+}</code></pre>
+    <p>Ortam değişkeniyle de kapatılır: <code>CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING</code>. Bu ayarların
+      hangi <code>settings.json</code> dosyasına yazılırsa neyi etkilediği
+      <a href="permissions-settings-guide.html" style="color:var(--ink-soft);">settings.json: deny her zaman kazanır</a>
+      sayfasında.</p>
+    <div class="note warn">
+      <span class="tag">Kapatmadan önce</span>
+      Kapatınca <code>/rewind</code> menüsündeki kod seçeneklerini de kaybedersin; elinde yalnızca
+      konuşmayı geri alma ve summarize kalır. Disk alanı gerçekten sorun değilse açık bırakmak
+      neredeyse her zaman daha iyi.
+    </div>
+  </section>
+
+  <section id="m9">
+    <h2><span class="num">09</span> /clear'ın ötesine geçmek</h2>
+    <p>Aynı Claude Code sürecinde daha önce <code>/clear</code> çalıştırdıysan rewind menüsünün en
+      üstünde fazladan bir satır çıkar:</p>
+    <pre><code>/resume &lt;session-id&gt; (previous session)</code></pre>
+    <p>Bunu seçmek <code>/clear</code>'dan önce aktif olan konuşmaya döndürür. Satır, Claude Code'dan
+      çıkana veya başka bir oturuma geçene kadar orada durur ve <strong>v2.1.191 veya sonrasını</strong>
+      gerektirir. Daha eski sürümlerde <code>/resume</code> çalıştırıp önceki oturumu listeden seç.</p>
+    <div class="note">
+      <span class="tag">Pratikte</span>
+      "<code>/clear</code> yazdım ama o konuşmada bir şey vardı" anı, <code>/rewind</code>'in en az
+      bilinen kullanımı. Refleks olarak <code>/resume</code> aramaya gitmeden önce çift
+      <code>Esc</code>'ye bas.
+    </div>
+  </section>
+
+  <section id="m10">
+    <h2><span class="num">10</span> Geri mi saracaksın, dallanacak mısın?</h2>
+    <p><code>/rewind</code> tek bir oturumun içinde çalışır: geri aldığın noktadan sonrası artık o
+      oturumun akışında değildir. Denediğin yolu <strong>kaybetmeden</strong> başka bir yol denemek
+      istiyorsan doğru araç dallanmadır.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Araç</th><th>Ne yapar</th><th>Ne zaman</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>/rewind</code></td>
+            <td>Aynı oturumda kodu ve/veya konuşmayı geri alır</td>
+            <td>Gidilen yol yanlıştı, saklamaya değmez</td>
+          </tr>
+          <tr>
+            <td><code>/branch [ad]</code></td>
+            <td>Konuşmanın kopyasını çıkarır, seni kopyaya geçirir; orijinal olduğu gibi kalır</td>
+            <td>"Bir de şöyle deneyelim" — ikisini de saklamak istiyorsun</td>
+          </tr>
+          <tr>
+            <td><code>claude --continue --fork-session</code></td>
+            <td>Aynı dallanmayı komut satırından, ayrı bir süreçte yapar</td>
+            <td>Oturumdan çıkmışsın; paralel çalışmak istiyorsun</td>
+          </tr>
+          <tr>
+            <td><code>Summarize…</code></td>
+            <td>Hiçbir şeyi geri almaz, konuşmayı sıkıştırır</td>
+            <td>Yol doğru, sadece context şişti</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <pre><code>/branch try-streaming-approach</code></pre>
+    <p><code>/branch</code> ad vermezsen dalı konuşmanın ilk prompt'undan adlandırır. Onay mesajında iki
+      session ID görürsün: içinde bulunduğun yeni dal ve orijinal. Orijinal diskte değişmeden kalır ve
+      oturum seçicide durur; <code>/resume &lt;orijinal-ad&gt;</code> ile geri dönersin.</p>
+    <div class="note warn">
+      <span class="tag">Dallanmanın taşımadığı şey</span>
+      <code>/branch</code> aynı süreçte devam ettiği için "bu oturum için izin ver" onayların dalda da
+      geçerlidir. <code>--fork-session</code> ile ayrı bir sürece çatallandığında ise o onaylar
+      taşınmaz, yeniden onaylaman gerekir.
+    </div>
+  </section>
+
+  <section id="m11">
+    <h2><span class="num">11</span> Checkpoint git'in yerine geçmez</h2>
+    <p>Checkpoint'ler <strong>oturum seviyesinde hızlı kurtarma</strong> için tasarlandı: 100
+      checkpoint'lik pencere, 30 günlük ömür, bash ve subagent boşlukları. Kalıcı geçmiş, dallar ve
+      ekip çalışması hâlâ git'in işi.</p>
     <div class="card">
       <ul style="margin-bottom:0;">
-        <li><strong>1 · Tarama.</strong> Kurulum, ayarlar, uzantılar ve CLAUDE.md dosyaları okunur.</li>
-        <li><strong>2 · Bulgu raporu.</strong> Ne bulduğunu tek tek listeler — hiçbir şeye dokunmadan.</li>
-        <li><strong>3 · Teklif.</strong> Düzeltebileceği maddeler için önerdiği değişikliği gösterir.</li>
-        <li><strong>4 · Onay.</strong> Sen kabul etmeden hiçbir dosya değişmez.</li>
+        <li><strong>Riskli işe başlamadan commit at.</strong> Temiz bir çalışma ağacı, <code>/rewind</code>'in
+          kapsamadığı her şey için ikinci ağdır — bash ile silinen dosya, subagent düzenlemesi, symlink.</li>
+        <li><strong>Oturum içinde <code>/rewind</code>, oturumlar arasında git.</strong> "Üç prompt geri"
+          checkpoint işi; "dünkü hâline dön" git işi.</li>
+        <li><strong>Geri aldıktan sonra <code>git status</code>'a bak.</strong> Kodun gerçekten
+          beklediğin noktaya döndüğünü doğrulamanın en hızlı yolu bu — özellikle atlanan dosya uyarısı
+          gördüysen.</li>
       </ul>
     </div>
+  </section>
 
-    <p>Bu davranış <strong>v2.1.205</strong> ile geldi. Daha eski sürümlerde <code>/doctor</code> salt okunur bir teşhis ekranı açıyordu ve raporu Claude'a düzeltmesi için göndermek istiyorsan <code>f</code> tuşuna basman gerekiyordu.</p>
-
+  <section id="m12">
+    <h2><span class="num">12</span> Hızlı referans</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Komut / tuş</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>/rewind</code></td><td>Rewind menüsünü açar</td></tr>
+          <tr><td><code>Esc</code> <code>Esc</code></td><td>Kutu boşken aynı menüyü açar; doluysa taslağı temizler</td></tr>
+          <tr><td><code>Up</code></td><td>Çift <code>Esc</code> ile temizlenen taslağı geri çağırır</td></tr>
+          <tr><td>Restore code and conversation</td><td>İkisini de seçilen noktaya döndürür</td></tr>
+          <tr><td>Restore code / Restore conversation</td><td>Yalnızca birini döndürür</td></tr>
+          <tr><td>Summarize from here / up to here</td><td>Konuşmanın sonrasını / öncesini özete sıkıştırır</td></tr>
+          <tr><td><code>/branch [ad]</code></td><td>Konuşmayı kopyalayıp dala geçirir, orijinali korur</td></tr>
+          <tr><td><code>claude --continue --fork-session</code></td><td>Aynı dallanmayı komut satırından yapar</td></tr>
+          <tr><td><code>/debug</code></td><td>Debug log'unu açar; atlanan dosya yollarını görmek için</td></tr>
+          <tr><td><code>cleanupPeriodDays</code></td><td>Oturum ve checkpoint saklama süresi (varsayılan 30 gün)</td></tr>
+          <tr><td><code>fileCheckpointingEnabled</code></td><td>Checkpoint alımını açar/kapatır (varsayılan <code>true</code>)</td></tr>
+          <tr><td><code>CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING</code></td><td>Aynı kapatmayı ortam değişkeniyle yapar</td></tr>
+        </tbody>
+      </table>
+    </div>
     <div class="note warn">
-      <span class="tag">Onay bir formalite değil</span>
-      Özellikle CLAUDE.md budama teklifini okumadan onaylama. Repo'ya commit edilmiş bir dosyadan bölüm siliyorsan bu değişiklik tüm ekibi etkiler — diff'i gözden geçir, gerekiyorsa maddeleri tek tek seç.
-    </div>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m4">
-    <h2><span class="num">04</span> claude hiç açılmıyorsa: claude doctor</h2>
-    <p>Slash command'lar ancak bir oturum başlatabildiğinde işine yarar. Claude Code hiç açılmıyorsa aynı teşhisin terminal versiyonu var:</p>
-
-    <pre><code><span class="c"># Oturum başlatmadan, doğrudan shell'den</span>
-claude doctor</code></pre>
-
-    <p>Bu komut <strong>salt okunur</strong> kurulum ve ayar teşhisi basar: kurulum sağlığı, settings dosyası doğrulama hataları ve önerilen düzeltmeleriyle birlikte uyarılar. Hiçbir şeyi kendiliğinden değiştirmez, bir oturum da başlatmaz.</p>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th></th><th><code>/doctor</code></th><th><code>claude doctor</code></th></tr></thead>
-        <tbody>
-          <tr><td>Nerede çalışır</td><td>Oturum içinde</td><td>Terminalde, oturum gerekmez</td></tr>
-          <tr><td>Düzeltme yapar mı</td><td>Evet — onayınla</td><td>Hayır, salt okunur</td></tr>
-          <tr><td>Kapsam</td><td>Kurulum + ayarlar + uzantılar + context + CLAUDE.md</td><td>Kurulum ve ayar teşhisi</td></tr>
-          <tr><td>Ne zaman</td><td>Claude Code çalışıyor ama bir şey ters</td><td><code>claude</code> hiç başlamıyor ya da <code>--version</code> dışında her şey bozuk</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Kurulum doğrulaması için basit sıralama: önce <code>claude --version</code> bir sürüm numarası basıyor mu diye bak, basıyorsa ama bir şeyler hâlâ yanlışsa <code>claude doctor</code>'a geç.</p>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m5">
-    <h2><span class="num">05</span> CLAUDE.md'ni budamaya gelir</h2>
-    <p><code>/doctor</code>'ın en az bilinen ama en çok işe yarayan denetimi bu. Üç iş birden yapıyor:</p>
-
-    <ul>
-      <li><strong>Deduplikasyon:</strong> Yerel CLAUDE.md dosyalarını repo'ya commit edilmiş olanlarla karşılaştırır, tekrar edeni ayıklar.</li>
-      <li><strong>Budama:</strong> Commit edilmiş CLAUDE.md dosyalarından, Claude'un zaten koddan türetebileceği içeriği keser.</li>
-      <li><strong>Taşıma:</strong> Kalan ve sürekli yüklenen yönlendirmeyi, ihtiyaç anında yüklenen <strong>skills</strong>'e ve alt dizinlerdeki CLAUDE.md dosyalarına taşır.</li>
-    </ul>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Budanır</th><th>Korunur</th></tr></thead>
-        <tbody>
-          <tr><td>Dizin yapısı / klasör haritaları</td><td>Tuzaklar (pitfalls)</td></tr>
-          <tr><td>Bağımlılık listeleri</td><td>Bir kararın <em>neden</em> öyle alındığı</td></tr>
-          <tr><td>Mimari genel bakış yazıları</td><td>Aracın varsayılanından farklı olan convention'lar</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Mantık basit: dizin yapısını Claude zaten <code>ls</code> ile görebiliyor, o satırlar her oturumda boşuna token yakıyor. Ama "bu repo'da migration'ları elle yazmıyoruz" bilgisi hiçbir yerden türetilemez — o kalır.</p>
-
-    <div class="note warn">
-      <span class="tag">Sürüm şartı</span>
-      CLAUDE.md budama denetimi <strong>Claude Code v2.1.206 veya sonrasını</strong> gerektirir. Daha eski bir sürümdeysen <code>/doctor</code> çalışır ama bu kontrolü yapmaz.
-    </div>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m6">
-    <h2><span class="num">06</span> Ne zaman çalıştırmalısın?</h2>
-    <p><code>/doctor</code> her gün koşturulacak bir komut değil. Şu anlarda anlamlı:</p>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>An</th><th>Neden</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>Kurulumdan hemen sonra</td>
-            <td><code>claude --version</code>'dan daha derin bir doğrulama; PATH ve çakışan kurulum varsa ilk günde yakalarsın</td>
-          </tr>
-          <tr>
-            <td>Bir şey "sessizce" çalışmıyorken</td>
-            <td>Hook tetiklenmiyor, ayar uygulanmıyor, skill görünmüyor — hata mesajı yoksa ilk durak burası</td>
-          </tr>
-          <tr>
-            <td>Sürüm güncellemesi beklerken</td>
-            <td>Release channel'ında yeni sürüm var mı ve son güncelleme denemesi neden başarısız oldu</td>
-          </tr>
-          <tr>
-            <td>Oturumlar pahalı gelmeye başladığında</td>
-            <td>Kullanılmayan skills / MCP / plugin ve şişmiş CLAUDE.md temizliği</td>
-          </tr>
-          <tr>
-            <td>Yeni bir makineye ya da ekibe geçtiğinde</td>
-            <td>Devraldığın yapılandırmanın sağlam olup olmadığını görürsün</td>
-          </tr>
-          <tr>
-            <td>GitHub'a issue açmadan hemen önce</td>
-            <td>Sorunun kendi kurulumunda olmadığını elemenin en hızlı yolu</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="note">
-      <span class="tag">Hangi sayfadayım bilmiyorum</span>
-      Sorunun hangi kategoriye girdiğinden emin değilsen resmi troubleshooting yönergesi de aynı şeyi söylüyor: önce <code>/doctor</code>, ardından MCP durumu için <code>/mcp</code>.
-    </div>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m7">
-    <h2><span class="num">07</span> Senaryo defteri</h2>
-    <p>Yedi somut durum. Her birinde belirti, <code>/doctor</code>'ın ne dediği ve sonraki adım.</p>
-
-    <h3>Senaryo 1 — "Yeni sürüm çıktı, bana gelmedi"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Ekipteki herkes yeni bir özelliği kullanıyor, sende yok. Auto-update açık görünüyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>claude doctor</code> — en son güncelleme denemesinin sonucunu basar.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> npm global kurulumun var ve npm'in global dizini yazılabilir değil. Bu durumda Claude Code başlangıçta bir kez uyarı gösterir, <code>claude doctor</code> ise mevcut çözümleri listeler. Alternatif neden: Homebrew, WinGet, apt/dnf/apk kurulumları <strong>varsayılan olarak otomatik güncellenmez</strong> — güncellemeyi elle yapman gerekir.</p>
-    </div>
-
-    <h3>Senaryo 2 — "claude eski sürümü açıyor"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Güncelleme başarılı diyor ama <code>claude --version</code> hâlâ eski numarayı basıyor. Ya da kaldırdığın hâlde <code>claude</code> çalışmaya devam ediyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>claude doctor</code>.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Birden fazla kurulum veya artık kalmış bir kurulum, eski bir installer'dan kalma bir shell alias'ı ya da <code>PATH</code> sıralaması. macOS/Linux'ta native installer <code>~/.local/bin/claude</code> launcher'ını yönetir; oraya kendi script'ini koyduysan <code>claude doctor</code> bunu "native installer'ın oluşturmadığı bir launcher" olarak raporlar. Yönetimi geri vermek için <code>~/.local/bin/claude</code>'u sil ve <code>claude update</code> çalıştır.</p>
-    </div>
-
-    <h3>Senaryo 3 — "Hook yazdım, hiç tetiklenmiyor"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> <code>settings.json</code>'a bir <code>PreToolUse</code> hook'u eklediniz, hiçbir şey olmuyor. Hata da yok.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>/doctor</code> → sonra <code>/hooks</code>.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> <code>matcher</code> alanına string yerine dizi yazılmış. Bu bir şema hatasıdır: Claude Code ayar hatası bildirimi gösterir ve <strong>tüm user/project/local settings dosyasını reddeder</strong> — yani o dosyadaki diğer hook'lar da ölür. <code>claude doctor</code> doğrulama hatasını raporlar, <code>/hooks</code> ise o dosyadan hiçbir hook listelemez.</p>
-    </div>
-
-    <pre><code><span class="c">// YANLIŞ — dizi kullanımı tüm dosyayı geçersiz kılar</span>
-{
-  <span class="s">"hooks"</span>: {
-    <span class="s">"PreToolUse"</span>: [
-      { <span class="s">"matcher"</span>: [<span class="s">"Edit"</span>, <span class="s">"Write"</span>], <span class="s">"hooks"</span>: [ <span class="c">/* ... */</span> ] }
-    ]
-  }
-}
-
-<span class="c">// DOĞRU — tek string, | ile ayrılmış</span>
-{
-  <span class="s">"hooks"</span>: {
-    <span class="s">"PreToolUse"</span>: [
-      { <span class="s">"matcher"</span>: <span class="s">"Edit|Write"</span>, <span class="s">"hooks"</span>: [ <span class="c">/* ... */</span> ] }
-    ]
-  }
-}</code></pre>
-
-    <h3>Senaryo 4 — "Oturum daha ilk mesajda dolu başlıyor"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Hiçbir şey yapmadan context'in üçte biri gitmiş; auto-compact erken devreye giriyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> Önce <code>/context</code> ile dağılımı gör, sonra <code>/doctor</code> ile temizlik önerilerini al.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Aylar önce eklenip bir daha dokunulmamış MCP server'lar, kullanılmayan plugin'ler ve şişmiş bir CLAUDE.md. <code>/doctor</code> bunları context maliyetleriyle birlikte listeler ve kaldırmayı/budamayı teklif eder.</p>
-    </div>
-
-    <h3>Senaryo 5 — "Her tool call'dan önce bir bekleme var"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Claude her dosya yazmadan önce bir-iki saniye takılıyor. Model yavaş değil, arada bir şey var.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>/doctor</code>.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Yavaş çalışan bir hook — <code>/doctor</code> bunları ayrıca işaretler. Suçlunun hook mu, plugin mi, MCP server mı olduğundan emin değilsen <code>claude --safe-mode</code> ile tüm özelleştirmeleri kapatıp farkı ölç.</p>
-    </div>
-
-    <h3>Senaryo 6 — "Ekibin CLAUDE.md'si 400 satır oldu"</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Dosya zamanla büyüdü; içinde dizin ağacı, bağımlılık listesi ve mimari anlatımı var. Claude bazı kuralları artık gözden kaçırıyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>/doctor</code> (v2.1.206+).</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Türetilebilir bölümlerin listesi ve bunları kesme teklifi; kalan yönlendirmenin skills ile alt dizin CLAUDE.md dosyalarına taşınması. Kural sayısı azaldıkça kalanlara düşen dikkat artar — bu, uyum sorunlarının en yaygın çözümü.</p>
-    </div>
-
-    <h3>Senaryo 7 — "Sürekli tekrar login istiyor" (macOS)</h3>
-    <div class="card">
-      <p style="margin-bottom:8px;"><strong>Belirti:</strong> Her oturumdan sonra yeniden giriş yapman isteniyor.</p>
-      <p style="margin-bottom:8px;"><strong>Ne yaparsın:</strong> <code>claude doctor</code> — Keychain erişimini kontrol eder.</p>
-      <p style="margin-bottom:0;"><strong>Tipik bulgu:</strong> Keychain kilitli ya da parolası hesap parolanla senkron değil; bu yüzden credentials kaydedilemiyor. Elle açmak için: <code>security unlock-keychain ~/Library/Keychains/login.keychain-db</code></p>
-    </div>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m8">
-    <h2><span class="num">08</span> /doctor'ın bakmadığı yerler</h2>
-    <p><code>/doctor</code> geniş ama derin değil. Belirli bir katmanı incelemek istediğinde doğru komut şu:</p>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Komut</th><th>Ne gösterir</th></tr></thead>
-        <tbody>
-          <tr><td><code>/context</code></td><td>Context window'u ne dolduruyor — kategori kategori döküm</td></tr>
-          <tr><td><code>/status</code></td><td>Aktif ayar kaynakları; managed settings devrede mi</td></tr>
-          <tr><td><code>/mcp</code></td><td>Bağlı MCP server'lar, bağlantı durumu ve proje onayı</td></tr>
-          <tr><td><code>/hooks</code></td><td>Bu oturumda kayıtlı hook'lar, event'e göre gruplanmış</td></tr>
-          <tr><td><code>/permissions</code></td><td>Yürürlükteki allow ve deny kurallarının çözülmüş hâli</td></tr>
-          <tr><td><code>/memory</code></td><td>Memory dosyalarının konumları ve auto-memory ayarları</td></tr>
-          <tr><td><code>/debug [sorun]</code></td><td>Oturum için debug log'u açar ve Claude'a log üzerinden teşhis yaptırır</td></tr>
-          <tr><td><code>/compact</code></td><td>Konuşmayı özetleyerek context açar</td></tr>
-          <tr><td><code>claude --safe-mode</code></td><td>Tüm özelleştirmeler kapalı bir oturum — sorunun kaynağını elemek için</td></tr>
-          <tr><td><code>/feedback</code></td><td>Sorunu doğrudan Anthropic'e bildirir</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Pratik sıra: <code>/doctor</code> genel resmi verir, <code>/context</code> neyin yüklendiğini gösterir, ardından ilgili kategorinin kendi komutuna inersin. Hiçbiri cevap vermiyorsa <code>claude --safe-mode</code> ile ikiye bölerek arama yaparsın.</p>
-  </section>
-
-  <!-- ===================================================== -->
-  <section id="m9">
-    <h2><span class="num">09</span> Tuzaklar ve sürüm farkları</h2>
-
-    <div class="note warn">
-      <span class="tag">Her şeyi görmez</span>
-      WSL'de dosya sistemleri arası okuma cezası yüzünden search beklenenden az sonuç döndürebilir — ama <code>claude doctor</code> bu durumda Search'ü <strong>OK</strong> olarak gösterir. "doctor temiz" demek "sorun yok" demek değil.
-    </div>
-
-    <p><strong>Kapatmak isterseniz.</strong> <code>disableBundledSkills</code> ayarı bütün bundled skill'leri kapatır ama <code>/doctor</code>'a dokunmaz — o yazılabilir kalır (v2.1.205+). Gerçekten gizlemek için:</p>
-
-    <pre><code><span class="c"># Ortam değişkeni ile</span>
-DISABLE_DOCTOR_COMMAND=<span class="s">1</span>
-
-<span class="c"># Ya da settings.json içinde skillOverrides ile</span>
-{
-  <span class="s">"skillOverrides"</span>: { <span class="s">"doctor"</span>: <span class="s">"off"</span> }
-}</code></pre>
-
-    <p><strong>Sürüm sürüm davranış.</strong> <code>/doctor</code> son aylarda epey değişti; bir yerde okuduğun davranış seninkiyle uyuşmuyorsa önce sürümüne bak.</p>
-
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th>Sürüm</th><th>Değişiklik</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>v2.1.205 öncesi</td>
-            <td><code>/doctor</code> bundled skill değil, built-in command'dı; salt okunur bir teşhis ekranı açıyor ve raporu Claude'a göndermek için <code>f</code> tuşunu bekliyordu</td>
-          </tr>
-          <tr>
-            <td>v2.1.206 öncesi</td>
-            <td>CLAUDE.md budama denetimi yok</td>
-          </tr>
-          <tr>
-            <td>v2.1.206 öncesi</td>
-            <td>Sürüm kontrolü, Homebrew kurulumlarını yüklü cask'ın kanalı yerine <code>autoUpdatesChannel</code> ayarına göre karşılaştırıyordu</td>
-          </tr>
-          <tr>
-            <td>v2.1.214 öncesi</td>
-            <td><code>~/.zshrc</code>, <code>~/.bashrc</code> gibi bir shell config yolunda <strong>dizin</strong> varsa <code>claude doctor</code> hiç çıktı vermeden kilitleniyor, <code>/status</code>'un System diagnostics bölümü boş kalıyordu</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>Son maddeye takılırsan: <code>claude update</code> ve <code>claude doctor</code>, eski bir <code>claude</code> alias'ı aramak için shell config dosyalarını tarar. Bu yollardan biri dizinse ve sürümün eskiyse komut asılı kalır. Şüpheleniyorsan hangi yolun dizin olduğunu bul — çıktıda <code>d</code> ile başlayan satır dizini işaretler:</p>
-
-    <pre><code>ls -ld ~/.zshrc ~/.bashrc ~/.bash_profile ~/.bash_login ~/.profile ~/.config/fish/config.fish</code></pre>
-
-    <div class="note">
-      <span class="tag">Kalıcı alışkanlık</span>
-      Bir sorunu GitHub'a taşımadan önce sırayla: <code>claude --version</code> → <code>claude doctor</code> → <code>/doctor</code> → <code>/mcp</code>. Bu dört adım, "sorun bende mi, üründe mi" sorusunun büyük kısmını cevaplar.
+      <span class="tag">Aklında kalsın</span>
+      Geri alınan: Claude'un düzenleme araçlarıyla yazdığı dosyalar. Geri alınmayan: bash komutları,
+      arka plandaki subagent düzenlemeleri, elle yaptığın değişiklikler, symlink ve hard link'ler.
     </div>
   </section>
 
   <footer>
-    Kaynaklar ·
-    <a href="https://code.claude.com/docs/en/commands">commands</a> ·
-    <a href="https://code.claude.com/docs/en/debug-your-config">debug-your-config</a> ·
-    <a href="https://code.claude.com/docs/en/troubleshooting">troubleshooting</a> ·
-    <a href="https://code.claude.com/docs/en/troubleshoot-install">troubleshoot-install</a> ·
-    <a href="https://code.claude.com/docs/en/setup">setup</a> ·
-    <a href="https://code.claude.com/docs/en/skills">skills</a>
+    Kaynaklar:
+    <a href="https://code.claude.com/docs/en/checkpointing">code.claude.com/docs/en/checkpointing</a> ·
+    <a href="https://code.claude.com/docs/en/sessions">/sessions</a> ·
+    <a href="https://code.claude.com/docs/en/interactive-mode">/interactive-mode</a> ·
+    <a href="https://code.claude.com/docs/en/settings">/settings</a>
   </footer>
 
 </div>

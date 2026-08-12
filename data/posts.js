@@ -1,6 +1,89 @@
 // OTOMATİK ÜRETİLDİ — elle düzenleme. Yenilemek için: node scripts/build.mjs
 window.YAZILAR = [
   {
+    "dosya": "posts/rewind-checkpoints-guide.html",
+    "baslik": "/rewind: geri sarar, ama her şeyi değil",
+    "aciklama": "Claude Code her prompt'tan önce dosyaların anlık görüntüsünü alıyor. /rewind menüsünün altı seçeneği, kodu mu konuşmayı mı geri alacağın kararı ve checkpoint'lerin sessizce kapsamadığı değişiklikler.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "rewind",
+      "checkpoint",
+      "geri alma",
+      "oturum yönetimi",
+      "esc esc",
+      "branch",
+      "fork-session",
+      "summarize",
+      "cleanupPeriodDays",
+      "git"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/checkpointing",
+    "tarih": "2026-08-12",
+    "sure": 7,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Her prompt bir dönüş noktası bırakır"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Esc bir kez, Esc iki kez"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Menüdeki altı seçenek"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Kodu mu geri alacaksın, konuşmayı mı?"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Summarize: nişan alınmış /compact"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Bash'in yaptığını geri alamaz"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Subagent kendi başına çalıştıysa"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "100 checkpoint, 30 gün"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "/clear'ın ötesine geçmek"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Geri mi saracaksın, dallanacak mısın?"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Checkpoint git'in yerine geçmez"
+      },
+      {
+        "id": "m12",
+        "no": "12",
+        "ad": "Hızlı referans"
+      }
+    ]
+  },
+  {
     "dosya": "posts/claude-code-web-mobile-guide.html",
     "baslik": "Telefondan commit, laptop kapalı",
     "aciklama": "claude.ai/code ve Claude mobil uygulamasından iş başlatmak: GitHub'ı bağlamak, repo ve branch seçmek, Claude'un branch'i push etmesi, diff'e satır yorumu bırakmak, Create PR ve Auto-fix. Bir de --cloud, --teleport ve Remote Control.",
@@ -1051,4 +1134,4 @@ window.YAZILAR = [
     ]
   }
 ];
-window.YAZILAR_GUNCELLEME = "2026-08-11";
+window.YAZILAR_GUNCELLEME = "2026-08-12";

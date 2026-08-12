@@ -99,6 +99,33 @@
 <meta name="twitter:description" content="Context window&#39;a neler yükleniyor, sınır kaç token, auto-compact hangi eşikte devreye giriyor ve /compact, /clear, subagent arasında nasıl seçim yapılır — senaryo senaryo.">
 <script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
 <!-- /yazi:bas -->
+<!-- yazi:bas -->
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/context-management-guide.html">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="apple-touch-icon" href="../assets/icon-192.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Handbook">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="Context window dolduğunda!!">
+<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/context-management-guide.html">
+<meta property="og:description" content="Context window&#39;a neler yükleniyor, sınır kaç token, auto-compact hangi eşikte devreye giriyor ve /compact, /clear, subagent arasında nasıl seçim yapılır — senaryo senaryo.">
+<meta property="article:published_time" content="2026-08-05">
+<meta property="article:tag" content="context window">
+<meta property="article:tag" content="compact">
+<meta property="article:tag" content="autocompact">
+<meta property="article:tag" content="token">
+<meta property="article:tag" content="1M context">
+<meta property="article:tag" content="subagent">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Context window dolduğunda!!">
+<meta name="twitter:description" content="Context window&#39;a neler yükleniyor, sınır kaç token, auto-compact hangi eşikte devreye giriyor ve /compact, /clear, subagent arasında nasıl seçim yapılır — senaryo senaryo.">
+<script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
+<!-- /yazi:bas -->
 </head>
 <body>
 <!-- yazi:veri -->
@@ -1003,7 +1030,7 @@ claude --autocompact 300k</code></pre>
           </tr>
           <tr>
             <td><code>/rewind</code></td>
-            <td>Kodu ve konuşmayı bir checkpoint'e geri alır</td>
+            <td>Kodu ve konuşmayı bir <a href="rewind-checkpoints-guide.html" style="color:var(--ink-soft);">checkpoint'e geri alır</a>; menüdeki summarize seçenekleri context de boşaltır</td>
             <td>Claude yanlış yöne gittiyse</td>
             <td>Düşük</td>
           </tr>

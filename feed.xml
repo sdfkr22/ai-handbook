@@ -5,8 +5,25 @@
   <link>https://sdfkr22.github.io/ai-handbook/</link>
   <description>Claude Code ve yapay zekâ araçları üzerine teknik yazılar. Konu başlığına göre filtrelenebilir arşiv.</description>
   <language>tr</language>
-  <lastBuildDate>Tue, 11 Aug 2026 12:00:00 GMT</lastBuildDate>
+  <lastBuildDate>Wed, 12 Aug 2026 12:00:00 GMT</lastBuildDate>
   <atom:link href="https://sdfkr22.github.io/ai-handbook/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title>/rewind: geri sarar, ama her şeyi değil</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/rewind-checkpoints-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/rewind-checkpoints-guide.html</guid>
+    <pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Claude Code her prompt&#39;tan önce dosyaların anlık görüntüsünü alıyor. /rewind menüsünün altı seçeneği, kodu mu konuşmayı mı geri alacağın kararı ve checkpoint&#39;lerin sessizce kapsamadığı değişiklikler.</description>
+    <category>rewind</category>
+    <category>checkpoint</category>
+    <category>geri alma</category>
+    <category>oturum yönetimi</category>
+    <category>esc esc</category>
+    <category>branch</category>
+    <category>fork-session</category>
+    <category>summarize</category>
+    <category>cleanupPeriodDays</category>
+    <category>git</category>
+  </item>
   <item>
     <title>Telefondan commit, laptop kapalı</title>
     <link>https://sdfkr22.github.io/ai-handbook/posts/claude-code-web-mobile-guide.html</link>
