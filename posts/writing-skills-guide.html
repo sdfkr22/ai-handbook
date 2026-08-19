@@ -103,7 +103,7 @@
 <script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
    Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
    gezinme bloğunu basar. */
-window.YAZI_VERI={"sure":17,"yeni":{"dosya":"hooks-guide.html","baslik":"Talimat rica eder, hook zorlar"},"eski":{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"},"ilgili":[{"dosya":"creating-subagents-guide.html","baslik":"Kendi subagent'ını yazmak"},{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"},{"dosya":"plugins-guide.html","baslik":".claude/ senin, plugin herkesin"}]};</script>
+window.YAZI_VERI={"sure":17,"yeni":{"dosya":"hooks-guide.html","baslik":"Talimat rica eder, hook zorlar"},"eski":{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"},"ilgili":[{"dosya":"slash-commands-guide.html","baslik":"Üçüncü kez yazdığın prompt artık bir /komut"},{"dosya":"creating-subagents-guide.html","baslik":"Kendi subagent'ını yazmak"},{"dosya":"claude-code-steering-handbook.html","baslik":"Skills? Rules? Hooks? Hangisi ne zaman?"}]};</script>
 <!-- /yazi:veri -->
 <!-- yazi:kabuk -->
 <script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
@@ -829,7 +829,7 @@ try{
     <p>Bu sayfa skill <em>yazmayı</em> anlatıyor. Skill yerine rules, hooks veya subagent'ın daha doğru olduğu
       durumlar için <a href="claude-code-steering-handbook.html" style="color:var(--ink-soft);">Skills? Rules? Hooks?</a>
       sayfasına, frontmatter alanlarının tam listesi ve yerleşik komutlar için
-      <a href="../archive/slash-commands-guide.html" style="color:var(--ink-soft);">slash command'ların tamamı</a> sayfasına bak.</p>
+      <a href="slash-commands-guide.html" style="color:var(--ink-soft);">slash command'ların tamamı</a> sayfasına bak.</p>
   </section>
 
   <!-- ============================================================ -->
@@ -914,7 +914,7 @@ updating. If the diff is empty, say there are no uncommitted changes.</code></pr
       <code>/deploy-staging</code>. Frontmatter'daki <code>name</code> alanı kişisel ve proje skill'lerinde yalnızca
       listelerde görünen etiketi değiştirir, yazdığın komutu değil. (Plugin skill'lerinde <code>name</code> komutun
       son parçasını da belirler; tüm yerleşimler için ad kaynağı tablosu
-      <a href="../archive/slash-commands-guide.html#m5" style="color:var(--ink-soft);">slash command sayfasında</a>.)</p>
+      <a href="slash-commands-guide.html#m5" style="color:var(--ink-soft);">slash command sayfasında</a>.)</p>
 
     <h3>Keşif ve canlı yenileme</h3>
     <p>Skill'in ne zaman "var" olduğunu bilmek, yazdığın dosyanın neden görünmediğini anlamak için gerekiyor:</p>
@@ -1064,7 +1064,7 @@ Copy this checklist and track your progress:
     <h2><span class="num">06</span> Frontmatter: işe yarayan alanlar</h2>
     <p>Alanların hepsi isteğe bağlıdır; pratikte yalnızca <code>description</code> gerçekten gereklidir. Aşağıdakiler
       yeni başlarken işine yarayacak olanlar — tam liste
-      <a href="../archive/slash-commands-guide.html" style="color:var(--ink-soft);">slash command sayfasında</a>.</p>
+      <a href="slash-commands-guide.html" style="color:var(--ink-soft);">slash command sayfasında</a>.</p>
 
     <div class="table-scroll">
       <table>
@@ -1252,7 +1252,7 @@ Summarize this pull request...</code></pre>
       <code>!</code> yalnızca satır başında veya bir boşluktan hemen sonra tanınır; <code>KEY=!`cmd`</code> düz metin
       olarak kalır ve komut hiç çalışmaz. Çok satırlı komutlar için satır içi form yerine <code>```!</code> ile
       açılan bir kod bloğu kullan. Kalan davranış ayrıntıları — tek geçişli değiştirme, kurumsal olarak kapatma,
-      argüman tırnaklama ve kaçış kuralları — <a href="../archive/slash-commands-guide.html#m8" style="color:var(--ink-soft);">slash command sayfasının 07-08. bölümlerinde</a>.
+      argüman tırnaklama ve kaçış kuralları — <a href="slash-commands-guide.html#m8" style="color:var(--ink-soft);">slash command sayfasının 07-08. bölümlerinde</a>.
     </div>
 
     <p><code>context: fork</code> ekleyen bir skill izole bir subagent'ta çalışır ve senin sohbet geçmişini görmez;

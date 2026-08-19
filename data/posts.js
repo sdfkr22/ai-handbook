@@ -1,6 +1,81 @@
 // OTOMATİK ÜRETİLDİ — elle düzenleme. Yenilemek için: node scripts/build.mjs
 window.YAZILAR = [
   {
+    "dosya": "posts/slash-commands-guide.html",
+    "baslik": "Üçüncü kez yazdığın prompt artık bir /komut",
+    "aciklama": "Eğik çizgiden sonra ne olduğunun tamamı: yerleşik komutlar, kutudan çıkan skill'ler ve kendi komutunu hangi klasöre hangi md dosyasıyla koyacağın — frontmatter, argümanlar, canlı veri enjeksiyonu ve çalışan senaryolarla.",
+    "kategori": "Claude Code",
+    "etiketler": [
+      "slash commands",
+      "custom commands",
+      "SKILL.md",
+      "frontmatter",
+      "argümanlar",
+      "MCP prompts",
+      "plugin"
+    ],
+    "kaynak": "https://code.claude.com/docs/en/commands",
+    "tarih": "2026-08-18",
+    "sure": 14,
+    "bolumler": [
+      {
+        "id": "m1",
+        "no": "01",
+        "ad": "Eğik çizgiden sonra ne var?"
+      },
+      {
+        "id": "m2",
+        "no": "02",
+        "ad": "Oturumu toparlayan komutlar"
+      },
+      {
+        "id": "m3",
+        "no": "03",
+        "ad": "Model, izin, tanılama"
+      },
+      {
+        "id": "m4",
+        "no": "04",
+        "ad": "Bir md dosyası = bir komut"
+      },
+      {
+        "id": "m5",
+        "no": "05",
+        "ad": "Komutun adı nereden geliyor?"
+      },
+      {
+        "id": "m6",
+        "no": "06",
+        "ad": "Frontmatter: hangi alan neyi açar"
+      },
+      {
+        "id": "m7",
+        "no": "07",
+        "ad": "Argümanı komutun içine sokmak"
+      },
+      {
+        "id": "m8",
+        "no": "08",
+        "ad": "Komutu canlı veriyle besle"
+      },
+      {
+        "id": "m9",
+        "no": "09",
+        "ad": "Kim çağırabilir: sen mi, Claude mu?"
+      },
+      {
+        "id": "m10",
+        "no": "10",
+        "ad": "Dört senaryo, dört dosya"
+      },
+      {
+        "id": "m11",
+        "no": "11",
+        "ad": "Çalışmadığında bakılacak yerler"
+      }
+    ]
+  },
+  {
     "dosya": "posts/loop-scheduled-tasks-guide.html",
     "baslik": "Nöbeti /loop devralsın",
     "aciklama": "/loop bir promptu oturum boyunca tekrar çalıştırır: sabit aralıkla, Claude'un seçtiği aralıkla ya da hiç prompt vermeden bakım turu olarak. Aralık grameri, loop.md, jitter, 7 günlük son ve durdurma yolları.",
@@ -1208,4 +1283,4 @@ window.YAZILAR = [
     ]
   }
 ];
-window.YAZILAR_GUNCELLEME = "2026-08-12";
+window.YAZILAR_GUNCELLEME = "2026-08-19";

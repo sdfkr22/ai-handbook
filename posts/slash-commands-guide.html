@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Üçüncü kez yazdığın prompt artık bir /komut</title>
+<meta name="yazi:baslik" content="Üçüncü kez yazdığın prompt artık bir /komut">
+<meta name="yazi:aciklama" content="Eğik çizgiden sonra ne olduğunun tamamı: yerleşik komutlar, kutudan çıkan skill'ler ve kendi komutunu hangi klasöre hangi md dosyasıyla koyacağın — frontmatter, argümanlar, canlı veri enjeksiyonu ve çalışan senaryolarla.">
+<meta name="yazi:kategori" content="Claude Code">
+<meta name="yazi:etiketler" content="slash commands, custom commands, SKILL.md, frontmatter, argümanlar, MCP prompts, plugin">
+<meta name="yazi:kaynak" content="https://code.claude.com/docs/en/commands">
+<meta name="yazi:tarih" content="2026-08-18">
+<style>
+  /* Koyu tema varsayılan. Açık tema override'larını, tema düğmesini ve geri linkini
+     scripts/build.mjs her sayfaya kendisi enjekte eder — buraya elle ekleme. */
+  :root{
+    --bg:#0e0d0b; --panel:#16140f; --panel-2:#1d1a13; --table-bg:#191610;
+    --ink:#ece7da; --ink-soft:#b3ab98; --ink-mute:#7d7766;
+    --line:#2c281e; --accent:#e8a33d; --accent-2:#7fb069; --danger:#e07a5f;
+    --code-bg:#0a0908; --code-ink:#d9d2c0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:72px 28px 120px;}
+  header.hero{margin-bottom:64px;}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 18px;}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(38px,6.5vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0 0 20px;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0;}
+  .source{margin-top:28px;font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;border-top:1px solid var(--line);padding-top:18px;}
+  .source a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-mute);}
+  section{margin:0 0 56px;scroll-margin-top:24px;}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.01em;margin:0 0 8px;display:flex;align-items:baseline;gap:14px;}
+  h2 .num{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--accent);font-weight:500;flex:none;}
+  h3{font-family:"IBM Plex Sans";font-weight:600;font-size:17px;margin:28px 0 10px;color:var(--ink);}
+  p{margin:0 0 14px;color:var(--ink-soft);}
+  strong{color:var(--ink);font-weight:600;}
+  ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  li{position:relative;padding-left:26px;margin-bottom:10px;color:var(--ink-soft);}
+  li::before{content:"\203A";position:absolute;left:6px;top:-1px;color:var(--accent);font-weight:700;}
+  code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--panel-2);color:var(--accent);padding:2px 6px;border-radius:5px;border:1px solid var(--line);}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:20px;overflow-x:auto;margin:0 0 18px;position:relative;}
+  pre code{background:none;border:none;padding:0;color:var(--code-ink);font-size:13px;line-height:1.7;}
+  pre .c{color:var(--ink-mute);} pre .k{color:var(--accent);} pre .s{color:var(--accent-2);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 18px;}
+  .note{border-left:3px solid var(--accent);background:rgba(232,163,61,.06);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 18px;font-size:14.5px;}
+  .note.warn{border-left-color:var(--danger);background:rgba(224,122,95,.07);}
+  .note .tag{font-family:"JetBrains Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);display:block;margin-bottom:5px;}
+  .note.warn .tag{color:var(--danger);}
+  .table-scroll{overflow-x:auto;margin:0 0 18px;border-radius:12px;border:1px solid var(--line);background:var(--table-bg);}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:var(--panel-2);color:var(--ink);font-weight:600;font-size:12.5px;letter-spacing:.02em;}
+  td{color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td code{font-size:12px;}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:64px;}
+  .toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:36px;}
+  .toc li{padding-left:0;margin-bottom:8px;}
+  .toc li::before{content:none;}
+  .toc a{color:var(--ink-soft);text-decoration:none;font-size:14.5px;display:flex;gap:10px;align-items:baseline;transition:color .15s;}
+  .toc a:hover{color:var(--accent);}
+  .toc a .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent);flex:none;}
+  footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-mute);font-family:"JetBrains Mono",monospace;}
+  @media (max-width:620px){.toc ol{columns:1;}.wrap{padding:48px 20px 90px;}}
+</style>
+<!-- yazi:bas -->
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="canonical" href="https://sdfkr22.github.io/ai-handbook/posts/slash-commands-guide.html">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="apple-touch-icon" href="../assets/icon-192.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="alternate" type="application/rss+xml" title="AI Handbook" href="../feed.xml">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0d0b">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf7ec">
+<meta name="description" content="Eğik çizgiden sonra ne olduğunun tamamı: yerleşik komutlar, kutudan çıkan skill&#39;ler ve kendi komutunu hangi klasöre hangi md dosyasıyla koyacağın — frontmatter, argümanlar, canlı veri enjeksiyonu ve çalışan senaryolarla.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Handbook">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="Üçüncü kez yazdığın prompt artık bir /komut">
+<meta property="og:url" content="https://sdfkr22.github.io/ai-handbook/posts/slash-commands-guide.html">
+<meta property="og:description" content="Eğik çizgiden sonra ne olduğunun tamamı: yerleşik komutlar, kutudan çıkan skill&#39;ler ve kendi komutunu hangi klasöre hangi md dosyasıyla koyacağın — frontmatter, argümanlar, canlı veri enjeksiyonu ve çalışan senaryolarla.">
+<meta property="article:published_time" content="2026-08-18">
+<meta property="article:tag" content="slash commands">
+<meta property="article:tag" content="custom commands">
+<meta property="article:tag" content="SKILL.md">
+<meta property="article:tag" content="frontmatter">
+<meta property="article:tag" content="argümanlar">
+<meta property="article:tag" content="MCP prompts">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Üçüncü kez yazdığın prompt artık bir /komut">
+<meta name="twitter:description" content="Eğik çizgiden sonra ne olduğunun tamamı: yerleşik komutlar, kutudan çıkan skill&#39;ler ve kendi komutunu hangi klasöre hangi md dosyasıyla koyacağın — frontmatter, argümanlar, canlı veri enjeksiyonu ve çalışan senaryolarla.">
+<script>(function(){if(!("serviceWorker" in navigator))return;if(location.protocol!=="http:"&&location.protocol!=="https:")return;window.addEventListener("load",function(){navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(function(){});});})();</script>
+<!-- /yazi:bas -->
+</head>
+<body>
+<!-- yazi:veri -->
+<script>/* OTOMATİK ÜRETİLDİ (scripts/build.mjs) — elle düzenleme.
+   Sayfaya özel veri; ortak kabuk bunu okuyup okuma süresini ve sayfa sonundaki
+   gezinme bloğunu basar. */
+window.YAZI_VERI={"sure":14,"yeni":null,"eski":{"dosya":"loop-scheduled-tasks-guide.html","baslik":"Nöbeti /loop devralsın"},"ilgili":[{"dosya":"writing-skills-guide.html","baslik":"Sıfırdan skill yazmak"},{"dosya":"creating-subagents-guide.html","baslik":"Kendi subagent'ını yazmak"}]};</script>
+<!-- /yazi:veri -->
+<!-- yazi:kabuk -->
+<script>/* Kayıtlı tema tercihini boyamadan önce uygula (FOUC yok).
+   Aynı yerde .yazi-yazim sınıfı eklenir: başlık, daktilo animasyonu hazırlanana
+   kadar gizli kalsın diye. JS kapalıysa sınıf hiç eklenmez, başlık normal görünür.
+
+   Bu sayfanın önceki okuma kaydı da burada, her şeyden önce anlık görüntülenir:
+   ilerleme çubuğu açılışta hemen yazmaya başlıyor ve kaydı ezmiş oluyor; "kaldığın
+   yere dön" satırının okuması gereken değer açılış anındaki değerdir. */
+(function(){try{var t=localStorage.getItem("tema");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}
+document.documentElement.classList.add("yazi-yazim");
+try{
+  var d=(location.pathname.split("/").pop()||"").toLowerCase();
+  window.YAZI_KALDIGI=d?(JSON.parse(localStorage.getItem("okuma")||"{}")||{})[d]||null:null;
+}catch(e){window.YAZI_KALDIGI=null;}})();</script>
+<style>
+  /* color-scheme kaydırma çubuğunu ve yerleşik denetimleri temaya uydurur. */
+  :root{color-scheme:dark;}
+  :root[data-theme="light"]{
+    color-scheme:light;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root[data-theme="light"] body{background:var(--bg);}
+  :root[data-theme="light"] .note{background:rgba(184,72,10,.09);}
+  :root[data-theme="light"] .note.warn{background:rgba(198,47,31,.08);}
+  :root[data-theme="light"] .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root[data-theme="light"] .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root[data-theme="light"] .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root[data-theme="light"] pre{background:var(--code-bg);border-color:#eddec2;}
+  :root[data-theme="light"] code{border-color:rgba(184,72,10,.20);}
+  @media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#fdf7ec; --panel:#fffdf8; --panel-2:#fdf0dc; --table-bg:#fffcf5;
+    --card:#fbf5e9; --card-line:#ecdfc8;
+    --ink:#1c1710; --ink-soft:#4b4234; --ink-mute:#7b7060;
+    --line:#efdcc0; --accent:#b8480a; --accent-2:#2f7d32; --danger:#c62f1f;
+    --code-bg:#fcf3e3; --code-ink:#2b251b;
+  }
+  :root:not([data-theme="dark"]) body{background:var(--bg);}
+  :root:not([data-theme="dark"]) .note{background:rgba(184,72,10,.09);}
+  :root:not([data-theme="dark"]) .note.warn{background:rgba(198,47,31,.08);}
+  :root:not([data-theme="dark"]) .card{background:var(--card);border-color:var(--card-line);box-shadow:none;}
+  :root:not([data-theme="dark"]) .card code{background:#fffcf3;border-color:rgba(184,72,10,.22);}
+  :root:not([data-theme="dark"]) .toc{box-shadow:0 1px 2px rgba(122,74,20,.06);}
+  :root:not([data-theme="dark"]) pre{background:var(--code-bg);border-color:#eddec2;}
+  :root:not([data-theme="dark"]) code{border-color:rgba(184,72,10,.20);}
+  }
+  .yazi-geri{position:fixed;top:18px;left:18px;z-index:99;font-family:"JetBrains Mono",monospace;
+    font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--ink-soft);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;backdrop-filter:blur(6px);transition:all .15s;}
+  .yazi-geri:hover{color:var(--accent);border-color:var(--accent);}
+  .tema-btn{position:fixed;top:18px;right:18px;z-index:99;width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);transition:color .15s,border-color .15s;}
+  .tema-btn:hover{color:var(--accent);border-color:var(--accent);}
+  /* --- Başlık: komut satırı görünümü --- */
+  .yazi-yazim header.hero h1{visibility:hidden;}
+  header.hero h1{
+    font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-weight:500;font-size:clamp(21px,5.2vw,46px);line-height:1.32;letter-spacing:-.02em;}
+  header.hero h1 em{font-style:normal;}
+  /* Karakter düz yazılır: "\276F " biçiminde yazılırsa sondaki boşluk hex
+     kaçışın sonlandırıcısı sayılır ve içeriğe boşluk olarak geçmez. */
+  header.hero h1::before{content:"❯ ";color:var(--accent);opacity:.5;}
+  .yazi-imlec{display:inline-block;width:0;height:1em;vertical-align:-.12em;position:relative;}
+  .yazi-imlec::after{content:"";position:absolute;left:.04em;bottom:0;width:.52em;height:1em;
+    background:var(--accent);animation:yazi-imlec-yanip 1.05s steps(1) infinite;}
+  @keyframes yazi-imlec-yanip{0%,50%{opacity:1;}50.01%,100%{opacity:0;}}
+  @media (prefers-reduced-motion: reduce){.yazi-imlec::after{animation:none;}}
+  @media (max-width:900px){
+    .yazi-geri{position:static;display:inline-block;margin:16px 0 0 20px;}
+    .tema-btn{top:12px;right:12px;width:32px;height:32px;font-size:14px;}
+  }
+  /* --- Okuma ilerleme çubuğu --- */
+  .yazi-ilerleme{position:fixed;top:0;left:0;z-index:100;height:2px;width:100%;
+    background:var(--accent);transform:scaleX(0);transform-origin:0 50%;will-change:transform;}
+  /* --- Kod bloğu kopyala düğmesi ---
+     pre'nin kendisi yatay kayabildiği için düğme, pre'yi saran ayrı bir
+     kapsayıcıya konur; böylece kod sağa kaydırılınca düğme yerinde kalır. */
+  .yazi-pre-sar{position:relative;}
+  /* Dil etiketi ve kopyala düğmesi aynı satırda durur; düğme görünmezken de
+     yer kapladığı için etiket hover'da yerinden oynamaz. */
+  .yazi-pre-ust{position:absolute;top:10px;right:10px;z-index:2;
+    display:flex;align-items:center;gap:8px;}
+  .yazi-dil{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);opacity:.7;pointer-events:none;}
+  .yazi-kopyala{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;line-height:1;
+    color:var(--ink-mute);background:var(--panel);border:1px solid var(--line);border-radius:7px;
+    padding:6px 10px;cursor:pointer;opacity:0;transition:opacity .15s,color .15s,border-color .15s;}
+  .yazi-pre-sar:hover .yazi-kopyala,.yazi-kopyala:focus-visible{opacity:1;}
+  .yazi-kopyala:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-kopyala.ok{opacity:1;color:var(--accent-2);border-color:var(--accent-2);}
+  @media (hover:none){.yazi-kopyala{opacity:.7;}}
+  /* --- İçindekiler: okunan bölümün vurgulanması ---
+     Geniş ekranda liste sol boşluğa sabitlenir ve okurken yerinde kalır;
+     dar ekranda normal akıştaki kutu görünümünü korur. */
+  .toc a{transition:color .18s,border-color .18s;}
+  .toc a.aktif{color:var(--accent);}
+  @media (min-width:1400px){
+    .toc{position:fixed;top:92px;left:calc(50vw - 676px);width:212px;
+      margin:0;padding:0;background:none;border:none;
+      max-height:calc(100vh - 150px);overflow-y:auto;}
+    .toc ol{columns:1;}
+    .toc li{margin-bottom:0;}
+    .toc a{font-size:13px;line-height:1.45;padding:5px 0 5px 12px;border-left:1px solid var(--line);}
+    .toc a.aktif{border-left-color:var(--accent);}
+  }
+  /* Dar ekranda içindekiler katlanır ve kapalı başlar; 12 maddelik liste
+     yoksa içeriği ekran boyu aşağı itiyor. Etiket bölüm sayısını verir. */
+  .yazi-toc-ac{display:none;}
+  @media (max-width:900px){
+    .yazi-toc-ac{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;
+      font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--ink-mute);background:none;border:none;padding:0;cursor:pointer;}
+    .yazi-toc-ac .ok{transition:transform .2s;font-size:14px;}
+    .toc[data-kapali="1"] ol{display:none;}
+    .toc:not([data-kapali="1"]) .yazi-toc-ac{margin-bottom:16px;}
+    .toc:not([data-kapali="1"]) .yazi-toc-ac .ok{transform:rotate(180deg);}
+  }
+  /* --- Bölüm başlığı anchor'ı --- */
+  h2 .yazi-anchor{font-family:"JetBrains Mono",monospace;font-size:.46em;flex:none;
+    color:var(--ink-mute);text-decoration:none;opacity:0;transition:opacity .15s,color .15s;}
+  h2:hover .yazi-anchor,.yazi-anchor:focus-visible{opacity:1;}
+  .yazi-anchor:hover{color:var(--accent);}
+  section.yazi-parla{animation:yazi-parla 1.3s ease-out;}
+  @keyframes yazi-parla{from{background:rgba(232,163,61,.13);}to{background:transparent;}}
+  @media (prefers-reduced-motion: reduce){section.yazi-parla{animation:none;}}
+  /* --- Yukarı dön --- */
+  .yazi-yukari{position:fixed;right:18px;bottom:18px;z-index:99;width:38px;height:38px;
+    display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    backdrop-filter:blur(6px);opacity:0;pointer-events:none;transform:translateY(6px);
+    transition:opacity .2s,transform .2s,color .15s,border-color .15s;}
+  .yazi-yukari.gorunur{opacity:1;pointer-events:auto;transform:none;}
+  .yazi-yukari:hover{color:var(--accent);border-color:var(--accent);}
+  /* --- Sayfa sonu gezinme --- */
+  .yazi-gezinme{margin-top:72px;padding-top:28px;border-top:1px solid var(--line);}
+  .yazi-komsu{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .yazi-komsu-bag{display:flex;flex-direction:column;gap:6px;text-decoration:none;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    transition:border-color .15s,transform .15s;}
+  .yazi-komsu-bag:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .yazi-komsu-bag .yon{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);}
+  .yazi-komsu-bag .ad{color:var(--ink);font-weight:600;font-size:15px;line-height:1.35;}
+  .yazi-komsu-bag.sag{text-align:right;align-items:flex-end;}
+  .yazi-ilgili{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .yazi-ilgili-baslik{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 4px 0 0;}
+  .yazi-ilgili a{font-size:13.5px;color:var(--ink-soft);text-decoration:none;
+    border:1px solid var(--line);border-radius:999px;padding:6px 14px;
+    transition:color .15s,border-color .15s;}
+  .yazi-ilgili a:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-sure{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-mute);margin:16px 0 0;}
+  /* --- Kaldığın yere dön ---
+     Yalnızca bu tarayıcıda yarım bırakılmış yazılarda ve sayfa doğrudan bir
+     bölüm bağlantısıyla açılmadıysa görünür. */
+  .yazi-devam{display:flex;align-items:center;gap:8px;margin:12px 0 0;}
+  .yazi-devam button{font-family:"JetBrains Mono",monospace;font-size:12px;line-height:1;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:8px 14px;cursor:pointer;
+    transition:color .15s,border-color .15s;}
+  .yazi-devam button:hover{color:var(--accent);border-color:var(--accent);}
+  .yazi-devam .yazi-devam-kapat{padding:8px 11px;font-size:13px;color:var(--ink-mute);}
+  @media (max-width:620px){
+    .yazi-komsu{grid-template-columns:1fr;}
+    .yazi-komsu-bag.sag{text-align:left;align-items:flex-start;}
+  }
+  /* --- Tema geçişi ---
+     Sınıf yalnızca düğmeye basıldığı anda eklenir; sürekli açık kalsa
+     sıradan hover'lar da yavaşlardı. */
+  :root.yazi-tema-gecis,:root.yazi-tema-gecis *{
+    transition:background-color .22s,border-color .22s,color .22s !important;}
+  @media (prefers-reduced-motion: reduce){
+    :root.yazi-tema-gecis,:root.yazi-tema-gecis *{transition:none !important;}
+  }
+  /* --- Yazdırma ---
+     :root[data-theme] seçicisi tema override'larıyla aynı özgüllükte ve
+     daha sonra geldiği için kazanır; yoksa koyu tema kâğıda basılırdı. */
+  @media print{
+    :root,:root[data-theme]{
+      --bg:#fff; --panel:#fff; --panel-2:#f2f2f2; --table-bg:#fff;
+      --card:#fff; --card-line:#bbb;
+      --ink:#000; --ink-soft:#1c1c1c; --ink-mute:#555;
+      --line:#bbb; --accent:#7a3c00; --accent-2:#1d5c20; --danger:#a01c10;
+      --code-bg:#f6f6f6; --code-ink:#111;
+    }
+    .yazi-geri,.tema-btn,.yazi-ilerleme,.yazi-kopyala,.yazi-yukari,.yazi-gezinme,.yazi-toc-ac,
+    .yazi-devam{display:none !important;}
+    /* Daktilo animasyonu sürerken yazdırılırsa başlık eksik basılırdı:
+       harfler görünürlüğü kapalı halde bekliyor. Kâğıtta hepsi görünür. */
+    .yazi-imlec{display:none !important;}
+    .yazi-yazim header.hero h1,header.hero h1 span{visibility:visible !important;}
+    body{background:#fff !important;color:#000;font-size:10.5pt;}
+    .wrap{max-width:none;padding:0;}
+    .toc{position:static !important;left:auto !important;top:auto !important;width:auto !important;
+      max-height:none !important;overflow:visible !important;
+      border:1px solid #bbb !important;padding:16px 20px !important;margin-bottom:28px !important;}
+    /* Kâğıt dar olsa da içindekiler açık basılır: katlama yalnızca ekran içindir. */
+    .toc[data-kapali="1"] ol{display:block !important;}
+    .toc ol{columns:2 !important;}
+    .toc a{border-left:none !important;padding-left:0 !important;}
+    h2,h3{break-after:avoid;}
+    pre,.card,.note,.table-scroll,figure{break-inside:avoid;}
+    a[href^="http"]::after{content:" (" attr(href) ")";font-size:8.5pt;color:#555;word-break:break-all;}
+  }
+</style>
+<a class="yazi-geri" href="../index.html">&#8592; Tüm yazılar</a>
+<button class="tema-btn" id="temaBtn" type="button" aria-label="Temayı değiştir" title="Temayı değiştir"></button>
+<script>
+(function(){
+  var kok=document.documentElement,btn=document.getElementById("temaBtn");
+  function aktif(){return kok.dataset.theme||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
+  function ciz(){btn.textContent=aktif()==="light"?"☾":"☀";}
+  var gecisZaman;
+  btn.addEventListener("click",function(){
+    var yeni=aktif()==="light"?"dark":"light";
+    /* Renkler anlık sıçramasın; sınıf kısa süre kalır (bkz. .yazi-tema-gecis). */
+    kok.classList.add("yazi-tema-gecis");
+    clearTimeout(gecisZaman);
+    gecisZaman=setTimeout(function(){kok.classList.remove("yazi-tema-gecis");},280);
+    kok.dataset.theme=yeni;
+    try{localStorage.setItem("tema",yeni);}catch(e){}
+    ciz();
+  });
+  ciz();
+})();
+</script>
+<script>
+/* Başlığı komut satırında yazılıyormuş gibi harf harf gösterir.
+   Harfler en baştan yer kaplar (görünürlük kapatılır, kaldırılmaz), böylece
+   animasyon boyunca satır sarması ve sayfa düzeni hiç oynamaz.
+   JS kapalıysa veya reduced-motion açıksa başlık olduğu gibi görünür. */
+(function(){
+  var kok=document.documentElement;
+  function ac(){kok.classList.remove("yazi-yazim");}
+  function baslat(){
+    try{
+      var h1=document.querySelector("header.hero h1");
+      if(!h1){ac();return;}
+      if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){ac();return;}
+      /* Etiketi innerText'ten alma: başlık o an gizli olduğu için boş dönebilir.
+         <br> yerine boşluk koyup metni doğrudan çıkar. */
+      var gecici=document.createElement("div");
+      gecici.innerHTML=h1.innerHTML.replace(/<br\s*\/?>/gi," ");
+      h1.setAttribute("aria-label",(gecici.textContent||"").replace(/\s+/g," ").trim());
+      var gez=document.createTreeWalker(h1,NodeFilter.SHOW_TEXT),dugumler=[],d;
+      while(d=gez.nextNode())dugumler.push(d);
+      var harfler=[];
+      dugumler.forEach(function(tn){
+        var parca=document.createDocumentFragment();
+        tn.nodeValue.split("").forEach(function(h){
+          var s=document.createElement("span");
+          s.textContent=h;s.style.visibility="hidden";s.setAttribute("aria-hidden","true");
+          parca.appendChild(s);harfler.push(s);
+        });
+        tn.parentNode.replaceChild(parca,tn);
+      });
+      if(!harfler.length){ac();return;}
+      var imlec=document.createElement("span");
+      imlec.className="yazi-imlec";imlec.setAttribute("aria-hidden","true");
+      ac();
+      var i=0;
+      (function tik(){
+        if(i>=harfler.length){
+          setTimeout(function(){if(imlec.parentNode)imlec.parentNode.removeChild(imlec);},2600);
+          return;
+        }
+        var s=harfler[i++];
+        s.style.visibility="visible";
+        s.parentNode.insertBefore(imlec,s.nextSibling);
+        setTimeout(tik,/[,.:?!]/.test(s.textContent)?190:38);
+      })();
+    }catch(e){ac();}
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Üstteki ilerleme çubuğu + içindekilerde o an okunan bölümün vurgulanması.
+   İkisi de aynı scroll dinleyicisinden beslenir, rAF ile tek karede güncellenir. */
+(function(){
+  function baslat(){
+    var cubuk=document.createElement("div");
+    cubuk.className="yazi-ilerleme";
+    cubuk.setAttribute("aria-hidden","true");
+    document.body.appendChild(cubuk);
+
+    var baglar=[],hedefler=[];
+    Array.prototype.forEach.call(document.querySelectorAll(".toc a[href^='#']"),function(a){
+      var el=document.getElementById(a.getAttribute("href").slice(1));
+      if(el){baglar.push(a);hedefler.push(el);}
+    });
+
+    /* Okuma ilerlemesi tarayıcıda saklanır; katalogdaki "okundu" rozeti ve
+       "kaldığın yere dön" satırı bunu okur. Hiçbir veri dışarı gitmez. */
+    var DOSYA=(location.pathname.split("/").pop()||"").toLowerCase();
+    var BASTA=window.YAZI_KALDIGI||null;
+    var sonBolum="",sonYazilan=-1,yazZaman=0,sonOran=0,kaydirildi=false;
+    /* Sayfayı açıp hiç kaydırmadan kapatmak kaydı silmemeli: aksi halde okunmuş
+       bir yazıya tekrar bakmak "okundu" işaretini düşürürdü. */
+    window.addEventListener("scroll",function(){kaydirildi=true;},{passive:true,once:true});
+    function kaydet(oran,zorla){
+      if(!DOSYA||!kaydirildi)return;
+      /* Okundu işareti geri alınmaz; yazı yeniden sonuna kadar okunursa tazelenir. */
+      if(BASTA&&BASTA.o>=0.92&&oran<0.92)return;
+      var t=Date.now();
+      /* Her karede yazmak anlamsız: %2'lik değişimde ya da yarım saniyede bir. */
+      if(!zorla&&Math.abs(oran-sonYazilan)<0.02&&t-yazZaman<500)return;
+      sonYazilan=oran;yazZaman=t;
+      try{
+        var h=JSON.parse(localStorage.getItem("okuma")||"{}")||{};
+        h[DOSYA]={o:Math.round(oran*1000)/1000,b:sonBolum,t:t};
+        /* Kayıt şişmesin; en eski girdiler atılır. */
+        var adlar=Object.keys(h);
+        if(adlar.length>60){
+          adlar.sort(function(a,b){return (h[a].t||0)-(h[b].t||0);});
+          for(var i=0;i<adlar.length-60;i++)delete h[adlar[i]];
+        }
+        localStorage.setItem("okuma",JSON.stringify(h));
+      }catch(e){}
+    }
+
+    var bekliyor=false,sonAktif=-1;
+    function guncelle(){
+      bekliyor=false;
+      var yol=document.documentElement.scrollHeight-window.innerHeight;
+      var oran=yol>0?Math.min(1,Math.max(0,window.scrollY/yol)):0;
+      cubuk.style.transform="scaleX("+oran+")";
+      /* Ekrandan kısa sayfada kaydırılacak yer yok: tamamı görülmüş sayılır —
+         kaydırma beklenemeyeceği için kayıt da hemen serbest bırakılır. */
+      if(yol<=0)kaydirildi=true;
+      sonOran=yol>0?oran:1;
+      kaydet(sonOran);
+      if(!hedefler.length)return;
+      /* Üst kenarın 120px altını geçmiş son bölüm aktif sayılır. */
+      var s=0;
+      for(var i=0;i<hedefler.length;i++){
+        if(hedefler[i].getBoundingClientRect().top<=120)s=i;
+      }
+      /* Son bölüm kısaysa dibe inince hiç aktifleşmeyebilir; en altta onu seç. */
+      if(yol>0&&window.scrollY>=yol-4)s=hedefler.length-1;
+      if(s!==sonAktif){
+        if(sonAktif>-1)baglar[sonAktif].classList.remove("aktif");
+        baglar[s].classList.add("aktif");
+        sonAktif=s;
+        sonBolum=hedefler[s].id||"";
+      }
+    }
+    function tetikle(){if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}}
+    window.addEventListener("scroll",tetikle,{passive:true});
+    window.addEventListener("resize",tetikle);
+    /* Sekme kapanırken son konum kısıtsız yazılır; aksi halde eşik yüzünden
+       son birkaç yüzde kaybolurdu. */
+    window.addEventListener("pagehide",function(){kaydet(sonOran,true);});
+    document.addEventListener("visibilitychange",function(){
+      if(document.visibilityState==="hidden")kaydet(sonOran,true);
+    });
+    guncelle();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Her kod bloğuna kopyala düğmesi. Sözdizimi renklendirmesi <span>'lerle
+   yapıldığı için textContent düz metni doğru verir. clipboard API yoksa
+   (veya izin vermezse) execCommand ile geri düşülür. */
+(function(){
+  function kopyala(metin){
+    if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(metin);
+    return new Promise(function(coz,red){
+      var a=document.createElement("textarea");
+      a.value=metin;a.setAttribute("readonly","");
+      a.style.position="fixed";a.style.top="-1000px";
+      document.body.appendChild(a);a.select();
+      var ok=false;
+      try{ok=document.execCommand("copy");}catch(e){ok=false;}
+      document.body.removeChild(a);
+      ok?coz():red();
+    });
+  }
+  /* Dil etiketi. Öncelik <pre data-dil="…">; yoksa yalnızca tereddütsüz
+     sinyallerde çıkarım yapılır. Bu sitedeki blokların önemli bir kısmı düz
+     Türkçe istem metni veya slash command satırı — yanlış etiket, etiketsiz
+     bırakmaktan kötü olduğu için kural tutmazsa sessiz kalınır. */
+  function dilBul(pre){
+    var acik=pre.getAttribute("data-dil");
+    if(acik)return acik;
+
+    var ham=String((pre.querySelector("code")||pre).textContent).split(/\r?\n/)
+      .map(function(s){return s.trim();}).filter(Boolean);
+    if(!ham.length)return "";
+
+    /* Shebang ve markdown başlığı yorum satırı elenmeden önce bakılır: ikisi de
+       "#" ile başlıyor. Tek "#" bu sitede kabuk yorumu, "##" markdown başlığı. */
+    if(/^#!/.test(ham[0]))return "bash";
+    if(/^#{2,6}\s/.test(ham[0]))return "markdown";
+
+    var satirlar=ham.filter(function(s){return !/^#($|\s)/.test(s)&&s.indexOf("//")!==0;});
+    if(!satirlar.length)return "";
+    var ilk=satirlar[0],govde=satirlar.join("\n");
+
+    /* "---" ile başlayan blok: kapanış çizgisinden sonra da içerik varsa bu bir
+       frontmatter'lı markdown dosyasıdır (SKILL.md, agent .md), saf YAML değil. */
+    if(ilk==="---"){
+      var kapanis=satirlar.indexOf("---",1);
+      if(kapanis>-1&&satirlar.length>kapanis+1)return "markdown";
+      return /^[A-Za-z_][\w-]*\s*:/m.test(govde)?"yaml":"";
+    }
+
+    if(/^[{["]/.test(ilk)&&/"\s*:/.test(govde))return "json";
+    /* PowerShell, bash'ten önce: iki blok da "claude …" ile başlayabiliyor,
+       ayırt eden here-string ve cmdlet sözdizimi. */
+    if(/@'|\$env:|(^|\s)(New|Get|Set|Remove|Write)-[A-Z]/.test(govde))return "powershell";
+    if(/^\$\s/.test(ilk))return "bash";
+    if(/^(claude|npm|npx|node|git|cd|curl|mkdir|chmod|export|brew|pip|pipx|uv)\s/.test(ilk))return "bash";
+    return "";
+  }
+
+  function baslat(){
+    Array.prototype.forEach.call(document.querySelectorAll("pre"),function(pre){
+      if(pre.parentNode&&pre.parentNode.classList.contains("yazi-pre-sar"))return;
+      var sar=document.createElement("div");
+      sar.className="yazi-pre-sar";
+      pre.parentNode.insertBefore(sar,pre);
+      sar.appendChild(pre);
+
+      var ust=document.createElement("div");
+      ust.className="yazi-pre-ust";
+      sar.appendChild(ust);
+
+      var dil=dilBul(pre);
+      if(dil){
+        var etiket=document.createElement("span");
+        etiket.className="yazi-dil";
+        etiket.textContent=dil;
+        etiket.setAttribute("aria-hidden","true");
+        ust.appendChild(etiket);
+      }
+
+      var btn=document.createElement("button");
+      btn.type="button";
+      btn.className="yazi-kopyala";
+      btn.textContent="kopyala";
+      btn.setAttribute("aria-label","Kod bloğunu kopyala");
+      ust.appendChild(btn);
+
+      var zaman;
+      btn.addEventListener("click",function(){
+        var kod=pre.querySelector("code")||pre;
+        /* Kaynak dosyalar CRLF olabiliyor; panoya LF gitsin ki kod
+           doğrudan terminale yapıştırılabilsin. */
+        var metin=String(kod.textContent).replace(/\r\n?/g,"\n").replace(/\s+$/,"");
+        kopyala(metin).then(function(){
+          btn.textContent="kopyalandı ✓";btn.classList.add("ok");
+        },function(){
+          btn.textContent="kopyalanamadı";btn.classList.remove("ok");
+        });
+        clearTimeout(zaman);
+        zaman=setTimeout(function(){btn.textContent="kopyala";btn.classList.remove("ok");},1800);
+      });
+    });
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Sayfaya özel veriden (window.YAZI_VERI, build.mjs üretir) beslenen parçalar:
+   okuma süresi ve sayfa sonundaki gezinme bloğu. Veri yoksa hiçbiri basılmaz. */
+(function(){
+  function esc(s){
+    return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function komsuBag(k,yon,sinif){
+    return '<a class="yazi-komsu-bag '+sinif+'" href="'+esc(k.dosya)+'">'+
+      '<span class="yon">'+esc(yon)+'</span><span class="ad">'+esc(k.baslik)+'</span></a>';
+  }
+  function baslat(){
+    var v=window.YAZI_VERI||{};
+
+    var lede=document.querySelector("header.hero .lede");
+    if(v.sure&&lede&&!document.querySelector(".yazi-sure")){
+      var s=document.createElement("p");
+      s.className="yazi-sure";
+      s.textContent="~"+v.sure+" dakikalık okuma";
+      lede.parentNode.insertBefore(s,lede.nextSibling);
+    }
+
+    var footer=document.querySelector(".wrap > footer");
+    if(!footer||document.querySelector(".yazi-gezinme"))return;
+    var ilgili=v.ilgili||[];
+    if(!v.yeni&&!v.eski&&!ilgili.length)return;
+
+    var html="";
+    if(v.yeni||v.eski){
+      /* Sıralama yeniden eskiye; komşuları tarih diliyle adlandırmak
+         "önceki/sonraki"den daha az kafa karıştırıyor. */
+      html+='<div class="yazi-komsu">'+
+        (v.yeni?komsuBag(v.yeni,"← Daha yeni",""):"<span></span>")+
+        (v.eski?komsuBag(v.eski,"Daha eski →","sag"):"<span></span>")+
+      "</div>";
+    }
+    if(ilgili.length){
+      html+='<div class="yazi-ilgili"><p class="yazi-ilgili-baslik">İlgili</p>'+
+        ilgili.map(function(k){
+          return '<a href="'+esc(k.dosya)+'">'+esc(k.baslik)+"</a>";
+        }).join("")+"</div>";
+    }
+
+    var nav=document.createElement("nav");
+    nav.className="yazi-gezinme";
+    nav.setAttribute("aria-label","Diğer yazılar");
+    nav.innerHTML=html;
+    footer.parentNode.insertBefore(nav,footer);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* "Kaldığın yere dön" satırı. Kaynak, ilerleme çubuğunun yazdığı localStorage
+   kaydı. Sayfa doğrudan bir bölüm bağlantısıyla açıldıysa (#mN) hiç gösterilmez:
+   okuyucu zaten nereye gideceğini söylemiş. Okuma süresi satırının hemen altına
+   girer, o yüzden bu blok YAZI_VERI script'inden sonra gelmeli. */
+(function(){
+  function baslat(){
+    if(location.hash.length>1)return;
+    /* Kayıt açılışta anlık görüntülendi (bkz. kabuğun ilk script'i); doğrudan
+       localStorage okunsaydı ilerleme çubuğunun yazdığı taze değer gelirdi. */
+    var d=window.YAZI_KALDIGI;
+    if(!d||typeof d.o!=="number"||d.o<0.08||d.o>=0.92)return;
+
+    var yer=document.querySelector(".yazi-sure")||document.querySelector("header.hero .lede");
+    if(!yer)return;
+
+    var kutu=document.createElement("p");
+    kutu.className="yazi-devam";
+    var git=document.createElement("button");
+    git.type="button";
+    git.textContent="↩ kaldığın yere dön · %"+Math.round(d.o*100);
+    var kapat=document.createElement("button");
+    kapat.type="button";
+    kapat.className="yazi-devam-kapat";
+    kapat.textContent="×";
+    kapat.setAttribute("aria-label","Bu satırı kapat");
+    kutu.appendChild(git);
+    kutu.appendChild(kapat);
+    yer.parentNode.insertBefore(kutu,yer.nextSibling);
+
+    git.addEventListener("click",function(){
+      /* Bölüm kimliği varsa oraya git: pencere boyu değişmişse yüzde kayar,
+         bölüm kaymaz. Yoksa orana göre yaklaşık konuma in. */
+      var hedef=d.b&&document.getElementById(d.b);
+      if(hedef)hedef.scrollIntoView({behavior:"smooth",block:"start"});
+      else window.scrollTo({top:(document.documentElement.scrollHeight-window.innerHeight)*d.o,behavior:"smooth"});
+      kutu.parentNode.removeChild(kutu);
+    });
+    kapat.addEventListener("click",function(){kutu.parentNode.removeChild(kutu);});
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<script>
+/* Bölüm başlığı anchor'ları, yukarı dön düğmesi ve dar ekranda katlanan
+   içindekiler. Üçü de sayfa içeriğinden bağımsız, tamamen DOM üstünde çalışır. */
+(function(){
+  function parlat(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.classList.remove("yazi-parla");
+    void el.offsetWidth;           /* animasyonu yeniden tetiklemek için */
+    el.classList.add("yazi-parla");
+  }
+
+  function anchorlar(){
+    Array.prototype.forEach.call(document.querySelectorAll("section[id] > h2"),function(h2){
+      if(h2.querySelector(".yazi-anchor"))return;
+      var id=h2.parentNode.id;
+      var a=document.createElement("a");
+      a.className="yazi-anchor";
+      a.href="#"+id;
+      a.textContent="#";
+      a.setAttribute("aria-label","Bu bölüme bağlantı");
+      h2.appendChild(a);
+      a.addEventListener("click",function(){setTimeout(function(){parlat(id);},380);});
+    });
+  }
+
+  function yukariDugmesi(){
+    var btn=document.createElement("button");
+    btn.type="button";
+    btn.className="yazi-yukari";
+    btn.textContent="↑";
+    btn.setAttribute("aria-label","Sayfanın başına dön");
+    document.body.appendChild(btn);
+    btn.addEventListener("click",function(){
+      window.scrollTo({top:0,behavior:"smooth"});
+      var h1=document.querySelector("header.hero h1");
+      if(h1){h1.setAttribute("tabindex","-1");h1.focus({preventScroll:true});}
+    });
+    var bekliyor=false;
+    function guncelle(){
+      bekliyor=false;
+      btn.classList.toggle("gorunur",window.scrollY>600);
+    }
+    window.addEventListener("scroll",function(){
+      if(!bekliyor){bekliyor=true;requestAnimationFrame(guncelle);}
+    },{passive:true});
+    guncelle();
+  }
+
+  function katlanabilirToc(){
+    var toc=document.querySelector(".toc");
+    var ol=toc&&toc.querySelector("ol");
+    if(!toc||!ol||toc.querySelector(".yazi-toc-ac"))return;
+    var adet=ol.querySelectorAll("li").length;
+    var btn=document.createElement("button");
+    btn.type="button";
+    btn.className="yazi-toc-ac";
+    btn.innerHTML='<span>'+adet+' bölüm</span><span class="ok" aria-hidden="true">▾</span>';
+    btn.setAttribute("aria-expanded","false");
+    toc.insertBefore(btn,ol);
+    toc.dataset.kapali="1";
+    btn.addEventListener("click",function(){
+      var kapali=toc.dataset.kapali==="1";
+      if(kapali)delete toc.dataset.kapali; else toc.dataset.kapali="1";
+      btn.setAttribute("aria-expanded",String(kapali));
+    });
+    /* Bir bölüme gidilince liste yine kapansın, içerik hemen görünsün. */
+    ol.addEventListener("click",function(e){
+      if(e.target.closest("a")&&window.matchMedia("(max-width:900px)").matches){
+        toc.dataset.kapali="1";
+        btn.setAttribute("aria-expanded","false");
+      }
+    });
+  }
+
+  function baslat(){
+    anchorlar();
+    yukariDugmesi();
+    katlanabilirToc();
+    /* Sayfa doğrudan #mN ile açıldıysa hedef bölüm bir an vurgulansın. */
+    if(location.hash.length>1)setTimeout(function(){parlat(location.hash.slice(1));},300);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",baslat);
+  else baslat();
+})();
+</script>
+<!-- /yazi:kabuk -->
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Claude Code · Slash Commands</p>
+    <h1>Üçüncü kez yazdığın prompt<br><em>artık bir /komut</em></h1>
+    <p class="lede">Terminalde <code>/</code> tuşuna bastığında açılan liste tek bir yerden gelmiyor: bir kısmı
+      Claude Code'un kendi sabit mantığı, bir kısmı kutudan çıkan skill'ler, bir kısmı da senin bir klasöre
+      bıraktığın markdown dosyaları. Bu sayfa üçünü de ayrı ayrı anlatıyor — hangi yerleşik komut ne işe yarar,
+      kendi komutunu <strong>hangi dosyayla hangi klasöre</strong> koyarsın, argümanı nasıl geçirirsin, komutun
+      içine canlı veriyi nasıl sokarsın.</p>
+    <p class="source">18 Ağustos 2026 · Referans: <a href="https://code.claude.com/docs/en/commands">code.claude.com/docs/en/commands</a> + <a href="https://code.claude.com/docs/en/skills">/docs/en/skills</a></p>
+  </header>
+
+  <nav class="toc" aria-label="İçindekiler">
+    <ol>
+      <li><a href="#m1"><span class="n">01</span> Eğik çizgiden sonra ne var?</a></li>
+      <li><a href="#m2"><span class="n">02</span> Oturumu toparlayan komutlar</a></li>
+      <li><a href="#m3"><span class="n">03</span> Model, izin, tanılama</a></li>
+      <li><a href="#m4"><span class="n">04</span> Bir md dosyası = bir komut</a></li>
+      <li><a href="#m5"><span class="n">05</span> Komutun adı nereden geliyor?</a></li>
+      <li><a href="#m6"><span class="n">06</span> Frontmatter: hangi alan neyi açar</a></li>
+      <li><a href="#m7"><span class="n">07</span> Argümanı komutun içine sokmak</a></li>
+      <li><a href="#m8"><span class="n">08</span> Komutu canlı veriyle besle</a></li>
+      <li><a href="#m9"><span class="n">09</span> Kim çağırabilir: sen mi, Claude mu?</a></li>
+      <li><a href="#m10"><span class="n">10</span> Dört senaryo, dört dosya</a></li>
+      <li><a href="#m11"><span class="n">11</span> Çalışmadığında bakılacak yerler</a></li>
+    </ol>
+  </nav>
+
+  <section id="m1">
+    <h2><span class="num">01</span> Eğik çizgiden sonra ne var?</h2>
+    <p>Komut listesi tek bir kayıt defterinden değil, dört ayrı kaynaktan besleniyor. Hangisine baktığını bilmek,
+      bir komutun neden başka makinede çalışmadığını ya da neden seninkinin yerine başkasının çalıştığını
+      anlamanın kestirme yolu:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kaynak</th><th>Nasıl çalışır</th><th>Örnek</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Built-in</strong></td><td>Claude Code'un içine gömülü sabit mantık. Modele sorulmaz, doğrudan çalışır.</td><td><code>/clear</code>, <code>/model</code>, <code>/config</code></td></tr>
+          <tr><td><strong>Bundled skill</strong></td><td>Kutudan çıkan, prompt tabanlı skill'ler. Claude işi kendi araçlarıyla yürütür.</td><td><code>/doctor</code>, <code>/code-review</code>, <code>/debug</code>, <code>/loop</code></td></tr>
+          <tr><td><strong>Senin komutların</strong></td><td>Diskteki bir markdown dosyası. Kişisel, projeye ait veya kurumsal.</td><td><code>/commit</code>, <code>/deploy</code></td></tr>
+          <tr><td><strong>MCP &amp; plugin</strong></td><td>Bağlı MCP sunucusunun prompt'ları ve kurulu plugin'lerin komutları.</td><td><code>/mcp__github__pr_review</code>, <code>/my-plugin:review</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Ayrım neden önemli</span>
+      Yerleşik komut sabit iş yapar; skill ise Claude'a talimat verir. Bu yüzden <code>/compact</code> her seferinde
+      aynı şeyi yaparken <code>/code-review</code>'un çıktısı projeye göre değişir — ikincisi bir prompt'tur.
+    </div>
+
+    <p>Kutudan çıkan skill'lerin tamamını <code>disableBundledSkills</code> ayarıyla kapatabilirsin;
+      <code>/doctor</code> bu kapatmanın dışında kalır (v2.1.205 ve sonrası). Tek tek gizlemek için
+      <code>skillOverrides</code> içinde ilgili skill'i <code>"off"</code> yaparsın.</p>
+
+    <p>v2.1.199'dan itibaren tek satırda <strong>en fazla altı skill zincirlenebiliyor</strong>; arkadan gelen metin
+      hepsine argüman olarak geçer:</p>
+
+    <pre><code>/code-review /simplify şu dizindeki değişikliklere bak</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Liste sürüme bağlı</span>
+      Aşağıdaki iki bölümdeki komutlar Claude Code sürümüne, platforma ve planına göre değişir — <code>/desktop</code>
+      yalnızca macOS ve x64 Windows'ta, <code>/privacy-settings</code> Pro/Max planlarında var. Kendi kurulumundaki
+      kesin listeyi <code>/help</code> verir; sürümünü <code>/status</code> ya da <code>claude --version</code> söyler.
+    </div>
+  </section>
+
+  <section id="m2">
+    <h2><span class="num">02</span> Oturumu toparlayan komutlar</h2>
+    <p>Günlük kullanımın büyük kısmı context'i ve oturumu yönetmekle geçiyor. Bu tablodakiler işi bırakmadan
+      elinin altında olması gerekenler:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Komut</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>/clear</code></td><td>Context'i boşaltıp yeni bir konuşma başlatır. Diğer adları: <code>/reset</code>, <code>/new</code>.</td></tr>
+          <tr><td><code>/compact [talimat]</code></td><td>Konuşmayı özetleyerek yer açar. Talimat verirsen özetin neye odaklanacağını sen belirlersin.</td></tr>
+          <tr><td><code>/autocompact [auto|&lt;token&gt;]</code></td><td>Otomatik sıkıştırmanın hangi eşikte devreye gireceğini ayarlar.</td></tr>
+          <tr><td><code>/context [all]</code></td><td>Context'in neyle dolduğunu görselleştirir; <code>all</code> dökümü açar.</td></tr>
+          <tr><td><code>/resume</code></td><td>Daha önceki bir konuşmaya geri döner.</td></tr>
+          <tr><td><code>/rewind</code></td><td>Kodu ve konuşmayı bir checkpoint'e geri sarar.</td></tr>
+          <tr><td><code>/branch [ad]</code></td><td>Konuşmayı dallandırır — aynı noktadan farklı bir yol denemek için.</td></tr>
+          <tr><td><code>/fork [prompt]</code></td><td>Konuşmanın kopyasını arka planda yeni bir oturum olarak açar.</td></tr>
+          <tr><td><code>/background [prompt]</code></td><td>Mevcut oturumu arka plan ajanı olarak koparır. Kısası: <code>/bg</code>.</td></tr>
+          <tr><td><code>/subtask</code></td><td>Yan bir işi subagent'a devreder, sonucu sana raporlar.</td></tr>
+          <tr><td><code>/tasks</code></td><td>Oturumdaki arka plan işlerini listeler (cevabı kesmeden çalışır).</td></tr>
+          <tr><td><code>/btw [soru]</code></td><td>Konuşma geçmişine yazmadan araya bir soru sıkıştırır.</td></tr>
+          <tr><td><code>/goal [koşul]</code></td><td>Bir hedef koyar; Claude koşul sağlanana kadar çalışmayı sürdürür. <code>clear</code> ile kaldırılır.</td></tr>
+          <tr><td><code>/diff</code></td><td>Commit edilmemiş değişiklikler için etkileşimli diff görüntüleyici açar.</td></tr>
+          <tr><td><code>/add-dir &lt;yol&gt;</code></td><td>Oturuma yeni bir çalışma dizini ekler.</td></tr>
+          <tr><td><code>/cd &lt;yol&gt;</code></td><td>Konuşmayı koruyarak çalışma dizinini değiştirir.</td></tr>
+          <tr><td><code>/export [dosya]</code> · <code>/copy [N]</code></td><td>Konuşmayı düz metin olarak dışa aktarır; son (veya N'inci) yanıtı panoya kopyalar.</td></tr>
+          <tr><td><code>/recap</code></td><td>Oturumun tek satırlık özetini üretir.</td></tr>
+          <tr><td><code>/usage</code></td><td>Token kullanımını ve maliyeti gösterir. <code>/cost</code> aynı komut.</td></tr>
+          <tr><td><code>/teleport</code> · <code>/desktop</code></td><td>Web oturumunu terminale çeker; oturuma masaüstü uygulamasından devam eder.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Kesmeden çalışanlar</span>
+      <code>/status</code>, <code>/tasks</code> ve <code>/usage</code> Claude'un o anki cevabını bölmeden anında
+      çalışır — uzun bir işin ortasında maliyete bakmak için bekleme.
+    </div>
+  </section>
+
+  <section id="m3">
+    <h2><span class="num">03</span> Model, izin, tanılama</h2>
+    <p>İkinci grup, oturumun nasıl davranacağını ayarlayanlar ve bir şey ters gittiğinde açacakların:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Komut</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>/model [model]</code></td><td>Modeli değiştirir; sol/sağ ok tuşlarıyla effort seviyesini de ayarlarsın.</td></tr>
+          <tr><td><code>/effort [seviye|auto]</code></td><td>Effort seviyesini kurar: <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, <code>max</code>, <code>ultracode</code>, <code>auto</code>.</td></tr>
+          <tr><td><code>/fast [on|off]</code></td><td>Fast mode'u açar/kapatır.</td></tr>
+          <tr><td><code>/plan [açıklama]</code></td><td>Doğrudan prompt satırından plan mode'a girer.</td></tr>
+          <tr><td><code>/permissions</code></td><td>Araç izin kurallarını yönetir. Diğer adı: <code>/allowed-tools</code>.</td></tr>
+          <tr><td><code>/config [anahtar=değer]</code></td><td>Ayarlar arayüzünü açar veya değeri doğrudan yazar. Diğer adı: <code>/settings</code>.</td></tr>
+          <tr><td><code>/hooks</code></td><td>Araç olaylarına bağlı hook yapılandırmalarını gösterir.</td></tr>
+          <tr><td><code>/mcp</code></td><td>MCP sunucu bağlantılarını ve OAuth'u yönetir; <code>reconnect</code>, <code>enable</code>, <code>disable</code> alt komutları var.</td></tr>
+          <tr><td><code>/plugin [alt komut]</code></td><td>Plugin yönetimi: <code>list</code>, <code>install</code>, <code>enable</code>, <code>disable</code>.</td></tr>
+          <tr><td><code>/reload-plugins</code></td><td>Etkin plugin'leri yeniden yükler — dosyayı düzenledikten sonra yeniden başlatmadan.</td></tr>
+          <tr><td><code>/memory</code> · <code>/init</code></td><td><code>CLAUDE.md</code> dosyalarını düzenler; projeyi ilk kez <code>CLAUDE.md</code> ile donatır.</td></tr>
+          <tr><td><code>/doctor</code></td><td>Kurulum kontrolü yapıp bulduğu sorunları onarır. Diğer adı: <code>/checkup</code>.</td></tr>
+          <tr><td><code>/debug [açıklama]</code></td><td>Debug loglamayı açar ve sorunu birlikte izler.</td></tr>
+          <tr><td><code>/code-review</code></td><td>Diff'i hata ve sadeleştirme için gözden geçirir; <code>--fix</code> düzeltmeleri uygular, <code>--comment</code> PR'a yorum bırakır. Diğer adı: <code>/review</code>.</td></tr>
+          <tr><td><code>/security-review</code></td><td>Diff'i güvenlik açıkları için tarar.</td></tr>
+          <tr><td><code>/release-notes</code> · <code>/upgrade</code></td><td>Sürüm notlarını açar; Claude Code'u yükseltir (Enterprise planlarında yok).</td></tr>
+          <tr><td><code>/login</code> · <code>/logout</code></td><td>Anthropic hesabına giriş ve çıkış.</td></tr>
+          <tr><td><code>/ide</code> · <code>/install-github-app</code></td><td>IDE entegrasyonlarını yönetir; depo için GitHub App kurar.</td></tr>
+          <tr><td><code>/keybindings</code> · <code>/theme</code></td><td>Kısayol dosyasını açar; tema ayarını değiştirir.</td></tr>
+          <tr><td><code>/insights</code></td><td>Son oturumları analiz eden bir HTML rapor üretir.</td></tr>
+          <tr><td><code>/bug [rapor]</code> · <code>/feedback</code></td><td>Hata bildirir veya konuşmayı paylaşır; ürün geri bildirimi gönderir.</td></tr>
+          <tr><td><code>/help</code> · <code>/exit</code></td><td>Yardımı ve mevcut komutları gösterir; CLI'dan çıkar (<code>/quit</code>).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Takma adlar</span>
+      Aynı komuta iki isim: <code>/bg</code>→<code>/background</code>, <code>/reset</code> ve <code>/new</code>→<code>/clear</code>,
+      <code>/review</code>→<code>/code-review</code>, <code>/allowed-tools</code>→<code>/permissions</code>,
+      <code>/checkup</code>→<code>/doctor</code>, <code>/settings</code>→<code>/config</code>, <code>/quit</code>→<code>/exit</code>,
+      <code>/peers</code>→<code>/list-agents</code>, <code>/proactive</code>→<code>/loop</code>.
+    </div>
+  </section>
+
+  <section id="m4">
+    <h2><span class="num">04</span> Bir md dosyası = bir komut</h2>
+    <p>Kendi komutunu yazmak için tek gereken, doğru klasöre bir markdown dosyası bırakmak. Dosyanın gövdesi
+      Claude'a gidecek prompt'tur; üstteki YAML frontmatter ise komutun nasıl davranacağını ayarlar.</p>
+
+    <div class="note warn">
+      <span class="tag">Bilinmesi gereken birleşme</span>
+      <strong>Custom command'lar skill'lerle birleştirildi.</strong> <code>.claude/commands/deploy.md</code> ile
+      <code>.claude/skills/deploy/SKILL.md</code> ikisi de <code>/deploy</code> komutunu üretir ve aynı şekilde
+      çalışır. Eski <code>commands/</code> dosyaların çalışmaya devam eder; ama yeni yazacaklarını
+      <code>skills/</code> altında açmak daha iyi — orada yanına destekleyici dosya koyabilir, Claude'un komutu
+      kendiliğinden çağırmasına izin verebilirsin.
+    </div>
+
+    <h3>Dosya nereye konur</h3>
+    <p>Konum, komutu kimin göreceğini belirler:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Kapsam</th><th>Yol</th><th>Kim kullanır</th></tr></thead>
+        <tbody>
+          <tr><td>Kişisel</td><td><code>~/.claude/skills/&lt;ad&gt;/SKILL.md</code></td><td>Senin bütün projelerin</td></tr>
+          <tr><td>Proje</td><td><code>.claude/skills/&lt;ad&gt;/SKILL.md</code></td><td>Yalnızca bu depo — commit edilir, ekip de kullanır</td></tr>
+          <tr><td>Eski biçim</td><td><code>.claude/commands/&lt;ad&gt;.md</code></td><td>Aynı iş, tek dosya, klasörsüz</td></tr>
+          <tr><td>Plugin</td><td><code>&lt;plugin&gt;/skills/&lt;ad&gt;/SKILL.md</code></td><td>Plugin'in etkin olduğu her yer</td></tr>
+          <tr><td>Kurumsal</td><td>Managed settings dizini altındaki <code>.claude/skills/</code></td><td>Organizasyondaki herkes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Sıfırdan üç adım</h3>
+    <p>Depodaki testleri çalıştırıp sonucu yorumlayan bir <code>/check</code> komutu:</p>
+
+    <pre><code><span class="c"># 1 — klasörü aç (proje komutu; kişisel için ~/.claude/skills/ kullan)</span>
+mkdir -p .claude/skills/check</code></pre>
+
+    <p>2 — <code>.claude/skills/check/SKILL.md</code> dosyasını yaz:</p>
+
+    <pre><code>---
+description: Testleri ve linter'ı çalıştırıp çıktıyı yorumlar. Kullanıcı "test et", "kontrol et" dediğinde kullan.
+argument-hint: [dosya-yolu]
+allowed-tools: Bash(npm test *) Bash(npm run lint *)
+---
+
+Şunları sırayla çalıştır ve çıktıyı yorumla:
+
+1. `npm test $ARGUMENTS`
+2. `npm run lint`
+
+Kırmızı çıkan her satır için: nedeni tek cümle, önerilen düzeltme tek cümle.
+Hepsi yeşilse tek satırla "temiz" de, uzun özet yazma.</code></pre>
+
+    <p>3 — terminalde <code>/check</code> yaz. Klasördeki değişiklikler <strong>canlı yakalanır</strong>: dosyayı
+      kaydettiğin anda komut aynı oturumda kullanılabilir hâle gelir, yeniden başlatmaya gerek yok. Tek istisna,
+      <code>skills/</code> klasörünün oturum başlarken hiç var olmamasıdır — o durumda bir kez yeniden başlat.</p>
+
+    <div class="note">
+      <span class="tag">Klasör mü, tek dosya mı</span>
+      Komut sadece bir prompt'tan ibaretse <code>.claude/commands/adi.md</code> yeter. Yanına şablon, örnek çıktı
+      veya script koyacaksan <code>skills/&lt;ad&gt;/SKILL.md</code> seç — <code>SKILL.md</code>'yi 500 satırın
+      altında tutup ayrıntıyı komşu dosyalara taşımak da ancak orada mümkün.
+    </div>
+
+    <h3>Monorepo: komut alt dizine ait olabilir</h3>
+    <p>Alt dizinlerdeki <code>.claude/skills/</code> klasörleri de yüklenir, ama oturum başında değil: Claude o alt
+      dizindeki bir dosyayı ilk kez okuduğunda veya düzenlediğinde devreye girerler. Ad çakışırsa ikisi de kalır ve
+      alt dizindeki, dizinle nitelenmiş bir adla görünür — <code>apps/web/.claude/skills/deploy/</code> için
+      <code>/apps/web:deploy</code>. Düz <code>/deploy</code> yazdığında kök komut çalışır; alt dizindekini istiyorsan
+      nitelenmiş adı yazarsın.</p>
+  </section>
+
+  <section id="m5">
+    <h2><span class="num">05</span> Komutun adı nereden geliyor?</h2>
+    <p>Yazdığın ad, dosyanın adından değil çoğu zaman <strong>klasörünün</strong> adından geliyor. Kaynağa göre:</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yerleşim</th><th>Ad kaynağı</th><th>Örnek</th></tr></thead>
+        <tbody>
+          <tr><td><code>~/.claude/skills/</code> veya <code>.claude/skills/</code></td><td>Klasör adı</td><td><code>.claude/skills/deploy-staging/SKILL.md</code> → <code>/deploy-staging</code></td></tr>
+          <tr><td>Alt dizindeki <code>.claude/skills/</code> (ad çakışırsa)</td><td>Göreli dizin yolu + klasör adı</td><td><code>apps/web/.claude/skills/deploy/</code> → <code>/apps/web:deploy</code></td></tr>
+          <tr><td><code>.claude/commands/</code></td><td>Uzantısız dosya adı</td><td><code>.claude/commands/deploy.md</code> → <code>/deploy</code></td></tr>
+          <tr><td>Plugin'in <code>skills/</code> klasörü</td><td>Frontmatter <code>name</code> veya klasör adı, plugin öneki ile</td><td><code>my-plugin/skills/review/</code> → <code>/my-plugin:review</code></td></tr>
+          <tr><td>Plugin kökündeki <code>SKILL.md</code></td><td>Frontmatter <code>name</code>, yedeği plugin klasör adı</td><td><code>name: review</code> → <code>/my-plugin:review</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">name alanı komutu değiştirmez</span>
+      Kişisel ve proje skill'lerinde frontmatter'daki <code>name</code> yalnızca listelerde görünen etikettir;
+      yazdığın komut yine klasör adıdır. Yalnızca plugin skill'lerinde <code>name</code>, komutun son parçasını da
+      belirler. <code>.claude/commands/</code> dosyalarında ise <code>name</code> ve <code>paths</code> tümüyle
+      yok sayılır.
+    </div>
+
+    <h3>Aynı ad iki yerdeyse kim kazanır</h3>
+    <ul>
+      <li><strong>Seviyeler arası:</strong> kurumsal &gt; kişisel &gt; proje. Hem <code>~/.claude/skills/</code> hem
+        projede <code>deploy</code> varsa <code>/deploy</code> kişisel olanı çalıştırır.</li>
+      <li><strong>Skill &gt; command dosyası:</strong> <code>.claude/commands/deploy.md</code> ile
+        <code>.claude/skills/deploy/SKILL.md</code> bir aradaysa skill kazanır.</li>
+      <li><strong>Bundled skill'in üstüne yazabilirsin:</strong> projendeki <code>code-review</code> skill'i kutudan
+        çıkanın yerine geçer — ama takma adı geçmez, <code>/review</code> yine yerleşik olanı çalıştırır.</li>
+      <li><strong>Plugin'ler çakışmaz:</strong> <code>plugin-adi:skill-adi</code> ad alanında yaşadıkları için
+        seninkinin yanında sorunsuz durur.</li>
+      <li><strong>claude.ai'den senkronlanan skill'ler en altta:</strong> adı başka bir komutla çakışırsa atlanır.</li>
+    </ul>
+  </section>
+
+  <section id="m6">
+    <h2><span class="num">06</span> Frontmatter: hangi alan neyi açar</h2>
+    <p>Alanların hepsi isteğe bağlı; pratikte yalnızca <code>description</code> gerçekten gerekli — Claude'un komutu
+      kendiliğinden çağırıp çağırmayacağına onunla karar veriyor.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Alan</th><th>Ne yapar</th></tr></thead>
+        <tbody>
+          <tr><td><code>description</code></td><td>Komut ne yapar, ne zaman kullanılır. Boş bırakırsan gövdenin ilk paragrafı kullanılır. Asıl kullanım senaryosunu başa yaz: <code>description</code> + <code>when_to_use</code> listede 1.536 karakterde kesiliyor.</td></tr>
+          <tr><td><code>when_to_use</code></td><td>Tetikleyici ifadeler, örnek istekler. <code>description</code>'ın devamı gibi eklenir.</td></tr>
+          <tr><td><code>argument-hint</code></td><td>Otomatik tamamlamada görünen argüman ipucu: <code>[issue-no]</code>, <code>[dosya] [format]</code>.</td></tr>
+          <tr><td><code>arguments</code></td><td>Adlandırılmış konumsal argümanlar. Sırayla eşleşir; gövdede <code>$issue</code> gibi kullanılır.</td></tr>
+          <tr><td><code>disable-model-invocation</code></td><td><code>true</code> ise komutu yalnızca sen çağırabilirsin, Claude kendiliğinden çalıştıramaz.</td></tr>
+          <tr><td><code>user-invocable</code></td><td><code>false</code> ise tersi: <code>/</code> menüsünde görünmez, yalnızca Claude kullanır.</td></tr>
+          <tr><td><code>allowed-tools</code></td><td>Komutun çağrıldığı tur boyunca izin sorulmadan kullanılabilecek araçlar. Bir sonraki mesajında düşer.</td></tr>
+          <tr><td><code>disallowed-tools</code></td><td>Komut etkinken Claude'un elinden alınan araçlar. Aynı şekilde tur sonunda düşer.</td></tr>
+          <tr><td><code>model</code></td><td>Komut etkinken kullanılacak model. Tur bitince oturumun modeli geri gelir; <code>inherit</code> mevcut modeli korur.</td></tr>
+          <tr><td><code>effort</code></td><td>Komut etkinken effort seviyesi: <code>low</code> … <code>max</code>.</td></tr>
+          <tr><td><code>context</code></td><td><code>fork</code> ise izole bir subagent'ta çalışır; gövde doğrudan subagent'ın prompt'u olur.</td></tr>
+          <tr><td><code>agent</code> · <code>background</code></td><td><code>context: fork</code> ile: hangi subagent tipi kullanılacak; <code>background: false</code> sonucu aynı turda bekler.</td></tr>
+          <tr><td><code>hooks</code></td><td>Komut çağrıldığında kaydedilen ve oturum boyunca çalışmayı sürdüren hook'lar.</td></tr>
+          <tr><td><code>paths</code></td><td>Glob desenleri. Verilirse Claude komutu yalnızca eşleşen dosyalarla çalışırken kendiliğinden yükler.</td></tr>
+          <tr><td><code>shell</code></td><td>Gövdedeki kabuk enjeksiyonlarının hangi kabukta çalışacağı: <code>bash</code> (varsayılan) veya <code>powershell</code>.</td></tr>
+          <tr><td><code>name</code></td><td>Listelerde görünen etiket. Komut adını yalnızca plugin skill'lerinde etkiler (bkz. 05).</td></tr>
+          <tr><td><code>metadata</code> · <code>license</code> · <code>compatibility</code></td><td>Kendi araçların için serbest alanlar ve Agent Skills spec alanları; Claude Code kabul eder ama davranışa yansıtmaz.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Boolean yazımı</span>
+      <code>true</code>/<code>false</code> dışında <code>yes</code>, <code>no</code>, <code>on</code>, <code>off</code>,
+      <code>1</code>, <code>0</code> da kabul ediliyor (v2.1.218 öncesinde yalnızca <code>true</code>/<code>false</code>).
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Dışarı taşıyacaksan</span>
+      Bu alanların tamamı Claude Code'a özgü. Aynı dosyayı claude.ai'ye yükleyecek veya Skills API ile
+      paketleyeceksen yalnızca şu altısı geçerli: <code>name</code>, <code>description</code>, <code>license</code>,
+      <code>compatibility</code>, <code>metadata</code>, <code>allowed-tools</code>. Fazladan bir alan yükleme
+      hatasıyla döner — <code>argument-hint</code> bile.
+    </div>
+  </section>
+
+  <section id="m7">
+    <h2><span class="num">07</span> Argümanı komutun içine sokmak</h2>
+    <p><code>/fix-issue 4521</code> yazdığında <code>4521</code>'in gövdenin neresine gireceğini sen seçersin.
+      Yer tutucuyu hiç koymazsan argümanlar gövdenin sonuna <code>ARGUMENTS: &lt;değer&gt;</code> satırı olarak eklenir.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Yer tutucu</th><th>Ne verir</th></tr></thead>
+        <tbody>
+          <tr><td><code>$ARGUMENTS</code></td><td>Yazdığın argüman metninin tamamı.</td></tr>
+          <tr><td><code>$ARGUMENTS[N]</code></td><td>Sıfır tabanlı indeksle tek bir argüman.</td></tr>
+          <tr><td><code>$N</code></td><td><code>$ARGUMENTS[N]</code>'in kısası: <code>$0</code> birinci, <code>$1</code> ikinci argüman.</td></tr>
+          <tr><td><code>$ad</code></td><td><code>arguments</code> frontmatter'ında tanımladığın adlandırılmış argüman.</td></tr>
+          <tr><td><code>${CLAUDE_SESSION_ID}</code></td><td>Oturum kimliği — log dosyası adlandırmak için birebir.</td></tr>
+          <tr><td><code>${CLAUDE_EFFORT}</code></td><td>Geçerli effort seviyesi; talimatı seviyeye göre uyarlamak için.</td></tr>
+          <tr><td><code>${CLAUDE_SKILL_DIR}</code></td><td><code>SKILL.md</code>'nin bulunduğu klasör — yanındaki script'i çağırmanın güvenli yolu.</td></tr>
+          <tr><td><code>${CLAUDE_PROJECT_DIR}</code></td><td>Proje kökü (v2.1.196+). Depoya ait script'lere buradan referans ver.</td></tr>
+          <tr><td><code>${CLAUDE_PLUGIN_ROOT}</code> · <code>${CLAUDE_PLUGIN_DATA}</code></td><td>Yalnızca plugin skill'lerinde: plugin'in kurulum klasörü ve güncellemeden sağ çıkan veri klasörü.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">$1 ikinci argüman</span>
+      İndeks sıfır tabanlı. Kabuk script'i alışkanlığıyla <code>$1</code> yazarsan birinciyi değil <strong>ikinci</strong>
+      argümanı alırsın. Birincisi <code>$0</code>.
+    </div>
+
+    <ul>
+      <li><strong>Tırnak:</strong> indeksli argümanlar kabuk tarzı ayrıştırılır. <code>/my-skill "merhaba dünya" ikinci</code>
+        çağrısında <code>$0</code> → <code>merhaba dünya</code>, <code>$1</code> → <code>ikinci</code>. <code>$ARGUMENTS</code>
+        ise her zaman yazdığın metnin tamamıdır.</li>
+      <li><strong>Eksik argüman:</strong> karşılığı olmayan <code>$2</code> gövdede olduğu gibi kalır; adlandırılmış bir
+        yer tutucunun karşılığı yoksa boş dizeye dönüşür.</li>
+      <li><strong>Kaçış:</strong> metinde gerçekten <code>$1.00</code> yazacaksan <code>\$1.00</code> ile kaçır. Kaçış
+        yalnızca argüman yer tutucuları için geçerli — <code>${CLAUDE_*}</code> değişkenleri ters bölü ile durdurulamaz.</li>
+    </ul>
+
+    <p>Adlandırılmış argümanlar, üç parametreli bir komutu okunur hâle getirir:</p>
+
+    <pre><code>---
+description: Bir issue'yu verilen branch üzerinde çözer
+argument-hint: [issue-no] [branch]
+arguments: [issue, branch]
+---
+
+`$branch` dalına geç ve GitHub issue #$issue'yu çöz.
+Testleri yazmadan commit atma.</code></pre>
+  </section>
+
+  <section id="m8">
+    <h2><span class="num">08</span> Komutu canlı veriyle besle</h2>
+    <p>Komutun asıl gücü burada: <code>!`komut`</code> yazımı, gövde Claude'a gitmeden önce kabuk komutunu çalıştırır
+      ve yer tutucunun yerine <strong>çıktısını</strong> koyar. Claude komutu değil, sonucu görür.</p>
+
+    <pre><code>---
+description: Bekleyen değişiklikleri özetler ve riskli olanları işaretler
+---
+
+## Şu anki değişiklikler
+
+!`git diff HEAD`
+
+## Talimat
+
+Yukarıdaki diff'i iki üç maddede özetle, sonra gözüne çarpan riskleri sırala.
+Diff boşsa "bekleyen değişiklik yok" de.</code></pre>
+
+    <p>Çok satırlı komutlar için satır içi biçim yerine <code>```!</code> ile açılan bir kod bloğu kullanılır:</p>
+
+    <pre><code>## Ortam
+```!
+node --version
+npm --version
+git status --short
+```</code></pre>
+
+    <p><code>@</code> ile dosya referansı verirsen (<code>@src/config.ts</code> gibi) o dosya komutun içeriğine eklenir —
+      Claude'a "şunu da oku" demenin dosya hâli.</p>
+
+    <div class="note warn">
+      <span class="tag">Sessizce çalışmayan hâller</span>
+      <code>!</code> yalnızca satır başında veya bir boşluktan hemen sonra tanınır. <code>KEY=!`cmd`</code> düz metin
+      olarak kalır ve komut hiç çalışmaz. Ayrıca değiştirme <strong>tek geçişte</strong> yapılır: bir komutun çıktısı
+      yeni bir <code>!</code> yer tutucusu üretirse o çalıştırılmaz.
+    </div>
+
+    <h3>Hata olursa ne olur</h3>
+    <ul>
+      <li>Başarısız bir komut <strong>tüm çağrıyı iptal eder</strong> — Claude o sefer gövdeyi hiç görmez.
+        Ekranda <code>Shell command failed for pattern "..."</code> çıkar.</li>
+      <li>Varsayılan <code>bash</code> kabuğunda sıfır olmayan her çıkış kodu hatadır. Tek istisna arama/karşılaştırma
+        komutlarının 1 kodudur; 2 ve üstü onlarda da hata sayılır. Problem bulunca 1 dönen bir kontrol script'i
+        çalıştırıyorsan sonuna <code>|| true</code> ekle.</li>
+      <li>Enjekte edilen komutlar <strong>izin sormaz</strong>. İzin kontrolü "allow" dışında bir sonuç verirse çağrı
+        iptal olur — normalde sana soracak bir kural bile. Çözüm, komutu <code>allowed-tools</code> ile önceden
+        onaylamak; ama eşleşen bir ask/deny kuralı yine iptal eder.</li>
+      <li>Her komut Bash aracının varsayılan <strong>2 dakikalık</strong> zaman aşımıyla, oturumun o anki çalışma
+        dizininde çalışır. Yolun her seferinde aynı çözülmesi gerekiyorsa <code>${CLAUDE_SKILL_DIR}</code> veya
+        <code>${CLAUDE_PROJECT_DIR}</code> kullan.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Kurumsal kapatma</span>
+      <code>"disableSkillShellExecution": true</code> ayarı kullanıcı, proje, plugin ve ek dizin kaynaklı komutlarda bu
+      davranışı kapatır; her komutun yerine <code>[shell command execution disabled by policy]</code> yazılır. Kutudan
+      çıkan ve kurumsal skill'ler etkilenmez.
+    </div>
+  </section>
+
+  <section id="m9">
+    <h2><span class="num">09</span> Kim çağırabilir: sen mi, Claude mu?</h2>
+    <p>Varsayılan olarak bir komutu hem sen <code>/ad</code> yazarak hem de Claude konuya uygun bulduğunda
+      çağırabilir. İki alan bunu kısıtlar:</p>
+
+    <div class="card">
+      <ul style="margin-bottom:0;">
+        <li><strong><code>disable-model-invocation: true</code></strong> — yalnızca sen çağırırsın. Yan etkisi olan
+          işlerde şart: <code>/commit</code>, <code>/deploy</code>, <code>/send-slack-message</code>. Claude'un
+          "kod hazır görünüyor" diye deploy etmesini istemezsin.</li>
+        <li><strong><code>user-invocable: false</code></strong> — yalnızca Claude çağırır, <code>/</code> menüsünde
+          görünmez. Komut olarak anlamı olmayan arka plan bilgisi için: eski bir sistemin nasıl çalıştığını anlatan
+          bir <code>legacy-system-context</code> dosyasını kullanıcı "çalıştırmaz".</li>
+      </ul>
+    </div>
+
+    <p>Dosyayı düzenlemeden aynı etkiyi istiyorsan ayarlardaki <code>skillOverrides</code> girdisine
+      <code>"user-invocable-only"</code> yazabilirsin; <code>"off"</code> ise komutu tümüyle gizler.</p>
+
+    <h3>İzinleri önden vermek</h3>
+    <p><code>allowed-tools</code>, komutun çağrıldığı <strong>tur boyunca</strong> listelenen araçları izin sormadan
+      kullanılabilir kılar. Bir sonraki mesajını yazdığında hak düşer; komutu tekrar çağırmak tekrar verir. Araçları
+      kısıtlamaz — listelenmeyenler normal izin ayarlarına tabi kalır.</p>
+
+    <pre><code>---
+name: commit
+description: Bekleyen değişiklikleri stage'leyip commit atar
+disable-model-invocation: true
+allowed-tools: Bash(git add *) Bash(git commit *) Bash(git status *)
+---</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Depodan gelen dosyaya dikkat</span>
+      Workspace trust bu alanı kapsamıyor: projeye ait bir komutun <code>allowed-tools</code> girdisi, hiç
+      güvenilmediğini belirtmediğin bir klasördeki <code>-p</code> çalıştırmasında bile uygulanır. Bir depoda Claude
+      Code açmadan önce <code>.claude/</code> altındaki komutların <code>allowed-tools</code> satırlarına bak — bir
+      komut kendine geniş yetki verebilir.
+    </div>
+
+    <p>Tersi için <code>disallowed-tools</code>: komut etkinken o araçları Claude'un havuzundan çıkarır. Arka planda
+      dönen, kullanıcıya soru sormaması gereken bir komutta <code>AskUserQuestion</code>'ı kapatmak tipik kullanım.</p>
+  </section>
+
+  <section id="m10">
+    <h2><span class="num">10</span> Dört senaryo, dört dosya</h2>
+
+    <h3>1 — Commit mesajını sen yazmayı bırak</h3>
+    <p>Sorun: her commit öncesi aynı diff'i yapıştırıp "buna mesaj yaz" demek. Komut, diff'i kendisi getirsin ve
+      Claude bunu <em>kendiliğinden</em> çalıştırmasın.</p>
+    <pre><code><span class="c"># ~/.claude/skills/commit/SKILL.md  →  /commit</span>
+---
+description: Bekleyen değişikliklere commit mesajı yazar ve commit atar
+disable-model-invocation: true
+allowed-tools: Bash(git add *) Bash(git commit *) Bash(git diff *) Bash(git status *)
+---
+
+## Stage'lenmiş diff
+!`git diff --staged`
+
+## Stage'lenmemiş dosyalar
+!`git status --short`
+
+Stage'lenmiş değişikliklere tek satırlık, emir kipinde bir commit mesajı yaz ve commit at.
+Stage'lenmiş hiçbir şey yoksa commit atma, ne olduğunu söyle.
+Mesajda dosya adı sayma; neyin değiştiğini değil neden değiştiğini yaz.</code></pre>
+
+    <h3>2 — Issue numarasıyla çağrılan komut</h3>
+    <p>Argüman alan en yalın biçim. <code>argument-hint</code> sayesinde otomatik tamamlamada ne bekleneceği görünür.</p>
+    <pre><code><span class="c"># .claude/skills/fix-issue/SKILL.md  →  /fix-issue 4521</span>
+---
+description: Numarası verilen GitHub issue'sunu proje kurallarına göre çözer
+argument-hint: [issue-no]
+disable-model-invocation: true
+allowed-tools: Bash(gh issue view *)
+---
+
+## Issue
+!`gh issue view $ARGUMENTS`
+
+Yukarıdaki issue'yu çöz:
+1. Kabul kriterlerini maddele, belirsiz olan varsa çözmeden önce sor.
+2. Düzeltmeyi uygula, testini yaz.
+3. Commit atma — diff'i bana göster.</code></pre>
+
+    <h3>3 — Uzun işi kendi context'inde çalıştır</h3>
+    <p>PR incelemesi gibi bol çıktı üreten işler ana konuşmanı doldurur. <code>context: fork</code> komutu izole bir
+      subagent'ta çalıştırır; yalnızca sonucu geri gelir.</p>
+    <pre><code><span class="c"># .claude/skills/pr-summary/SKILL.md  →  /pr-summary</span>
+---
+description: Açık PR'daki değişiklikleri ve yorumları özetler
+context: fork
+agent: Explore
+allowed-tools: Bash(gh *)
+---
+
+## PR bağlamı
+- Diff: !`gh pr diff`
+- Yorumlar: !`gh pr view --comments`
+- Değişen dosyalar: !`gh pr diff --name-only`
+
+Bu PR'ı üç başlıkta özetle: ne değişti, hangi yorum hâlâ cevapsız, birleştirmeden önce ne kontrol edilmeli.</code></pre>
+    <div class="note warn">
+      <span class="tag">fork'un iki tuzağı</span>
+      Forklanan komut senin konuşma geçmişini <strong>görmez</strong> — gövde tek başına bir görev tarif etmeli.
+      "Şu API kurallarına uy" gibi bir kılavuzu forklarsan subagent kuralları alır ama yapacak iş bulamaz. İkincisi:
+      arka planda çalışan fork'un düzenlemeleri oturumun checkpoint'lerinin dışında kalır, <code>/rewind</code> onları
+      geri almaz — git ile dönersin.
+    </div>
+
+    <h3>4 — Depoya ait script'i tek komuta indir</h3>
+    <p><code>${CLAUDE_PROJECT_DIR}</code> ile yol, komutun nereden çağrıldığından bağımsız çözülür; aynı değişkeni
+      <code>allowed-tools</code> içinde de kullanınca izin kuralı tam da çalıştırılacak komuta oturur ve soru sorulmaz.</p>
+    <pre><code><span class="c"># .claude/skills/db-reset/SKILL.md  →  /db-reset</span>
+---
+description: Yerel geliştirme veritabanını sıfırlar ve seed verisini yükler
+disable-model-invocation: true
+allowed-tools: Bash(${CLAUDE_PROJECT_DIR}/scripts/db-reset.sh *)
+---
+
+`${CLAUDE_PROJECT_DIR}/scripts/db-reset.sh` çalıştır.
+Çıktıda hata varsa migration adını ve hatayı göster, kendi başına düzeltmeye kalkma.</code></pre>
+
+    <h3>Bonus — komut değil, arka plan bilgisi</h3>
+    <p>Bazı dosyalar çalıştırılmak için değil, Claude doğru dosyaya dokunduğunda devreye girmek için yazılır.
+      <code>paths</code> onu yalnızca eşleşen dosyalarla çalışırken yükler, <code>user-invocable: false</code> ise
+      <code>/</code> menüsünü kalabalıklaştırmasını engeller:</p>
+    <pre><code>---
+description: Bu depodaki API endpoint'lerinin yazım kuralları
+user-invocable: false
+paths: ["src/api/**/*.ts"]
+---
+
+Endpoint yazarken: RESTful adlandırma, tek tip hata gövdesi, girdi doğrulaması zorunlu.</code></pre>
+  </section>
+
+  <section id="m11">
+    <h2><span class="num">11</span> Çalışmadığında bakılacak yerler</h2>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Belirti</th><th>Muhtemel sebep</th></tr></thead>
+        <tbody>
+          <tr><td>Komut <code>/</code> listesinde hiç yok</td><td>Klasör oturum başlarken yoktu — bir kez yeniden başlat. Ya da alt dizindeki bir skill: Claude o dizinde bir dosyaya dokunana kadar yüklenmez.</td></tr>
+          <tr><td>Yazdığım komut değil başkası çalışıyor</td><td>Ad çakışması. Kurumsal &gt; kişisel &gt; proje, skill &gt; <code>commands/</code> dosyası. 05. bölümdeki sıraya bak.</td></tr>
+          <tr><td><code>name</code> yazdım ama komut değişmedi</td><td>Kişisel/proje skill'lerinde <code>name</code> yalnızca etikettir; komut klasör adından gelir. Klasörü yeniden adlandır.</td></tr>
+          <tr><td><code>!`komut`</code> çalışmadı, düz metin göründü</td><td><code>!</code> satır başında veya boşluktan sonra değil. Ya da <code>disableSkillShellExecution</code> açık.</td></tr>
+          <tr><td>Komut hiç çalışmadan iptal oldu</td><td>Enjekte edilen bir kabuk komutu sıfır olmayan kodla döndü veya izin kontrolünü geçemedi. <code>|| true</code> ekle ya da <code>allowed-tools</code> ile önden onayla.</td></tr>
+          <tr><td>Yanlış argüman geldi</td><td>İndeks sıfır tabanlı: birinci argüman <code>$0</code>. Çok kelimeli değeri tırnağa al.</td></tr>
+          <tr><td>Cloud/Cowork oturumunda "skill bulunamadı"</td><td>Bu oturumlar makinendeki <code>~/.claude/skills/</code> klasörünü okumaz. Skill'i claude.ai hesabında etkinleştir ya da depodaki <code>.claude/skills/</code> altına commit et.</td></tr>
+          <tr><td>claude.ai'ye yüklerken "unexpected key" hatası</td><td>Spec dışı bir frontmatter alanı var. Dışarı çıkacak dosyada yalnızca altı alan kullanılabilir (bkz. 06).</td></tr>
+          <tr><td>Forklanan komut eli boş döndü</td><td>Gövde bir görev değil kılavuz. <code>context: fork</code> yalnızca açık talimat içeren komutlar için anlamlı.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Nereden başlanır</span>
+      Kurulumla ilgili bir şey mi ters, yoksa komut mu hatalı, ayırt edemiyorsan önce <code>/doctor</code>, sonra
+      <code>/context</code> ile hangi skill'lerin yüklü olduğuna bak.
+    </div>
+  </section>
+
+  <footer>
+    code.claude.com/docs/en/commands ·
+    code.claude.com/docs/en/skills ·
+    code.claude.com/docs/en/mcp ·
+    agentskills.io
+  </footer>
+
+</div>
+</body>
+</html>
