@@ -5,8 +5,22 @@
   <link>https://sdfkr22.github.io/ai-handbook/</link>
   <description>Claude Code ve yapay zekâ araçları üzerine teknik yazılar. Konu başlığına göre filtrelenebilir arşiv.</description>
   <language>tr</language>
-  <lastBuildDate>Wed, 12 Aug 2026 12:00:00 GMT</lastBuildDate>
+  <lastBuildDate>Wed, 19 Aug 2026 12:00:00 GMT</lastBuildDate>
   <atom:link href="https://sdfkr22.github.io/ai-handbook/feed.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title>Üçüncü kez yazdığın prompt artık bir /komut</title>
+    <link>https://sdfkr22.github.io/ai-handbook/posts/slash-commands-guide.html</link>
+    <guid isPermaLink="true">https://sdfkr22.github.io/ai-handbook/posts/slash-commands-guide.html</guid>
+    <pubDate>Tue, 18 Aug 2026 12:00:00 GMT</pubDate>
+    <description>Eğik çizgiden sonra ne olduğunun tamamı: yerleşik komutlar, kutudan çıkan skill&#39;ler ve kendi komutunu hangi klasöre hangi md dosyasıyla koyacağın — frontmatter, argümanlar, canlı veri enjeksiyonu ve çalışan senaryolarla.</description>
+    <category>slash commands</category>
+    <category>custom commands</category>
+    <category>SKILL.md</category>
+    <category>frontmatter</category>
+    <category>argümanlar</category>
+    <category>MCP prompts</category>
+    <category>plugin</category>
+  </item>
   <item>
     <title>Nöbeti /loop devralsın</title>
     <link>https://sdfkr22.github.io/ai-handbook/posts/loop-scheduled-tasks-guide.html</link>
